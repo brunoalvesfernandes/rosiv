@@ -22,8 +22,10 @@ import {
   History,
   AlertTriangle,
   CheckCircle,
-  Package
+  Package,
+  Music
 } from "lucide-react";
+import { MusicManager } from "@/components/admin/MusicManager";
 import { useAdmin } from "@/hooks/useAdmin";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -230,6 +232,10 @@ export default function Admin() {
             <TabsTrigger value="gifts">
               <Gift className="w-4 h-4 mr-2" />
               Presentes
+            </TabsTrigger>
+            <TabsTrigger value="music">
+              <Music className="w-4 h-4 mr-2" />
+              Músicas
             </TabsTrigger>
             <TabsTrigger value="logs">
               <History className="w-4 h-4 mr-2" />
@@ -597,6 +603,11 @@ export default function Admin() {
                 )}
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* Music Tab */}
+          <TabsContent value="music" className="space-y-4">
+            <MusicManager />
           </TabsContent>
         </Tabs>
       </div>

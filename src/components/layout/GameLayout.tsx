@@ -29,6 +29,7 @@ import { useCharacter } from "@/hooks/useCharacter";
 import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useMusicByRoute } from "@/hooks/useMusicByRoute";
 
 interface NavItem {
   label: string;
@@ -66,6 +67,9 @@ export function GameLayout({ children }: GameLayoutProps) {
   const { signOut, user } = useAuth();
   const { data: character, isLoading } = useCharacter();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  // Play music based on current route
+  useMusicByRoute();
 
   // Check if user is admin
   const { data: isAdmin } = useQuery({
