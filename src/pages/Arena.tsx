@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { GameLayout } from "@/components/layout/GameLayout";
 import { AvatarFace } from "@/components/game/AvatarFace";
 import { ProgressBar } from "@/components/ui/progress-bar";
@@ -12,15 +12,18 @@ import {
   Loader2,
   ShieldAlert
 } from "lucide-react";
-import { useState } from "react";
 import { useCharacter, useArenaOpponents } from "@/hooks/useCharacter";
-import { useNPCs, useAttackNPC, useAttackPlayer, calculateWinChance } from "@/hooks/useCombat";
-import { playArenaBgm, stopBgm, playBattleHitSound, playVictorySound, playDefeatSound } from "@/utils/gameAudio";
+import { useNPCs, useAttackNPC, useAttackPlayer, calculateWinChance, NPC, BattleResult } from "@/hooks/useCombat";
+import { playArenaBgm, stopBgm, playBattleHitSound, playVictorySound, playDefeatSound, initAudioOnInteraction } from "@/utils/gameAudio";
+import { BattleAnimation } from "@/components/game/BattleAnimation";
 
 type CombatMode = "pvp" | "pve";
 
 export default function Arena() {
   const [mode, setMode] = useState<CombatMode>("pve");
+  const [showBattle, setShowBattle] = useState(false);
+  const [battleResult, setBattleResult] = useState<BattleResult | null>(null);
+  const [currentNpcName, setCurrentNpcName] = useState("");
   
   const { data: character, isLoading: charLoading } = useCharacter();
   const { data: opponents, isLoading: opponentsLoading, refetch: refetchOpponents } = useArenaOpponents();
@@ -28,8 +31,9 @@ export default function Arena() {
   const attackNPC = useAttackNPC();
   const attackPlayer = useAttackPlayer();
 
-  // Play arena background music
+  // Initialize audio on interaction and play arena BGM
   useEffect(() => {
+    initAudioOnInteraction();
     playArenaBgm();
     return () => stopBgm();
   }, []);
@@ -176,7 +180,23 @@ export default function Arena() {
                       </div>
                       <Button 
                         className="gap-2"
-                        onClick={() => attackNPC.mutate(npc)}
+                        onClick={() => {
+                          setCurrentNpcName(npc.name);
+                          attackNPC.mutate(npc, {
+                            onSuccess: (result) => {
+                              setBattleResult(result);
+                              setShowBattle(true);
+                              playBattleHitSound();
+                              setTimeout(() => {
+                                if (result.won) {
+                                  playVictorySound();
+                                } else {
+                                  playDefeatSound();
+                                }
+                              }, 2000);
+                            }
+                          });
+                        }}
                         disabled={attackNPC.isPending || character.current_hp <= 0}
                       >
                         <Swords className="w-4 h-4" />
@@ -284,6 +304,22 @@ export default function Arena() {
             )}
           </div>
         )}
+
+        {/* Battle Animation Modal */}
+        <BattleAnimation
+          isOpen={showBattle}
+          onClose={() => setShowBattle(false)}
+          npcName={currentNpcName}
+          result={battleResult}
+          playerAvatar={character ? {
+            hairStyle: character.hair_style,
+            hairColor: character.hair_color,
+            eyeColor: character.eye_color,
+            skinTone: character.skin_tone,
+            faceStyle: character.face_style,
+            accessory: character.accessory,
+          } : undefined}
+        />
       </div>
     </GameLayout>
   );
