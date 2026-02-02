@@ -96,6 +96,18 @@ export function useMyGuild() {
         throw memberError;
       }
 
+      // Enrich with leader name
+      if (membership?.guilds) {
+        const guild = membership.guilds as Guild;
+        const { data: leader } = await supabase
+          .from("characters")
+          .select("name")
+          .eq("user_id", guild.leader_id)
+          .single();
+
+        (membership.guilds as Guild).leader_name = leader?.name || "Desconhecido";
+      }
+
       return membership;
     },
     enabled: !!user,
