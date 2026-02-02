@@ -2,7 +2,6 @@ import { useState, useRef, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Send, MessageCircle, Users, Globe, Loader2, Clock } from "lucide-react";
 import { useGlobalChat, useGuildChat, ChatMessage } from "@/hooks/useChat";
@@ -11,6 +10,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { AvatarFace } from "./AvatarFace";
+import { EmotePicker, parseEmotes } from "./chat/GameEmotes";
+import { LevelBadge } from "./chat/LevelBadge";
 
 interface ChatMessagesProps {
   messages: ChatMessage[];
@@ -106,10 +107,11 @@ function ChatMessages({ messages, isLoading, currentUserId }: ChatMessagesProps)
                     : "bg-secondary text-secondary-foreground"
                 }`}
               >
-                <p className={`text-xs font-medium ${roleColor}`}>
+                <p className={`text-xs font-medium flex items-center gap-1 ${roleColor}`}>
                   {roleLabel} {msg.sender_name}
+                  {msg.level && <LevelBadge level={msg.level} />}
                 </p>
-                <p className="text-sm break-words">{msg.message}</p>
+                <p className="text-sm break-words">{parseEmotes(msg.message)}</p>
               </div>
               <span className="text-[10px] text-muted-foreground mt-1">
                 {formatDistanceToNow(new Date(msg.created_at), {
@@ -148,10 +150,15 @@ function ChatInput({ onSend, isPending, placeholder, cooldown = 0 }: ChatInputPr
     }
   };
 
+  const handleEmoteSelect = (emote: string) => {
+    setMessage((prev) => prev + emote);
+  };
+
   const isDisabled = isPending || cooldown > 0;
 
   return (
     <div className="flex gap-2 mt-3">
+      <EmotePicker onEmoteSelect={handleEmoteSelect} />
       <Input
         value={message}
         onChange={(e) => setMessage(e.target.value)}
