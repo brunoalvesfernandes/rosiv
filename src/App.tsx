@@ -11,6 +11,7 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import Character from "./pages/Character";
+import CharacterCustomization from "./pages/CharacterCustomization";
 import Missions from "./pages/Missions";
 import Training from "./pages/Training";
 import Arena from "./pages/Arena";
@@ -46,6 +47,9 @@ const App = () => (
             } />
             <Route path="/character" element={
               <ProtectedRoute><Character /></ProtectedRoute>
+            } />
+            <Route path="/character/customize" element={
+              <ProtectedRoute><CharacterCustomization /></ProtectedRoute>
             } />
             <Route path="/missions" element={
               <ProtectedRoute><Missions /></ProtectedRoute>

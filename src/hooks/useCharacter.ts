@@ -41,6 +41,13 @@ export interface Character {
   class: "warrior" | "mage" | "archer";
   created_at: string;
   updated_at: string;
+  // Customization fields
+  hair_style: string;
+  hair_color: string;
+  eye_color: string;
+  skin_tone: string;
+  face_style: string;
+  accessory: string | null;
 }
 
 async function fetchAndRegenerate(userId: string): Promise<Character | null> {

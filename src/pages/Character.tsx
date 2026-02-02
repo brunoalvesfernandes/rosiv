@@ -1,5 +1,5 @@
 import { GameLayout } from "@/components/layout/GameLayout";
-import { CharacterAvatar } from "@/components/game/CharacterAvatar";
+import { VisualAvatar } from "@/components/game/VisualAvatar";
 import { ProgressBar } from "@/components/ui/progress-bar";
 import { Button } from "@/components/ui/button";
 import { 
@@ -9,9 +9,11 @@ import {
   Zap, 
   Sparkles,
   Plus,
-  Loader2
+  Loader2,
+  Palette
 } from "lucide-react";
 import { useCharacter, useAddStatPoint } from "@/hooks/useCharacter";
+import { useNavigate } from "react-router-dom";
 
 const statConfig = [
   { key: "strength" as const, label: "Força", icon: Swords, description: "Aumenta o dano de ataque" },
@@ -24,6 +26,7 @@ const statConfig = [
 export default function Character() {
   const { data: character, isLoading } = useCharacter();
   const addStatPoint = useAddStatPoint();
+  const navigate = useNavigate();
 
   if (isLoading || !character) {
     return (
@@ -41,11 +44,29 @@ export default function Character() {
         {/* Character Header */}
         <div className="bg-card border border-border rounded-xl p-6">
           <div className="flex flex-col md:flex-row items-center gap-6">
-            <CharacterAvatar 
-              name={character.name} 
-              level={character.level} 
-              size="lg"
-            />
+            <div className="relative">
+              <VisualAvatar 
+                customization={{
+                  hairStyle: character.hair_style,
+                  hairColor: character.hair_color,
+                  eyeColor: character.eye_color,
+                  skinTone: character.skin_tone,
+                  faceStyle: character.face_style,
+                  accessory: character.accessory,
+                }}
+                size="lg"
+                showLevel
+                level={character.level}
+              />
+              <Button
+                size="icon"
+                variant="secondary"
+                className="absolute -bottom-2 -right-2 rounded-full w-8 h-8"
+                onClick={() => navigate("/character/customize")}
+              >
+                <Palette className="w-4 h-4" />
+              </Button>
+            </div>
             <div className="text-center md:text-left flex-1">
               <h1 className="font-display text-3xl font-bold">{character.name}</h1>
               <p className="text-muted-foreground">Guerreiro • Nível {character.level}</p>
