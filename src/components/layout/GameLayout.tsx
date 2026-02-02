@@ -16,7 +16,7 @@ import {
   Package,
   Users,
   Sparkles,
-  MessageCircle
+  Castle
 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -37,6 +37,7 @@ const navItems: NavItem[] = [
   { label: "Missões", href: "/missions", icon: Target },
   { label: "Treino", href: "/training", icon: Dumbbell },
   { label: "Arena", href: "/arena", icon: Swords },
+  { label: "Masmorras", href: "/dungeons", icon: Castle },
   { label: "Guildas", href: "/guilds", icon: Users },
   { label: "Guerras", href: "/guild-wars", icon: Swords },
   { label: "Loja", href: "/shop", icon: Store },

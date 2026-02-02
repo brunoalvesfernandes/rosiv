@@ -135,13 +135,15 @@ export function FloatingChat() {
     messages: globalMessages,
     isLoading: globalLoading,
     sendMessage: sendGlobalMessage,
-  } = useGlobalChat();
+    unreadCount: globalUnread,
+  } = useGlobalChat(isOpen);
 
   const {
     messages: guildMessages,
     isLoading: guildLoading,
     sendMessage: sendGuildMessage,
-  } = useGuildChat(myGuild?.id);
+    unreadCount: guildUnread,
+  } = useGuildChat(myGuild?.id, isOpen);
 
   // Hide chat on public pages
   const publicPaths = ["/", "/login", "/register"];
@@ -152,8 +154,7 @@ export function FloatingChat() {
     return null;
   }
 
-  // Count unread (simple: just show indicator when there are messages)
-  const hasMessages = globalMessages.length > 0 || guildMessages.length > 0;
+  const totalUnread = globalUnread + guildUnread;
 
   if (!isOpen) {
     return (
@@ -163,8 +164,10 @@ export function FloatingChat() {
         className="fixed bottom-4 right-4 z-50 h-14 w-14 rounded-full shadow-lg hover:scale-105 transition-transform"
       >
         <MessageCircle className="w-6 h-6" />
-        {hasMessages && (
-          <span className="absolute -top-1 -right-1 w-4 h-4 bg-destructive rounded-full animate-pulse" />
+        {totalUnread > 0 && (
+          <span className="absolute -top-1 -right-1 min-w-5 h-5 flex items-center justify-center bg-destructive text-destructive-foreground text-xs font-bold rounded-full px-1">
+            {totalUnread > 99 ? "99+" : totalUnread}
+          </span>
         )}
       </Button>
     );
@@ -209,18 +212,28 @@ export function FloatingChat() {
           <TabsList className="w-full rounded-none border-b border-border bg-transparent p-0 h-10">
             <TabsTrigger
               value="global"
-              className="flex-1 rounded-none data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-primary gap-1 text-xs"
+              className="flex-1 rounded-none data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-primary gap-1 text-xs relative"
             >
               <Globe className="w-3 h-3" />
               Global
+              {globalUnread > 0 && (
+                <span className="ml-1 min-w-4 h-4 flex items-center justify-center bg-destructive text-destructive-foreground text-[10px] font-bold rounded-full px-1">
+                  {globalUnread > 99 ? "99+" : globalUnread}
+                </span>
+              )}
             </TabsTrigger>
             <TabsTrigger
               value="guild"
-              className="flex-1 rounded-none data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-primary gap-1 text-xs"
+              className="flex-1 rounded-none data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-primary gap-1 text-xs relative"
               disabled={!myGuild}
             >
               <Users className="w-3 h-3" />
               Guilda
+              {guildUnread > 0 && (
+                <span className="ml-1 min-w-4 h-4 flex items-center justify-center bg-destructive text-destructive-foreground text-[10px] font-bold rounded-full px-1">
+                  {guildUnread > 99 ? "99+" : guildUnread}
+                </span>
+              )}
             </TabsTrigger>
           </TabsList>
 
