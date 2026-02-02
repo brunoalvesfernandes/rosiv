@@ -27,88 +27,128 @@ const sizeConfig = {
   xl: { width: 180, height: 250 },
 };
 
-// Hair style paths
+// Hair style paths - anime style (more volume and dynamic)
 const hairStyles: Record<string, (color: string) => JSX.Element> = {
   short: (color) => (
     <g>
-      <ellipse cx="50" cy="18" rx="28" ry="14" fill={color} />
-      <path d="M22 28 Q25 15, 50 10 Q75 15, 78 28" fill={color} />
+      <ellipse cx="50" cy="16" rx="32" ry="18" fill={color} />
+      <path d="M18 30 Q22 12, 50 6 Q78 12, 82 30" fill={color} />
+      {/* Anime hair strands */}
+      <path d="M30 28 Q28 20, 32 15" stroke={color} strokeWidth="4" fill="none" />
+      <path d="M70 28 Q72 20, 68 15" stroke={color} strokeWidth="4" fill="none" />
+      {/* Highlight */}
+      <ellipse cx="38" cy="14" rx="8" ry="4" fill="white" opacity="0.15" />
     </g>
   ),
   long: (color) => (
     <g>
-      <ellipse cx="50" cy="18" rx="30" ry="16" fill={color} />
-      <path d="M20 28 Q23 14, 50 8 Q77 14, 80 28 L80 55 Q75 60, 70 55 L70 35 L30 35 L30 55 Q25 60, 20 55 Z" fill={color} />
+      <ellipse cx="50" cy="14" rx="34" ry="18" fill={color} />
+      <path d="M16 30 Q20 10, 50 4 Q80 10, 84 30 L86 70 Q82 80, 76 70 L76 38 L24 38 L24 70 Q18 80, 14 70 Z" fill={color} />
+      {/* Side hair flowing */}
+      <path d="M18 40 Q12 60, 16 85 Q20 95, 26 85 L24 40" fill={color} />
+      <path d="M82 40 Q88 60, 84 85 Q80 95, 74 85 L76 40" fill={color} />
+      {/* Highlight */}
+      <ellipse cx="36" cy="12" rx="10" ry="5" fill="white" opacity="0.15" />
     </g>
   ),
   spiky: (color) => (
     <g>
-      <path d="M25 30 L18 5 L35 22 L40 -2 L48 20 L50 -5 L52 20 L60 -2 L65 22 L82 5 L75 30" fill={color} />
-      <ellipse cx="50" cy="22" rx="26" ry="12" fill={color} />
+      {/* Dramatic anime spikes */}
+      <path d="M20 35 L8 -5 L30 22 L35 -15 L42 18 L50 -20 L58 18 L65 -15 L70 22 L92 -5 L80 35" fill={color} />
+      <ellipse cx="50" cy="20" rx="30" ry="16" fill={color} />
+      {/* Highlight */}
+      <path d="M35 10 Q40 5, 50 8" stroke="white" strokeWidth="3" opacity="0.2" fill="none" />
     </g>
   ),
   curly: (color) => (
     <g>
-      <circle cx="30" cy="18" r="10" fill={color} />
-      <circle cx="45" cy="12" r="12" fill={color} />
-      <circle cx="65" cy="12" r="12" fill={color} />
-      <circle cx="75" cy="18" r="10" fill={color} />
-      <circle cx="25" cy="32" r="8" fill={color} />
-      <circle cx="80" cy="32" r="8" fill={color} />
-      <ellipse cx="50" cy="22" rx="24" ry="12" fill={color} />
+      {/* Fluffy anime curls */}
+      <circle cx="26" cy="16" r="12" fill={color} />
+      <circle cx="42" cy="8" r="14" fill={color} />
+      <circle cx="62" cy="8" r="14" fill={color} />
+      <circle cx="78" cy="16" r="12" fill={color} />
+      <circle cx="18" cy="32" r="10" fill={color} />
+      <circle cx="86" cy="32" r="10" fill={color} />
+      <ellipse cx="50" cy="20" rx="28" ry="14" fill={color} />
+      {/* Highlight */}
+      <circle cx="42" cy="6" r="4" fill="white" opacity="0.15" />
     </g>
   ),
   mohawk: (color) => (
     <g>
-      <path d="M42 30 L38 0 L46 12 L50 -5 L54 12 L62 0 L58 30" fill={color} />
-      <path d="M30 28 Q35 24, 50 22 Q65 24, 70 28" fill={color} />
+      {/* Dramatic mohawk */}
+      <path d="M38 35 L32 -10 L42 12 L48 -20 L52 -20 L58 12 L68 -10 L62 35" fill={color} />
+      <path d="M28 32 Q38 26, 50 24 Q62 26, 72 32" fill={color} />
+      {/* Highlight */}
+      <path d="M46 0 L50 -15 L54 0" stroke="white" strokeWidth="2" opacity="0.2" fill="none" />
     </g>
   ),
   ponytail: (color) => (
     <g>
-      <ellipse cx="50" cy="18" rx="28" ry="14" fill={color} />
-      <path d="M22 28 Q25 15, 50 10 Q75 15, 78 28" fill={color} />
-      <ellipse cx="78" cy="40" rx="6" ry="20" fill={color} />
+      <ellipse cx="50" cy="16" rx="32" ry="18" fill={color} />
+      <path d="M18 30 Q22 12, 50 6 Q78 12, 82 30" fill={color} />
+      {/* Ponytail with ribbon */}
+      <ellipse cx="82" cy="35" rx="8" ry="6" fill="#dc2626" />
+      <path d="M82 41 Q90 50, 88 75 Q86 90, 80 85 Q84 70, 82 50" fill={color} />
+      <path d="M82 41 Q74 50, 76 75 Q78 90, 84 85 Q80 70, 82 50" fill={color} />
+      {/* Highlight */}
+      <ellipse cx="38" cy="14" rx="8" ry="4" fill="white" opacity="0.15" />
     </g>
   ),
   bald: () => <g></g>,
 };
 
-// Face shape paths  
+// Face shape paths - anime style (softer, rounder)
 const faceShapes: Record<string, string> = {
-  round: "M50 15 C75 15, 85 40, 82 60 C78 80, 65 90, 50 90 C35 90, 22 80, 18 60 C15 40, 25 15, 50 15",
-  oval: "M50 12 C72 12, 82 38, 80 58 C76 82, 65 95, 50 95 C35 95, 24 82, 20 58 C18 38, 28 12, 50 12",
-  square: "M25 18 L75 18 C80 18, 82 22, 82 28 L82 70 C82 85, 72 90, 50 90 C28 90, 18 85, 18 70 L18 28 C18 22, 20 18, 25 18",
-  heart: "M50 12 C75 12, 85 38, 82 55 C78 78, 62 95, 50 95 C38 95, 22 78, 18 55 C15 38, 25 12, 50 12",
+  round: "M50 18 C72 18, 82 42, 80 62 C76 85, 62 92, 50 92 C38 92, 24 85, 20 62 C18 42, 28 18, 50 18",
+  oval: "M50 15 C70 15, 80 40, 78 60 C74 88, 62 96, 50 96 C38 96, 26 88, 22 60 C20 40, 30 15, 50 15",
+  square: "M28 20 L72 20 C78 20, 82 26, 82 32 L82 68 C82 84, 70 92, 50 92 C30 92, 18 84, 18 68 L18 32 C18 26, 22 20, 28 20",
+  heart: "M50 16 C72 16, 82 40, 80 58 C76 82, 60 94, 50 94 C40 94, 24 82, 20 58 C18 40, 28 16, 50 16",
 };
 
-// Eye styles
+// Anime-style eyes with large irises and highlights
 const renderEyes = (eyeColor: string, skinTone: string) => (
   <g>
-    {/* Left eye */}
-    <ellipse cx="38" cy="48" rx="8" ry="6" fill="white" />
-    <circle cx="40" cy="48" r="4" fill={eyeColor} />
-    <circle cx="41" cy="47" r="1.5" fill="white" opacity="0.8" />
+    {/* Left eye - anime style */}
+    <ellipse cx="36" cy="50" rx="12" ry="14" fill="white" />
+    <ellipse cx="36" cy="50" rx="12" ry="14" fill="none" stroke={skinTone} strokeWidth="0.5" opacity="0.3" />
+    <ellipse cx="37" cy="51" rx="9" ry="11" fill={eyeColor} />
+    <ellipse cx="37" cy="54" rx="7" ry="8" fill={eyeColor} filter="brightness(0.7)" />
+    <circle cx="33" cy="46" r="3.5" fill="white" opacity="0.95" />
+    <circle cx="40" cy="54" r="2" fill="white" opacity="0.7" />
+    <ellipse cx="37" cy="51" rx="3" ry="4" fill="black" />
     
-    {/* Right eye */}
-    <ellipse cx="62" cy="48" rx="8" ry="6" fill="white" />
-    <circle cx="60" cy="48" r="4" fill={eyeColor} />
-    <circle cx="61" cy="47" r="1.5" fill="white" opacity="0.8" />
+    {/* Right eye - anime style */}
+    <ellipse cx="64" cy="50" rx="12" ry="14" fill="white" />
+    <ellipse cx="64" cy="50" rx="12" ry="14" fill="none" stroke={skinTone} strokeWidth="0.5" opacity="0.3" />
+    <ellipse cx="63" cy="51" rx="9" ry="11" fill={eyeColor} />
+    <ellipse cx="63" cy="54" rx="7" ry="8" fill={eyeColor} filter="brightness(0.7)" />
+    <circle cx="67" cy="46" r="3.5" fill="white" opacity="0.95" />
+    <circle cx="60" cy="54" r="2" fill="white" opacity="0.7" />
+    <ellipse cx="63" cy="51" rx="3" ry="4" fill="black" />
     
-    {/* Eyebrows */}
-    <path d="M30 40 Q38 36, 46 40" stroke="#3d3d3d" strokeWidth="2" fill="none" />
-    <path d="M54 40 Q62 36, 70 40" stroke="#3d3d3d" strokeWidth="2" fill="none" />
+    {/* Eyelashes - top */}
+    <path d="M24 42 Q30 38, 36 40 Q42 38, 48 42" stroke="#2d2d2d" strokeWidth="2.5" fill="none" strokeLinecap="round" />
+    <path d="M52 42 Q58 38, 64 40 Q70 38, 76 42" stroke="#2d2d2d" strokeWidth="2.5" fill="none" strokeLinecap="round" />
+    
+    {/* Eyebrows - expressive anime style */}
+    <path d="M26 34 Q36 28, 46 34" stroke="#3d3d3d" strokeWidth="2.5" fill="none" strokeLinecap="round" />
+    <path d="M54 34 Q64 28, 74 34" stroke="#3d3d3d" strokeWidth="2.5" fill="none" strokeLinecap="round" />
   </g>
 );
 
-// Mouth and nose
-const renderFaceFeatures = () => (
+// Anime-style mouth and nose (minimal)
+const renderFaceFeatures = (skinTone: string) => (
   <g>
-    {/* Nose */}
-    <path d="M48 55 Q50 62, 52 55" stroke="#c9a07a" strokeWidth="1.5" fill="none" />
+    {/* Nose - very minimal anime style */}
+    <path d="M49 62 L50 66 L51 62" stroke="#c9a07a" strokeWidth="1" fill="none" opacity="0.6" />
     
-    {/* Mouth */}
-    <path d="M42 72 Q50 78, 58 72" stroke="#c97878" strokeWidth="2" fill="none" />
+    {/* Blush marks */}
+    <ellipse cx="28" cy="64" rx="6" ry="3" fill="#ffb7b7" opacity="0.4" />
+    <ellipse cx="72" cy="64" rx="6" ry="3" fill="#ffb7b7" opacity="0.4" />
+    
+    {/* Mouth - cute anime style */}
+    <path d="M44 74 Q50 80, 56 74" stroke="#e57373" strokeWidth="2.5" fill="none" strokeLinecap="round" />
   </g>
 );
 
@@ -249,7 +289,7 @@ export function VisualAvatar({
         {renderEyes(eyeColor, skinTone)}
         
         {/* Face features */}
-        {renderFaceFeatures()}
+        {renderFaceFeatures(skinTone)}
         
         {/* Hair */}
         {HairComponent(hairColor)}
