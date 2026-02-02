@@ -41,7 +41,9 @@ export interface Character {
   class: "warrior" | "mage" | "archer";
   created_at: string;
   updated_at: string;
-  // Customization fields
+  // Avatar ID for pixel art system
+  avatar_id: string;
+  // Legacy customization fields (kept for compatibility)
   hair_style: string;
   hair_color: string;
   eye_color: string;
