@@ -328,6 +328,39 @@ export type Database = {
           },
         ]
       }
+      daily_logins: {
+        Row: {
+          created_at: string
+          day_streak: number
+          gold_reward: number
+          id: string
+          login_date: string
+          reward_claimed: boolean
+          user_id: string
+          xp_reward: number
+        }
+        Insert: {
+          created_at?: string
+          day_streak?: number
+          gold_reward?: number
+          id?: string
+          login_date?: string
+          reward_claimed?: boolean
+          user_id: string
+          xp_reward?: number
+        }
+        Update: {
+          created_at?: string
+          day_streak?: number
+          gold_reward?: number
+          id?: string
+          login_date?: string
+          reward_claimed?: boolean
+          user_id?: string
+          xp_reward?: number
+        }
+        Relationships: []
+      }
       dungeon_participants: {
         Row: {
           damage_dealt: number

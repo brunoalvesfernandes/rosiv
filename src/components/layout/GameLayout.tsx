@@ -24,7 +24,7 @@ import {
   Volume2,
   VolumeX
 } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCharacter } from "@/hooks/useCharacter";
@@ -33,6 +33,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useMusicByRoute } from "@/hooks/useMusicByRoute";
 import { setBgmEnabled, isBgmEnabled, stopMusic, resumeMusic } from "@/utils/musicPlayer";
+import { DailyLoginReward } from "@/components/game/DailyLoginReward";
 
 interface NavItem {
   label: string;
@@ -259,6 +260,9 @@ export function GameLayout({ children }: GameLayoutProps) {
           {children}
         </main>
       </div>
+
+      {/* Daily Login Reward */}
+      <DailyLoginReward />
     </div>
   );
 }
