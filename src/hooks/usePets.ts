@@ -29,6 +29,9 @@ export interface PlayerPet {
   experience: number;
   acquired_at: string;
   last_ability_use: string | null;
+  hunger: number;
+  happiness: number;
+  last_fed: string | null;
   pet?: Pet;
 }
 
@@ -182,10 +185,10 @@ export function usePets() {
 export function getAbilityDescription(type: string, value: number): string {
   const descriptions: Record<string, string> = {
     invisibility: `Fica invisível por ${value} segundos`,
-    heal: `Cura ${value}% do HP a cada uso`,
+    heal: `Cura ${value}% do HP máximo na batalha`,
     strength_boost: `+${value}% de força em batalha`,
     collector: `Coleta ${value}% mais recursos`,
-    shield: `Absorve ${value}% do dano recebido`,
+    shield: `Cria escudo que absorve ${value}% do dano`,
     speed: `+${value}% de velocidade de ataque`,
   };
   return descriptions[type] || "Habilidade especial";
