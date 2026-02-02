@@ -13,7 +13,10 @@ import {
   X,
   Loader2,
   Store,
-  Package
+  Package,
+  Users,
+  Sparkles,
+  MessageCircle
 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -27,15 +30,15 @@ interface NavItem {
   icon: React.ElementType;
 }
 
-import { Users } from "lucide-react";
-
 const navItems: NavItem[] = [
   { label: "Dashboard", href: "/dashboard", icon: Shield },
   { label: "Personagem", href: "/character", icon: User },
+  { label: "Classes", href: "/classes", icon: Sparkles },
   { label: "Missões", href: "/missions", icon: Target },
   { label: "Treino", href: "/training", icon: Dumbbell },
   { label: "Arena", href: "/arena", icon: Swords },
   { label: "Guildas", href: "/guilds", icon: Users },
+  { label: "Guerras", href: "/guild-wars", icon: Swords },
   { label: "Loja", href: "/shop", icon: Store },
   { label: "Inventário", href: "/inventory", icon: Package },
   { label: "Ranking", href: "/ranking", icon: Trophy },

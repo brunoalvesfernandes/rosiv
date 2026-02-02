@@ -1,7 +1,8 @@
 import { GameLayout } from "@/components/layout/GameLayout";
 import { CharacterAvatar } from "@/components/game/CharacterAvatar";
-import { Trophy, Medal, Crown, TrendingUp, Loader2 } from "lucide-react";
-import { useRanking, useCharacter } from "@/hooks/useCharacter";
+import { Trophy, Medal, Crown, TrendingUp, Loader2, Shield } from "lucide-react";
+import { useRanking, useCharacter, RankedCharacter } from "@/hooks/useCharacter";
+import { Badge } from "@/components/ui/badge";
 
 const getRankIcon = (rank: number) => {
   switch (rank) {
@@ -38,7 +39,7 @@ export default function Ranking() {
   const myPosition = myRank !== undefined && myRank >= 0 ? myRank + 1 : null;
 
   // Calculate power for display
-  const calculatePower = (c: typeof ranking extends (infer T)[] ? T : never) => {
+  const calculatePower = (c: RankedCharacter) => {
     return (c.strength * 3 + c.defense * 2 + c.vitality * 2 + c.agility * 2 + c.luck) * c.level;
   };
 
@@ -119,7 +120,15 @@ export default function Ranking() {
                           {player.name}
                           {isMe && <span className="text-primary ml-2">(Você)</span>}
                         </p>
-                        <p className="text-sm text-muted-foreground">Nível {player.level}</p>
+                        <div className="flex items-center gap-2">
+                          <p className="text-sm text-muted-foreground">Nível {player.level}</p>
+                          {player.guild_name && (
+                            <Badge variant="outline" className="text-xs gap-1">
+                              <Shield className="w-3 h-3" />
+                              {player.guild_name}
+                            </Badge>
+                          )}
+                        </div>
                       </div>
                       <div className="text-right hidden sm:block">
                         <p className="font-bold text-gold">{player.arena_points.toLocaleString()}</p>

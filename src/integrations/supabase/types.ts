@@ -64,6 +64,7 @@ export type Database = {
           agility: number
           arena_points: number
           available_points: number
+          class: Database["public"]["Enums"]["character_class"] | null
           created_at: string
           current_energy: number
           current_hp: number
@@ -96,6 +97,7 @@ export type Database = {
           agility?: number
           arena_points?: number
           available_points?: number
+          class?: Database["public"]["Enums"]["character_class"] | null
           created_at?: string
           current_energy?: number
           current_hp?: number
@@ -128,6 +130,7 @@ export type Database = {
           agility?: number
           arena_points?: number
           available_points?: number
+          class?: Database["public"]["Enums"]["character_class"] | null
           created_at?: string
           current_energy?: number
           current_hp?: number
@@ -157,6 +160,41 @@ export type Database = {
           xp_to_next_level?: number
         }
         Relationships: []
+      }
+      chat_messages: {
+        Row: {
+          created_at: string
+          guild_id: string | null
+          id: string
+          is_global: boolean
+          message: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          guild_id?: string | null
+          id?: string
+          is_global?: boolean
+          message: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          guild_id?: string | null
+          id?: string
+          is_global?: boolean
+          message?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_messages_guild_id_fkey"
+            columns: ["guild_id"]
+            isOneToOne: false
+            referencedRelation: "guilds"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       guild_members: {
         Row: {
@@ -225,6 +263,70 @@ export type Database = {
           {
             foreignKeyName: "guild_requests_guild_id_fkey"
             columns: ["guild_id"]
+            isOneToOne: false
+            referencedRelation: "guilds"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      guild_wars: {
+        Row: {
+          attacker_guild_id: string
+          attacker_score: number
+          defender_guild_id: string
+          defender_score: number
+          ends_at: string
+          gold_reward: number
+          id: string
+          started_at: string
+          status: string
+          winner_guild_id: string | null
+          xp_reward: number
+        }
+        Insert: {
+          attacker_guild_id: string
+          attacker_score?: number
+          defender_guild_id: string
+          defender_score?: number
+          ends_at?: string
+          gold_reward?: number
+          id?: string
+          started_at?: string
+          status?: string
+          winner_guild_id?: string | null
+          xp_reward?: number
+        }
+        Update: {
+          attacker_guild_id?: string
+          attacker_score?: number
+          defender_guild_id?: string
+          defender_score?: number
+          ends_at?: string
+          gold_reward?: number
+          id?: string
+          started_at?: string
+          status?: string
+          winner_guild_id?: string | null
+          xp_reward?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "guild_wars_attacker_guild_id_fkey"
+            columns: ["attacker_guild_id"]
+            isOneToOne: false
+            referencedRelation: "guilds"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "guild_wars_defender_guild_id_fkey"
+            columns: ["defender_guild_id"]
+            isOneToOne: false
+            referencedRelation: "guilds"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "guild_wars_winner_guild_id_fkey"
+            columns: ["winner_guild_id"]
             isOneToOne: false
             referencedRelation: "guilds"
             referencedColumns: ["id"]
@@ -565,6 +667,47 @@ export type Database = {
         }
         Relationships: []
       }
+      war_battles: {
+        Row: {
+          attacker_damage: number
+          attacker_id: string
+          created_at: string
+          defender_damage: number
+          defender_id: string
+          id: string
+          war_id: string
+          winner_id: string | null
+        }
+        Insert: {
+          attacker_damage?: number
+          attacker_id: string
+          created_at?: string
+          defender_damage?: number
+          defender_id: string
+          id?: string
+          war_id: string
+          winner_id?: string | null
+        }
+        Update: {
+          attacker_damage?: number
+          attacker_id?: string
+          created_at?: string
+          defender_damage?: number
+          defender_id?: string
+          id?: string
+          war_id?: string
+          winner_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "war_battles_war_id_fkey"
+            columns: ["war_id"]
+            isOneToOne: false
+            referencedRelation: "guild_wars"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -583,6 +726,7 @@ export type Database = {
       }
     }
     Enums: {
+      character_class: "warrior" | "mage" | "archer"
       guild_role: "leader" | "officer" | "member"
     }
     CompositeTypes: {
@@ -711,6 +855,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      character_class: ["warrior", "mage", "archer"],
       guild_role: ["leader", "officer", "member"],
     },
   },

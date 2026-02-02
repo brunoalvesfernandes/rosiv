@@ -38,6 +38,7 @@ export interface Character {
   last_mana_regen: string;
   current_mana: number;
   max_mana: number;
+  class: "warrior" | "mage" | "archer";
   created_at: string;
   updated_at: string;
 }
@@ -218,6 +219,10 @@ export function useAddStatPoint() {
   });
 }
 
+export interface RankedCharacter extends Character {
+  guild_name?: string | null;
+}
+
 export function useRanking() {
   return useQuery({
     queryKey: ["ranking"],
@@ -229,7 +234,31 @@ export function useRanking() {
         .limit(50);
 
       if (error) throw error;
-      return data as Character[];
+
+      // Get guild info for each character
+      const charactersWithGuild = await Promise.all(
+        (data || []).map(async (char) => {
+          const { data: membership } = await supabase
+            .from("guild_members")
+            .select("guild_id")
+            .eq("user_id", char.user_id)
+            .single();
+
+          if (membership) {
+            const { data: guild } = await supabase
+              .from("guilds")
+              .select("name")
+              .eq("id", membership.guild_id)
+              .single();
+
+            return { ...char, guild_name: guild?.name || null } as RankedCharacter;
+          }
+
+          return { ...char, guild_name: null } as RankedCharacter;
+        })
+      );
+
+      return charactersWithGuild;
     },
   });
 }
