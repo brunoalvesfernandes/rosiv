@@ -100,6 +100,7 @@ export type Database = {
       }
       characters: {
         Row: {
+          accessory: string | null
           agility: number
           arena_points: number
           available_points: number
@@ -110,7 +111,11 @@ export type Database = {
           current_mana: number
           current_xp: number
           defense: number
+          eye_color: string
+          face_style: string
           gold: number
+          hair_color: string
+          hair_style: string
           id: string
           is_protected: boolean
           last_energy_regen: string
@@ -124,6 +129,7 @@ export type Database = {
           missions_completed: number
           name: string
           protection_until: string | null
+          skin_tone: string
           strength: number
           total_battles: number
           updated_at: string
@@ -133,6 +139,7 @@ export type Database = {
           xp_to_next_level: number
         }
         Insert: {
+          accessory?: string | null
           agility?: number
           arena_points?: number
           available_points?: number
@@ -143,7 +150,11 @@ export type Database = {
           current_mana?: number
           current_xp?: number
           defense?: number
+          eye_color?: string
+          face_style?: string
           gold?: number
+          hair_color?: string
+          hair_style?: string
           id?: string
           is_protected?: boolean
           last_energy_regen?: string
@@ -157,6 +168,7 @@ export type Database = {
           missions_completed?: number
           name: string
           protection_until?: string | null
+          skin_tone?: string
           strength?: number
           total_battles?: number
           updated_at?: string
@@ -166,6 +178,7 @@ export type Database = {
           xp_to_next_level?: number
         }
         Update: {
+          accessory?: string | null
           agility?: number
           arena_points?: number
           available_points?: number
@@ -176,7 +189,11 @@ export type Database = {
           current_mana?: number
           current_xp?: number
           defense?: number
+          eye_color?: string
+          face_style?: string
           gold?: number
+          hair_color?: string
+          hair_style?: string
           id?: string
           is_protected?: boolean
           last_energy_regen?: string
@@ -190,6 +207,7 @@ export type Database = {
           missions_completed?: number
           name?: string
           protection_until?: string | null
+          skin_tone?: string
           strength?: number
           total_battles?: number
           updated_at?: string
