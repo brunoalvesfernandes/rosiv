@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { 
   Swords, 
   User, 
@@ -10,10 +10,14 @@ import {
   Shield,
   Coins,
   Menu,
-  X
+  X,
+  Loader2
 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/contexts/AuthContext";
+import { useCharacter } from "@/hooks/useCharacter";
+import { toast } from "sonner";
 
 interface NavItem {
   label: string;
@@ -32,19 +36,32 @@ const navItems: NavItem[] = [
 
 interface GameLayoutProps {
   children: React.ReactNode;
-  playerName?: string;
-  playerLevel?: number;
-  playerGold?: number;
 }
 
-export function GameLayout({ 
-  children, 
-  playerName = "Guerreiro", 
-  playerLevel = 1,
-  playerGold = 0 
-}: GameLayoutProps) {
+export function GameLayout({ children }: GameLayoutProps) {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { signOut } = useAuth();
+  const { data: character, isLoading } = useCharacter();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const handleLogout = async () => {
+    await signOut();
+    toast.success("Até logo, guerreiro!");
+    navigate("/");
+  };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  const playerName = character?.name || "Guerreiro";
+  const playerLevel = character?.level || 1;
+  const playerGold = character?.gold || 0;
 
   return (
     <div className="min-h-screen bg-background">
@@ -76,7 +93,12 @@ export function GameLayout({
                 <p className="text-xs text-muted-foreground">Nível {playerLevel}</p>
               </div>
             </div>
-            <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-primary">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="text-muted-foreground hover:text-primary"
+              onClick={handleLogout}
+            >
               <LogOut className="w-5 h-5" />
             </Button>
           </div>
@@ -125,6 +147,13 @@ export function GameLayout({
                   {item.label}
                 </Link>
               ))}
+              <button
+                onClick={handleLogout}
+                className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:text-destructive hover:bg-secondary w-full"
+              >
+                <LogOut className="w-5 h-5" />
+                Sair
+              </button>
             </nav>
           </div>
         )}

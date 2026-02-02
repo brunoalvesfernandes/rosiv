@@ -9,87 +9,95 @@ import {
   Zap, 
   Sparkles,
   Clock,
-  CheckCircle
+  CheckCircle,
+  Loader2
 } from "lucide-react";
 import { useState } from "react";
-
-// Mock data
-const mockPlayer = {
-  name: "ShadowSlayer",
-  level: 15,
-  gold: 2450,
-  currentEnergy: 40,
-  maxEnergy: 50,
-  trainingSlots: 3,
-  usedSlots: 1,
-};
+import { useCharacter } from "@/hooks/useCharacter";
+import { useActiveTraining, useStartTraining, useCompleteTraining, TrainingSession } from "@/hooks/useTraining";
 
 const trainingOptions = [
   { 
-    id: "strength", 
+    id: "strength" as const, 
     label: "Força", 
     icon: Swords, 
     description: "Treino intenso de combate",
     energyCost: 10,
-    duration: 60, // minutes
-    statGain: { min: 1, max: 3 },
+    duration: 60,
   },
   { 
-    id: "defense", 
+    id: "defense" as const, 
     label: "Defesa", 
     icon: Shield, 
     description: "Exercícios de resistência",
     energyCost: 10,
     duration: 60,
-    statGain: { min: 1, max: 3 },
   },
   { 
-    id: "vitality", 
+    id: "vitality" as const, 
     label: "Vitalidade", 
     icon: Heart, 
     description: "Treino de resistência física",
     energyCost: 10,
     duration: 60,
-    statGain: { min: 1, max: 3 },
   },
   { 
-    id: "agility", 
+    id: "agility" as const, 
     label: "Agilidade", 
     icon: Zap, 
     description: "Exercícios de velocidade",
     energyCost: 10,
     duration: 60,
-    statGain: { min: 1, max: 3 },
   },
   { 
-    id: "luck", 
+    id: "luck" as const, 
     label: "Sorte", 
     icon: Sparkles, 
     description: "Meditação e foco mental",
     energyCost: 10,
     duration: 60,
-    statGain: { min: 1, max: 2 },
   },
 ];
 
-const activeTraining = {
-  id: "strength",
-  label: "Força",
-  startTime: new Date(Date.now() - 30 * 60 * 1000), // 30 min ago
-  endTime: new Date(Date.now() + 30 * 60 * 1000), // 30 min from now
-  progress: 50,
+const statIcons: Record<string, React.ElementType> = {
+  strength: Swords,
+  defense: Shield,
+  vitality: Heart,
+  agility: Zap,
+  luck: Sparkles,
 };
 
 export default function Training() {
   const [selectedTraining, setSelectedTraining] = useState<string | null>(null);
-  const remainingSlots = mockPlayer.trainingSlots - mockPlayer.usedSlots;
+  
+  const { data: character, isLoading: charLoading } = useCharacter();
+  const { data: activeTrainings, isLoading: trainingsLoading } = useActiveTraining();
+  const startTraining = useStartTraining();
+  const completeTraining = useCompleteTraining();
+
+  if (charLoading || !character) {
+    return (
+      <GameLayout>
+        <div className="flex items-center justify-center min-h-[50vh]">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+      </GameLayout>
+    );
+  }
+
+  const maxSlots = 3;
+  const usedSlots = activeTrainings?.length || 0;
+  const remainingSlots = maxSlots - usedSlots;
+
+  const handleStartTraining = () => {
+    if (selectedTraining) {
+      startTraining.mutate({ statType: selectedTraining as any, durationMinutes: 60 });
+      setSelectedTraining(null);
+    }
+  };
 
   return (
-    <GameLayout 
-      playerName={mockPlayer.name} 
-      playerLevel={mockPlayer.level}
-      playerGold={mockPlayer.gold}
-    >
+    <GameLayout>
       <div className="space-y-6 animate-fade-in">
         {/* Header */}
         <div>
@@ -107,8 +115,8 @@ export default function Training() {
           <div className="bg-card border border-border rounded-xl p-4">
             <ProgressBar 
               variant="energy" 
-              value={mockPlayer.currentEnergy} 
-              max={mockPlayer.maxEnergy}
+              value={character.current_energy} 
+              max={character.max_energy}
               label="Energia Disponível"
             />
           </div>
@@ -116,15 +124,15 @@ export default function Training() {
             <div className="flex justify-between text-sm mb-1">
               <span className="text-muted-foreground font-medium">Slots de Treino</span>
               <span className="text-foreground font-bold">
-                {remainingSlots} / {mockPlayer.trainingSlots} disponíveis
+                {remainingSlots} / {maxSlots} disponíveis
               </span>
             </div>
             <div className="flex gap-2">
-              {Array.from({ length: mockPlayer.trainingSlots }).map((_, i) => (
+              {Array.from({ length: maxSlots }).map((_, i) => (
                 <div 
                   key={i}
                   className={`h-4 flex-1 rounded-full ${
-                    i < mockPlayer.usedSlots 
+                    i < usedSlots 
                       ? "bg-primary shadow-[0_0_10px_hsl(var(--primary)/0.5)]" 
                       : "bg-muted"
                   }`}
@@ -134,35 +142,57 @@ export default function Training() {
           </div>
         </div>
 
-        {/* Active Training */}
-        {activeTraining && (
-          <div className="bg-card border border-primary/30 rounded-xl p-6 shadow-[0_0_20px_hsl(var(--primary)/0.1)]">
-            <div className="flex items-center gap-2 mb-4">
+        {/* Active Trainings */}
+        {!trainingsLoading && activeTrainings && activeTrainings.length > 0 && (
+          <div className="space-y-4">
+            <h2 className="font-display text-lg font-bold flex items-center gap-2">
               <Clock className="w-5 h-5 text-primary animate-pulse" />
-              <h2 className="font-display text-lg font-bold">Treino em Andamento</h2>
-            </div>
-            <div className="flex items-center gap-4">
-              <div className="p-3 rounded-lg bg-secondary">
-                <Swords className="w-6 h-6 text-primary" />
-              </div>
-              <div className="flex-1">
-                <p className="font-medium">{activeTraining.label}</p>
-                <ProgressBar 
-                  variant="xp"
-                  value={activeTraining.progress}
-                  max={100}
-                  size="sm"
-                  showLabel={false}
-                />
-                <p className="text-xs text-muted-foreground mt-1">
-                  Tempo restante: 30 minutos
-                </p>
-              </div>
-              <Button variant="secondary" size="sm" className="gap-2">
-                <CheckCircle className="w-4 h-4" />
-                Acelerar
-              </Button>
-            </div>
+              Treinos em Andamento
+            </h2>
+            {activeTrainings.map((training) => {
+              const Icon = statIcons[training.stat_type] || Dumbbell;
+              const isComplete = new Date(training.completes_at) <= new Date();
+              const timeRemaining = Math.max(0, Math.ceil((new Date(training.completes_at).getTime() - Date.now()) / 60000));
+              const totalTime = Math.ceil((new Date(training.completes_at).getTime() - new Date(training.started_at).getTime()) / 60000);
+              const progress = isComplete ? 100 : Math.floor(((totalTime - timeRemaining) / totalTime) * 100);
+
+              return (
+                <div 
+                  key={training.id}
+                  className="bg-card border border-primary/30 rounded-xl p-4 shadow-[0_0_20px_hsl(var(--primary)/0.1)]"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="p-3 rounded-lg bg-secondary">
+                      <Icon className="w-6 h-6 text-primary" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-medium capitalize">{training.stat_type}</p>
+                      <ProgressBar 
+                        variant="xp"
+                        value={progress}
+                        max={100}
+                        size="sm"
+                        showLabel={false}
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {isComplete ? "Pronto para coletar!" : `${timeRemaining} minutos restantes`}
+                      </p>
+                    </div>
+                    {isComplete && (
+                      <Button 
+                        size="sm" 
+                        className="gap-2"
+                        onClick={() => completeTraining.mutate(training)}
+                        disabled={completeTraining.isPending}
+                      >
+                        <CheckCircle className="w-4 h-4" />
+                        Coletar +{training.stat_gain}
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         )}
 
@@ -173,7 +203,7 @@ export default function Training() {
             {trainingOptions.map((training) => {
               const Icon = training.icon;
               const isSelected = selectedTraining === training.id;
-              const hasEnergy = mockPlayer.currentEnergy >= training.energyCost;
+              const hasEnergy = character.current_energy >= training.energyCost;
               const hasSlots = remainingSlots > 0;
               const canTrain = hasEnergy && hasSlots;
 
@@ -184,7 +214,7 @@ export default function Training() {
                     isSelected 
                       ? "border-primary bg-primary/5 shadow-[0_0_15px_hsl(var(--primary)/0.2)]" 
                       : "border-border bg-card hover:border-primary/50"
-                  } ${!canTrain && "opacity-60"}`}
+                  } ${!canTrain && "opacity-60 cursor-not-allowed"}`}
                   onClick={() => canTrain && setSelectedTraining(training.id)}
                 >
                   <div className="flex items-start gap-3">
@@ -212,9 +242,7 @@ export default function Training() {
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">Ganho:</span>
-                      <span className="text-success">
-                        +{training.statGain.min}-{training.statGain.max}
-                      </span>
+                      <span className="text-success">+1-2</span>
                     </div>
                   </div>
                 </div>
@@ -226,9 +254,14 @@ export default function Training() {
         {/* Start Training Button */}
         {selectedTraining && (
           <div className="flex justify-center">
-            <Button size="lg" className="gap-2 px-8">
+            <Button 
+              size="lg" 
+              className="gap-2 px-8"
+              onClick={handleStartTraining}
+              disabled={startTraining.isPending}
+            >
               <Dumbbell className="w-5 h-5" />
-              Iniciar Treino de {trainingOptions.find(t => t.id === selectedTraining)?.label}
+              {startTraining.isPending ? "Iniciando..." : `Iniciar Treino de ${trainingOptions.find(t => t.id === selectedTraining)?.label}`}
             </Button>
           </div>
         )}

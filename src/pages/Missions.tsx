@@ -1,15 +1,10 @@
 import { GameLayout } from "@/components/layout/GameLayout";
 import { MissionCard } from "@/components/game/MissionCard";
 import { Button } from "@/components/ui/button";
-import { Target, Clock, Star, Trophy } from "lucide-react";
+import { Target, Clock, Star, Trophy, Loader2, CheckCircle } from "lucide-react";
 import { useState } from "react";
-
-// Mock data
-const mockPlayer = {
-  name: "ShadowSlayer",
-  level: 15,
-  gold: 2450,
-};
+import { useMissions, usePlayerMissions, useStartMission, useCompleteMission, Mission, PlayerMission } from "@/hooks/useMissions";
+import { useCharacter } from "@/hooks/useCharacter";
 
 type MissionCategory = "all" | "story" | "daily" | "grind" | "boss";
 
@@ -21,103 +16,33 @@ const categories = [
   { id: "boss" as const, label: "Boss", icon: Trophy },
 ];
 
-const mockMissions = [
-  {
-    id: 1,
-    title: "Floresta Sombria",
-    description: "Derrote 5 lobos na floresta sombria e traga suas presas como prova.",
-    difficulty: "easy" as const,
-    xpReward: 150,
-    goldReward: 50,
-    duration: 5,
-    category: "grind",
-    isActive: true,
-  },
-  {
-    id: 2,
-    title: "O Guardião da Caverna",
-    description: "Entre na caverna e derrote o Golem de Pedra que guarda o tesouro antigo.",
-    difficulty: "medium" as const,
-    xpReward: 350,
-    goldReward: 120,
-    duration: 15,
-    category: "story",
-  },
-  {
-    id: 3,
-    title: "Coleta Diária de Recursos",
-    description: "Colete 20 unidades de recursos espalhados pelo mundo.",
-    difficulty: "easy" as const,
-    xpReward: 100,
-    goldReward: 40,
-    duration: 10,
-    category: "daily",
-  },
-  {
-    id: 4,
-    title: "O Dragão Ancião",
-    description: "Desafie o Dragão Ancião em seu covil e prove seu valor como guerreiro lendário.",
-    difficulty: "boss" as const,
-    xpReward: 2000,
-    goldReward: 500,
-    duration: 60,
-    category: "boss",
-  },
-  {
-    id: 5,
-    title: "Proteção da Vila",
-    description: "Defenda a vila de uma horda de goblins que atacam ao anoitecer.",
-    difficulty: "medium" as const,
-    xpReward: 400,
-    goldReward: 150,
-    duration: 20,
-    category: "story",
-  },
-  {
-    id: 6,
-    title: "Caça aos Bandidos",
-    description: "Elimine 10 bandidos que aterrorizam os viajantes na estrada principal.",
-    difficulty: "easy" as const,
-    xpReward: 180,
-    goldReward: 70,
-    duration: 8,
-    category: "grind",
-  },
-  {
-    id: 7,
-    title: "Arena Diária",
-    description: "Participe de uma batalha na arena e ganhe recompensas independente do resultado.",
-    difficulty: "medium" as const,
-    xpReward: 200,
-    goldReward: 80,
-    duration: 5,
-    category: "daily",
-  },
-  {
-    id: 8,
-    title: "O Necromante",
-    description: "Encontre e derrote o Necromante que está ressuscitando mortos na cripta abandonada.",
-    difficulty: "hard" as const,
-    xpReward: 800,
-    goldReward: 300,
-    duration: 30,
-    category: "boss",
-  },
-];
-
 export default function Missions() {
   const [activeCategory, setActiveCategory] = useState<MissionCategory>("all");
+  
+  const { data: missions, isLoading: missionsLoading } = useMissions();
+  const { data: playerMissions } = usePlayerMissions();
+  const { data: character } = useCharacter();
+  const startMission = useStartMission();
+  const completeMission = useCompleteMission();
 
-  const filteredMissions = mockMissions.filter(
-    (mission) => activeCategory === "all" || mission.category === activeCategory
+  const activeMissionIds = new Set(
+    playerMissions?.filter(pm => pm.status === "active").map(pm => pm.mission_id) || []
   );
 
+  const getPlayerMission = (missionId: string): (PlayerMission & { mission: Mission }) | undefined => {
+    return playerMissions?.find(pm => pm.mission_id === missionId && pm.status === "active");
+  };
+
+  const filteredMissions = missions?.filter(
+    (mission) => {
+      const categoryMatch = activeCategory === "all" || mission.category === activeCategory;
+      const levelMatch = (character?.level || 1) >= mission.min_level;
+      return categoryMatch && levelMatch;
+    }
+  ) || [];
+
   return (
-    <GameLayout 
-      playerName={mockPlayer.name} 
-      playerLevel={mockPlayer.level}
-      playerGold={mockPlayer.gold}
-    >
+    <GameLayout>
       <div className="space-y-6 animate-fade-in">
         {/* Header */}
         <div>
@@ -149,22 +74,56 @@ export default function Missions() {
           })}
         </div>
 
-        {/* Missions Grid */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {filteredMissions.map((mission) => (
-            <MissionCard
-              key={mission.id}
-              {...mission}
-              onAccept={() => console.log("Accept mission", mission.id)}
-            />
-          ))}
-        </div>
+        {/* Loading */}
+        {missionsLoading && (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          </div>
+        )}
 
-        {filteredMissions.length === 0 && (
+        {/* Missions Grid */}
+        {!missionsLoading && (
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {filteredMissions.map((mission) => {
+              const isActive = activeMissionIds.has(mission.id);
+              const playerMission = getPlayerMission(mission.id);
+              const isComplete = playerMission && new Date(playerMission.completes_at) <= new Date();
+
+              return (
+                <div key={mission.id} className="relative">
+                  <MissionCard
+                    title={mission.title}
+                    description={mission.description}
+                    difficulty={mission.difficulty as "easy" | "medium" | "hard" | "boss"}
+                    xpReward={mission.xp_reward}
+                    goldReward={mission.gold_reward}
+                    duration={mission.duration_minutes}
+                    isActive={isActive && !isComplete}
+                    onAccept={() => startMission.mutate(mission)}
+                  />
+                  {isActive && isComplete && playerMission && (
+                    <div className="absolute inset-0 bg-card/90 rounded-lg flex items-center justify-center">
+                      <Button 
+                        onClick={() => completeMission.mutate(playerMission)}
+                        disabled={completeMission.isPending}
+                        className="gap-2"
+                      >
+                        <CheckCircle className="w-4 h-4" />
+                        Coletar Recompensa
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {!missionsLoading && filteredMissions.length === 0 && (
           <div className="text-center py-12">
             <Target className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
             <p className="text-muted-foreground">
-              Nenhuma missão encontrada nesta categoria
+              Nenhuma missão disponível para seu nível nesta categoria
             </p>
           </div>
         )}

@@ -8,72 +8,59 @@ import {
   Heart, 
   Zap, 
   Sparkles,
-  Plus
+  Plus,
+  Loader2
 } from "lucide-react";
-
-// Mock data
-const mockPlayer = {
-  name: "ShadowSlayer",
-  level: 15,
-  gold: 2450,
-  currentHp: 85,
-  maxHp: 100,
-  currentEnergy: 40,
-  maxEnergy: 50,
-  currentXp: 7500,
-  xpToNextLevel: 10000,
-  availablePoints: 5,
-  stats: {
-    strength: 25,
-    defense: 18,
-    vitality: 20,
-    agility: 15,
-    luck: 10,
-  },
-  totalBattles: 142,
-  wins: 98,
-  missionsCompleted: 67,
-};
+import { useCharacter, useAddStatPoint } from "@/hooks/useCharacter";
 
 const statConfig = [
-  { key: "strength", label: "Força", icon: Swords, description: "Aumenta o dano de ataque" },
-  { key: "defense", label: "Defesa", icon: Shield, description: "Reduz o dano recebido" },
-  { key: "vitality", label: "Vitalidade", icon: Heart, description: "Aumenta a vida máxima" },
-  { key: "agility", label: "Agilidade", icon: Zap, description: "Aumenta chance de esquiva" },
-  { key: "luck", label: "Sorte", icon: Sparkles, description: "Aumenta chance de crítico" },
+  { key: "strength" as const, label: "Força", icon: Swords, description: "Aumenta o dano de ataque" },
+  { key: "defense" as const, label: "Defesa", icon: Shield, description: "Reduz o dano recebido" },
+  { key: "vitality" as const, label: "Vitalidade", icon: Heart, description: "Aumenta a vida máxima" },
+  { key: "agility" as const, label: "Agilidade", icon: Zap, description: "Aumenta chance de esquiva" },
+  { key: "luck" as const, label: "Sorte", icon: Sparkles, description: "Aumenta chance de crítico" },
 ];
 
 export default function Character() {
+  const { data: character, isLoading } = useCharacter();
+  const addStatPoint = useAddStatPoint();
+
+  if (isLoading || !character) {
+    return (
+      <GameLayout>
+        <div className="flex items-center justify-center min-h-[50vh]">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+      </GameLayout>
+    );
+  }
+
   return (
-    <GameLayout 
-      playerName={mockPlayer.name} 
-      playerLevel={mockPlayer.level}
-      playerGold={mockPlayer.gold}
-    >
+    <GameLayout>
       <div className="space-y-6 animate-fade-in">
         {/* Character Header */}
         <div className="bg-card border border-border rounded-xl p-6">
           <div className="flex flex-col md:flex-row items-center gap-6">
             <CharacterAvatar 
-              name={mockPlayer.name} 
-              level={mockPlayer.level} 
+              name={character.name} 
+              level={character.level} 
               size="lg"
             />
             <div className="text-center md:text-left flex-1">
-              <h1 className="font-display text-3xl font-bold">{mockPlayer.name}</h1>
-              <p className="text-muted-foreground">Guerreiro • Nível {mockPlayer.level}</p>
+              <h1 className="font-display text-3xl font-bold">{character.name}</h1>
+              <p className="text-muted-foreground">Guerreiro • Nível {character.level}</p>
               
               <div className="grid grid-cols-3 gap-4 mt-4 text-center">
                 <div>
-                  <p className="text-2xl font-bold text-primary">{mockPlayer.totalBattles}</p>
+                  <p className="text-2xl font-bold text-primary">{character.total_battles}</p>
                   <p className="text-xs text-muted-foreground">Batalhas</p>
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-success">{mockPlayer.wins}</p>
+                  <p className="text-2xl font-bold text-success">{character.wins}</p>
                   <p className="text-xs text-muted-foreground">Vitórias</p>
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-gold">{mockPlayer.missionsCompleted}</p>
+                  <p className="text-2xl font-bold text-gold">{character.missions_completed}</p>
                   <p className="text-xs text-muted-foreground">Missões</p>
                 </div>
               </div>
@@ -86,34 +73,34 @@ export default function Character() {
           <div className="bg-card border border-border rounded-xl p-4">
             <ProgressBar 
               variant="health" 
-              value={mockPlayer.currentHp} 
-              max={mockPlayer.maxHp}
+              value={character.current_hp} 
+              max={character.max_hp}
               label="Vida"
             />
           </div>
           <div className="bg-card border border-border rounded-xl p-4">
             <ProgressBar 
               variant="energy" 
-              value={mockPlayer.currentEnergy} 
-              max={mockPlayer.maxEnergy}
+              value={character.current_energy} 
+              max={character.max_energy}
               label="Energia"
             />
           </div>
           <div className="bg-card border border-border rounded-xl p-4">
             <ProgressBar 
               variant="xp" 
-              value={mockPlayer.currentXp} 
-              max={mockPlayer.xpToNextLevel}
+              value={character.current_xp} 
+              max={character.xp_to_next_level}
               label="Experiência"
             />
           </div>
         </div>
 
         {/* Available Points Banner */}
-        {mockPlayer.availablePoints > 0 && (
+        {character.available_points > 0 && (
           <div className="bg-gradient-primary rounded-xl p-4 text-center">
             <p className="text-primary-foreground font-medium">
-              Você tem <span className="font-bold text-xl">{mockPlayer.availablePoints}</span> pontos de atributo disponíveis!
+              Você tem <span className="font-bold text-xl">{character.available_points}</span> pontos de atributo disponíveis!
             </p>
           </div>
         )}
@@ -124,7 +111,7 @@ export default function Character() {
           <div className="space-y-4">
             {statConfig.map((stat) => {
               const Icon = stat.icon;
-              const value = mockPlayer.stats[stat.key as keyof typeof mockPlayer.stats];
+              const value = character[stat.key];
               
               return (
                 <div 
@@ -141,11 +128,13 @@ export default function Character() {
                     </div>
                     <p className="text-xs text-muted-foreground">{stat.description}</p>
                   </div>
-                  {mockPlayer.availablePoints > 0 && (
+                  {character.available_points > 0 && (
                     <Button 
                       size="icon" 
                       variant="outline"
                       className="shrink-0 border-primary/30 hover:border-primary hover:bg-primary/10"
+                      onClick={() => addStatPoint.mutate(stat.key)}
+                      disabled={addStatPoint.isPending}
                     >
                       <Plus className="w-4 h-4" />
                     </Button>
