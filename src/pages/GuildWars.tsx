@@ -12,7 +12,7 @@ import { useMyGuild, useGuilds, useGuildMembers } from "@/hooks/useGuilds";
 import { useActiveWars, useMyGuildWar, useWarBattles, useDeclareWar, useWarAttack, GuildWar } from "@/hooks/useGuildWars";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { playGuildWarBgm, stopBgm } from "@/utils/gameAudio";
+
 
 export default function GuildWars() {
   const { user } = useAuth();
@@ -37,11 +37,6 @@ export default function GuildWars() {
 
   const [declareDialogOpen, setDeclareDialogOpen] = useState(false);
 
-  // Play guild war background music
-  useEffect(() => {
-    playGuildWarBgm();
-    return () => stopBgm();
-  }, []);
 
   // Filter guilds that can be attacked
   const availableTargets = allGuilds?.filter(

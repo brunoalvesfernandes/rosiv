@@ -35,7 +35,7 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 import { useCharacter } from "@/hooks/useCharacter";
 import { cn } from "@/lib/utils";
-import { playDungeonBgm, stopBgm } from "@/utils/gameAudio";
+
 
 function DungeonCard({
   dungeon,
@@ -269,11 +269,6 @@ export default function Dungeons() {
 
   const [creatingDungeonId, setCreatingDungeonId] = useState<string | null>(null);
 
-  // Play dungeon background music
-  useEffect(() => {
-    playDungeonBgm();
-    return () => stopBgm();
-  }, []);
 
   const handleCreateRun = async (dungeon: Dungeon) => {
     setCreatingDungeonId(dungeon.id);
