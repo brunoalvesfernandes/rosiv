@@ -4,11 +4,13 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Send, MessageCircle, Users, Globe, Loader2, X, Minimize2, Clock, Maximize2 } from "lucide-react";
+import { Send, MessageCircle, Users, Globe, Loader2, X, Minimize2, Clock, Maximize2, Mail } from "lucide-react";
 import { useGlobalChat, useGuildChat, ChatMessage } from "@/hooks/useChat";
 import { useMyGuild } from "@/hooks/useGuilds";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCharacter } from "@/hooks/useCharacter";
+import { useConversations } from "@/hooks/usePrivateMessages";
+import { usePlayerPresence } from "@/hooks/usePlayerPresence";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
@@ -16,6 +18,10 @@ import { AvatarFace } from "./AvatarFace";
 import { EmotePicker, parseEmotes } from "./chat/GameEmotes";
 import { LevelBadge } from "./chat/LevelBadge";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { MentionAutocomplete } from "./chat/MentionAutocomplete";
+import { PrivateMessagePanel } from "./chat/PrivateMessagePanel";
+
+const MESSAGE_MAX_LENGTH = 500;
 
 interface ChatMessagesProps {
   messages: ChatMessage[];
@@ -114,7 +120,7 @@ function ChatMessages({ messages, isLoading, currentUserId }: ChatMessagesProps)
                   )}
                 </div>
                 
-                <div className={cn("flex flex-col max-w-[80%]", isMe ? "items-end" : "items-start")}>
+                <div className={cn("flex flex-col min-w-0 max-w-[75%]", isMe ? "items-end" : "items-start")}>
                   {/* Name and level */}
                   <div className={cn(
                     "flex items-center gap-1 mb-0.5 px-1",
@@ -123,22 +129,22 @@ function ChatMessages({ messages, isLoading, currentUserId }: ChatMessagesProps)
                     {roleStyles.icon && (
                       <span className="text-xs">{roleStyles.icon}</span>
                     )}
-                    <span className={cn("text-xs font-semibold", roleStyles.color)}>
+                    <span className={cn("text-xs font-semibold truncate max-w-[120px]", roleStyles.color)}>
                       {msg.sender_name}
                     </span>
                     {msg.level && <LevelBadge level={msg.level} />}
                   </div>
                   
-                  {/* Message bubble */}
+                  {/* Message bubble - FIXED OVERFLOW */}
                   <div
                     className={cn(
-                      "rounded-2xl px-3 py-2 shadow-sm",
+                      "rounded-2xl px-3 py-2 shadow-sm overflow-hidden",
                       isMe
                         ? "bg-primary text-primary-foreground rounded-tr-sm"
                         : "bg-muted rounded-tl-sm"
                     )}
                   >
-                    <p className="text-sm break-words whitespace-pre-wrap leading-relaxed">
+                    <p className="text-sm break-words whitespace-pre-wrap leading-relaxed overflow-hidden" style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}>
                       {parseEmotes(msg.message)}
                     </p>
                   </div>
@@ -169,45 +175,83 @@ interface ChatInputProps {
 
 function ChatInput({ onSend, isPending, placeholder, cooldown = 0 }: ChatInputProps) {
   const [message, setMessage] = useState("");
+  const [showMention, setShowMention] = useState(false);
+  const [cursorPosition, setCursorPosition] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const handleSend = () => {
     if (!message.trim()) return;
-    onSend(message.trim());
+    // Truncate to max length before sending
+    const trimmedMessage = message.trim().slice(0, MESSAGE_MAX_LENGTH);
+    onSend(trimmedMessage);
     setMessage("");
     inputRef.current?.focus();
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && !e.shiftKey) {
+    if (e.key === "Enter" && !e.shiftKey && !showMention) {
       e.preventDefault();
       handleSend();
     }
   };
 
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Limit input length
+    const value = e.target.value.slice(0, MESSAGE_MAX_LENGTH);
+    setMessage(value);
+    setCursorPosition(e.target.selectionStart || 0);
+  };
+
+  const handleMentionSelect = (playerName: string, startIndex: number, endIndex: number) => {
+    const before = message.slice(0, startIndex);
+    const after = message.slice(endIndex);
+    const newValue = `${before}@${playerName} ${after}`.slice(0, MESSAGE_MAX_LENGTH);
+    setMessage(newValue);
+    setShowMention(false);
+    
+    setTimeout(() => {
+      if (inputRef.current) {
+        const newPosition = Math.min(startIndex + playerName.length + 2, newValue.length);
+        inputRef.current.setSelectionRange(newPosition, newPosition);
+        inputRef.current.focus();
+      }
+    }, 0);
+  };
+
   const handleEmoteSelect = (emote: string) => {
-    setMessage((prev) => prev + emote);
+    if (message.length + emote.length <= MESSAGE_MAX_LENGTH) {
+      setMessage((prev) => prev + emote);
+    }
     inputRef.current?.focus();
   };
 
   const isDisabled = isPending || cooldown > 0;
 
   return (
-    <div className="flex gap-2 p-3 border-t border-border bg-muted/30">
+    <div className="flex gap-2 p-3 border-t border-border bg-muted/30 relative">
+      <MentionAutocomplete
+        inputValue={message}
+        cursorPosition={cursorPosition}
+        onSelect={handleMentionSelect}
+        inputRef={inputRef}
+        isVisible={showMention}
+        onVisibilityChange={setShowMention}
+      />
       <EmotePicker onEmoteSelect={handleEmoteSelect} />
       <div className="flex-1 relative">
         <Input
           ref={inputRef}
           value={message}
-          onChange={(e) => setMessage(e.target.value)}
+          onChange={handleInputChange}
           onKeyPress={handleKeyPress}
+          onSelect={(e) => setCursorPosition((e.target as HTMLInputElement).selectionStart || 0)}
           placeholder={cooldown > 0 ? `Aguarde ${cooldown}s...` : placeholder || "Digite sua mensagem..."}
-          maxLength={200}
+          maxLength={MESSAGE_MAX_LENGTH}
           disabled={isDisabled}
-          className="text-sm pr-12 bg-background/50"
+          className="text-sm pr-14 bg-background/50"
         />
         <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground">
-          {message.length}/200
+          {message.length}/{MESSAGE_MAX_LENGTH}
         </span>
       </div>
       <Button
@@ -237,11 +281,15 @@ export function FloatingChat() {
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [activeTab, setActiveTab] = useState("global");
   const { user } = useAuth();
   const location = useLocation();
   const { data: myGuildData } = useMyGuild();
   const { data: character } = useCharacter();
   const myGuild = myGuildData?.guilds as { id: string; name: string } | undefined;
+
+  // Track player presence
+  usePlayerPresence(character?.name);
 
   const {
     messages: globalMessages,
@@ -249,14 +297,16 @@ export function FloatingChat() {
     sendMessage: sendGlobalMessage,
     unreadCount: globalUnread,
     cooldownRemaining,
-  } = useGlobalChat(isOpen, character?.name);
+  } = useGlobalChat(isOpen && activeTab === "global", character?.name);
 
   const {
     messages: guildMessages,
     isLoading: guildLoading,
     sendMessage: sendGuildMessage,
     unreadCount: guildUnread,
-  } = useGuildChat(myGuild?.id, isOpen, character?.name);
+  } = useGuildChat(myGuild?.id, isOpen && activeTab === "guild", character?.name);
+
+  const { unreadTotal: privateUnread } = useConversations();
 
   // Hide chat on public pages
   const publicPaths = ["/", "/login", "/register"];
@@ -266,7 +316,7 @@ export function FloatingChat() {
     return null;
   }
 
-  const totalUnread = globalUnread + guildUnread;
+  const totalUnread = globalUnread + guildUnread + privateUnread;
 
   // Floating button when closed
   if (!isOpen) {
@@ -305,7 +355,7 @@ export function FloatingChat() {
       animate={{ opacity: 1, scale: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.9, y: 20 }}
       className={cn(
-        "fixed bottom-20 right-4 z-50 bg-card/95 backdrop-blur-md border border-border rounded-2xl shadow-2xl transition-all duration-300",
+        "fixed bottom-20 right-4 z-50 bg-card/95 backdrop-blur-md border border-border rounded-2xl shadow-2xl transition-all duration-300 overflow-hidden",
         chatWidth,
         chatHeight
       )}
@@ -361,9 +411,9 @@ export function FloatingChat() {
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
-            className="flex flex-col h-[calc(100%-3rem)]"
+            className="flex flex-col h-[calc(100%-3rem)] overflow-hidden"
           >
-            <Tabs defaultValue="global" className="flex flex-col h-full">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-col h-full overflow-hidden">
               <TabsList className="w-full rounded-none border-b border-border bg-transparent p-0 h-10 shrink-0">
                 <TabsTrigger
                   value="global"
@@ -390,7 +440,7 @@ export function FloatingChat() {
                   disabled={!myGuild}
                 >
                   <Users className="w-3.5 h-3.5" />
-                  {myGuild?.name ? myGuild.name.slice(0, 10) : "Guilda"}
+                  <span className="truncate max-w-[60px]">{myGuild?.name || "Guilda"}</span>
                   <AnimatePresence>
                     {guildUnread > 0 && (
                       <motion.span
@@ -400,6 +450,25 @@ export function FloatingChat() {
                         className="ml-1 min-w-4 h-4 flex items-center justify-center bg-destructive text-destructive-foreground text-[10px] font-bold rounded-full px-1"
                       >
                         {guildUnread > 99 ? "99+" : guildUnread}
+                      </motion.span>
+                    )}
+                  </AnimatePresence>
+                </TabsTrigger>
+                <TabsTrigger
+                  value="private"
+                  className="flex-1 rounded-none data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-primary gap-1.5 text-xs relative h-full"
+                >
+                  <Mail className="w-3.5 h-3.5" />
+                  Privado
+                  <AnimatePresence>
+                    {privateUnread > 0 && (
+                      <motion.span
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        exit={{ scale: 0 }}
+                        className="ml-1 min-w-4 h-4 flex items-center justify-center bg-destructive text-destructive-foreground text-[10px] font-bold rounded-full px-1"
+                      >
+                        {privateUnread > 99 ? "99+" : privateUnread}
                       </motion.span>
                     )}
                   </AnimatePresence>
@@ -441,6 +510,10 @@ export function FloatingChat() {
                     <p className="text-xs text-center">Entre em uma guilda para conversar com seus companheiros</p>
                   </div>
                 )}
+              </TabsContent>
+
+              <TabsContent value="private" className="flex-1 flex flex-col m-0 overflow-hidden">
+                <PrivateMessagePanel onClose={() => setActiveTab("global")} />
               </TabsContent>
             </Tabs>
           </motion.div>

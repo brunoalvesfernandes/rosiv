@@ -36,6 +36,7 @@ export interface ChatMessage {
 }
 
 const GLOBAL_CHAT_COOLDOWN_MS = 20000; // 20 seconds
+const MESSAGE_MAX_LENGTH = 500;
 
 export function useGlobalChat(isChatOpen: boolean = false, myCharacterName?: string) {
   const { user } = useAuth();
@@ -182,6 +183,10 @@ export function useGlobalChat(isChatOpen: boolean = false, myCharacterName?: str
     mutationFn: async (message: string) => {
       if (!user) throw new Error("Não autenticado");
 
+      // Validate and truncate message
+      const trimmedMessage = message.trim().slice(0, MESSAGE_MAX_LENGTH);
+      if (!trimmedMessage) throw new Error("Mensagem vazia");
+
       // Check cooldown
       const now = Date.now();
       const timeSinceLastMessage = now - lastMessageTime;
@@ -192,7 +197,7 @@ export function useGlobalChat(isChatOpen: boolean = false, myCharacterName?: str
 
       const { error } = await supabase.from("chat_messages").insert({
         user_id: user.id,
-        message,
+        message: trimmedMessage,
         is_global: true,
       });
 
@@ -374,10 +379,14 @@ export function useGuildChat(guildId: string | undefined, isChatOpen: boolean = 
     mutationFn: async (message: string) => {
       if (!user || !guildId) throw new Error("Não autenticado ou sem guilda");
 
+      // Validate and truncate message
+      const trimmedMessage = message.trim().slice(0, MESSAGE_MAX_LENGTH);
+      if (!trimmedMessage) throw new Error("Mensagem vazia");
+
       const { error } = await supabase.from("chat_messages").insert({
         user_id: user.id,
         guild_id: guildId,
-        message,
+        message: trimmedMessage,
         is_global: false,
       });
 
