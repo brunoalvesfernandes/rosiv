@@ -80,6 +80,33 @@ export type Database = {
         }
         Relationships: []
       }
+      area_music: {
+        Row: {
+          area_label: string
+          area_name: string
+          created_at: string
+          id: string
+          music_url: string | null
+          updated_at: string
+        }
+        Insert: {
+          area_label: string
+          area_name: string
+          created_at?: string
+          id?: string
+          music_url?: string | null
+          updated_at?: string
+        }
+        Update: {
+          area_label?: string
+          area_name?: string
+          created_at?: string
+          id?: string
+          music_url?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       battle_logs: {
         Row: {
           arena_points_change: number
