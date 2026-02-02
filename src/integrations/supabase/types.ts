@@ -14,6 +14,45 @@ export type Database = {
   }
   public: {
     Tables: {
+      achievements: {
+        Row: {
+          category: string
+          created_at: string
+          description: string
+          gold_reward: number
+          icon: string | null
+          id: string
+          name: string
+          requirement_type: string
+          requirement_value: number
+          xp_reward: number
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          description: string
+          gold_reward?: number
+          icon?: string | null
+          id?: string
+          name: string
+          requirement_type: string
+          requirement_value: number
+          xp_reward?: number
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string
+          gold_reward?: number
+          icon?: string | null
+          id?: string
+          name?: string
+          requirement_type?: string
+          requirement_value?: number
+          xp_reward?: number
+        }
+        Relationships: []
+      }
       battle_logs: {
         Row: {
           arena_points_change: number
@@ -571,6 +610,36 @@ export type Database = {
         }
         Relationships: []
       }
+      materials: {
+        Row: {
+          created_at: string
+          description: string
+          drop_source: string
+          icon: string | null
+          id: string
+          name: string
+          rarity: string
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          drop_source: string
+          icon?: string | null
+          id?: string
+          name: string
+          rarity?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          drop_source?: string
+          icon?: string | null
+          id?: string
+          name?: string
+          rarity?: string
+        }
+        Relationships: []
+      }
       missions: {
         Row: {
           category: string
@@ -655,6 +724,38 @@ export type Database = {
         }
         Relationships: []
       }
+      player_achievements: {
+        Row: {
+          achievement_id: string
+          claimed: boolean
+          id: string
+          unlocked_at: string
+          user_id: string
+        }
+        Insert: {
+          achievement_id: string
+          claimed?: boolean
+          id?: string
+          unlocked_at?: string
+          user_id: string
+        }
+        Update: {
+          achievement_id?: string
+          claimed?: boolean
+          id?: string
+          unlocked_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "player_achievements_achievement_id_fkey"
+            columns: ["achievement_id"]
+            isOneToOne: false
+            referencedRelation: "achievements"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       player_inventory: {
         Row: {
           acquired_at: string
@@ -689,6 +790,38 @@ export type Database = {
             columns: ["item_id"]
             isOneToOne: false
             referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      player_materials: {
+        Row: {
+          created_at: string
+          id: string
+          material_id: string
+          quantity: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          material_id: string
+          quantity?: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          material_id?: string
+          quantity?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "player_materials_material_id_fkey"
+            columns: ["material_id"]
+            isOneToOne: false
+            referencedRelation: "materials"
             referencedColumns: ["id"]
           },
         ]
@@ -757,6 +890,83 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      recipe_materials: {
+        Row: {
+          id: string
+          material_id: string
+          quantity_required: number
+          recipe_id: string
+        }
+        Insert: {
+          id?: string
+          material_id: string
+          quantity_required?: number
+          recipe_id: string
+        }
+        Update: {
+          id?: string
+          material_id?: string
+          quantity_required?: number
+          recipe_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recipe_materials_material_id_fkey"
+            columns: ["material_id"]
+            isOneToOne: false
+            referencedRelation: "materials"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recipe_materials_recipe_id_fkey"
+            columns: ["recipe_id"]
+            isOneToOne: false
+            referencedRelation: "recipes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      recipes: {
+        Row: {
+          crafting_time_minutes: number
+          created_at: string
+          description: string
+          icon: string | null
+          id: string
+          name: string
+          required_level: number
+          result_item_id: string
+        }
+        Insert: {
+          crafting_time_minutes?: number
+          created_at?: string
+          description: string
+          icon?: string | null
+          id?: string
+          name: string
+          required_level?: number
+          result_item_id: string
+        }
+        Update: {
+          crafting_time_minutes?: number
+          created_at?: string
+          description?: string
+          icon?: string | null
+          id?: string
+          name?: string
+          required_level?: number
+          result_item_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recipes_result_item_id_fkey"
+            columns: ["result_item_id"]
+            isOneToOne: false
+            referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       training_sessions: {
         Row: {

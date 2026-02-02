@@ -16,7 +16,9 @@ import {
   Package,
   Users,
   Sparkles,
-  Castle
+  Castle,
+  Hammer,
+  Award
 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -40,8 +42,10 @@ const navItems: NavItem[] = [
   { label: "Masmorras", href: "/dungeons", icon: Castle },
   { label: "Guildas", href: "/guilds", icon: Users },
   { label: "Guerras", href: "/guild-wars", icon: Swords },
+  { label: "Crafting", href: "/crafting", icon: Hammer },
   { label: "Loja", href: "/shop", icon: Store },
   { label: "Inventário", href: "/inventory", icon: Package },
+  { label: "Conquistas", href: "/achievements", icon: Award },
   { label: "Ranking", href: "/ranking", icon: Trophy },
 ];
 
