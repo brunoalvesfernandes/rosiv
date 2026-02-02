@@ -227,38 +227,44 @@ export function useRanking() {
   return useQuery({
     queryKey: ["ranking"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // Get all characters ordered by arena points
+      const { data: characters, error } = await supabase
         .from("characters")
         .select("*")
         .order("arena_points", { ascending: false })
         .limit(50);
 
       if (error) throw error;
+      if (!characters || characters.length === 0) return [];
 
-      // Get guild info for each character
-      const charactersWithGuild = await Promise.all(
-        (data || []).map(async (char) => {
-          const { data: membership } = await supabase
-            .from("guild_members")
-            .select("guild_id")
-            .eq("user_id", char.user_id)
-            .single();
+      // Get all user IDs
+      const userIds = characters.map(c => c.user_id);
 
-          if (membership) {
-            const { data: guild } = await supabase
-              .from("guilds")
-              .select("name")
-              .eq("id", membership.guild_id)
-              .single();
+      // Batch fetch all guild memberships
+      const { data: memberships } = await supabase
+        .from("guild_members")
+        .select("user_id, guild_id")
+        .in("user_id", userIds);
 
-            return { ...char, guild_name: guild?.name || null } as RankedCharacter;
-          }
+      // Get unique guild IDs
+      const guildIds = [...new Set((memberships || []).map(m => m.guild_id))];
 
-          return { ...char, guild_name: null } as RankedCharacter;
-        })
-      );
+      // Batch fetch all guilds
+      const { data: guilds } = await supabase
+        .from("guilds")
+        .select("id, name")
+        .in("id", guildIds);
 
-      return charactersWithGuild;
+      // Create lookup maps
+      const membershipMap = new Map((memberships || []).map(m => [m.user_id, m.guild_id]));
+      const guildMap = new Map((guilds || []).map(g => [g.id, g.name]));
+
+      // Map characters with guild names
+      return characters.map(char => {
+        const guildId = membershipMap.get(char.user_id);
+        const guildName = guildId ? guildMap.get(guildId) : null;
+        return { ...char, guild_name: guildName || null } as RankedCharacter;
+      });
     },
   });
 }
