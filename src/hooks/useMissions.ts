@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-
+import { generateMaterialDrops, formatDropMessage, Difficulty } from "@/utils/materialDrops";
 export interface Mission {
   id: string;
   title: string;
@@ -194,16 +194,25 @@ export function useCompleteMission() {
         })
         .eq("user_id", user.id);
 
-      return { levelUp: newLevel > character.level, newLevel };
+      // Generate material drops based on mission difficulty
+      const difficulty = playerMission.mission.difficulty as Difficulty;
+      const drops = await generateMaterialDrops(user.id, "mission", difficulty);
+
+      return { levelUp: newLevel > character.level, newLevel, drops };
     },
     onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ["player-missions"] });
       queryClient.invalidateQueries({ queryKey: ["character"] });
+      queryClient.invalidateQueries({ queryKey: ["player-materials"] });
       
       if (result.levelUp) {
         toast.success(`🎉 Subiu para o nível ${result.newLevel}! +5 pontos de atributo`);
       } else {
         toast.success("Missão concluída! Recompensas recebidas.");
+      }
+      
+      if (result.drops.length > 0) {
+        toast.success(formatDropMessage(result.drops), { duration: 5000 });
       }
     },
     onError: (error) => {
