@@ -10,6 +10,7 @@ const progressBarVariants = cva(
         energy: "bg-muted",
         xp: "bg-muted",
         gold: "bg-muted",
+        mana: "bg-muted",
       },
       size: {
         sm: "h-2",
@@ -33,6 +34,7 @@ const progressFillVariants = cva(
         energy: "bg-energy shadow-[0_0_10px_hsl(var(--energy)/0.5)]",
         xp: "bg-xp shadow-[0_0_10px_hsl(var(--xp)/0.5)]",
         gold: "bg-gold shadow-[0_0_10px_hsl(var(--gold)/0.5)]",
+        mana: "bg-primary shadow-[0_0_10px_hsl(var(--primary)/0.5)]",
       },
     },
     defaultVariants: {

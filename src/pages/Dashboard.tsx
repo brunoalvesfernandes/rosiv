@@ -58,7 +58,7 @@ export default function Dashboard() {
         </div>
 
         {/* Vitals */}
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <ProgressBar 
             variant="health" 
             value={character.current_hp} 
@@ -70,6 +70,12 @@ export default function Dashboard() {
             value={character.current_energy} 
             max={character.max_energy}
             label="Energia"
+          />
+          <ProgressBar 
+            variant="mana" 
+            value={character.current_mana} 
+            max={character.max_mana}
+            label="Mana"
           />
           <ProgressBar 
             variant="xp" 

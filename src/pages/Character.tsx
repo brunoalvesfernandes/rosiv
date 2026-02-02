@@ -69,7 +69,7 @@ export default function Character() {
         </div>
 
         {/* Vitals */}
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <div className="bg-card border border-border rounded-xl p-4">
             <ProgressBar 
               variant="health" 
@@ -84,6 +84,14 @@ export default function Character() {
               value={character.current_energy} 
               max={character.max_energy}
               label="Energia"
+            />
+          </div>
+          <div className="bg-card border border-border rounded-xl p-4">
+            <ProgressBar 
+              variant="mana" 
+              value={character.current_mana} 
+              max={character.max_mana}
+              label="Mana"
             />
           </div>
           <div className="bg-card border border-border rounded-xl p-4">
