@@ -20,9 +20,11 @@ import {
   Hammer,
   Award,
   PawPrint,
-  Settings
+  Settings,
+  Volume2,
+  VolumeX
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCharacter } from "@/hooks/useCharacter";
@@ -30,6 +32,7 @@ import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useMusicByRoute } from "@/hooks/useMusicByRoute";
+import { setBgmEnabled, isBgmEnabled, stopMusic, resumeMusic } from "@/utils/musicPlayer";
 
 interface NavItem {
   label: string;
@@ -67,9 +70,23 @@ export function GameLayout({ children }: GameLayoutProps) {
   const { signOut, user } = useAuth();
   const { data: character, isLoading } = useCharacter();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [musicEnabled, setMusicEnabled] = useState(() => isBgmEnabled());
 
   // Play music based on current route
   useMusicByRoute();
+
+  const toggleMusic = () => {
+    const newState = !musicEnabled;
+    setMusicEnabled(newState);
+    setBgmEnabled(newState);
+    if (newState) {
+      resumeMusic();
+      toast.success("Música ativada");
+    } else {
+      stopMusic();
+      toast.success("Música desativada");
+    }
+  };
 
   // Check if user is admin
   const { data: isAdmin } = useQuery({
@@ -137,6 +154,15 @@ export function GameLayout({ children }: GameLayoutProps) {
               variant="ghost" 
               size="icon" 
               className="text-muted-foreground hover:text-primary"
+              onClick={toggleMusic}
+              title={musicEnabled ? "Desativar música" : "Ativar música"}
+            >
+              {musicEnabled ? <Volume2 className="w-5 h-5" /> : <VolumeX className="w-5 h-5" />}
+            </Button>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="text-muted-foreground hover:text-primary"
               onClick={handleLogout}
             >
               <LogOut className="w-5 h-5" />
@@ -187,6 +213,13 @@ export function GameLayout({ children }: GameLayoutProps) {
                   {item.label}
                 </Link>
               ))}
+              <button
+                onClick={toggleMusic}
+                className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary w-full"
+              >
+                {musicEnabled ? <Volume2 className="w-5 h-5" /> : <VolumeX className="w-5 h-5" />}
+                {musicEnabled ? "Música Ligada" : "Música Desligada"}
+              </button>
               <button
                 onClick={handleLogout}
                 className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:text-destructive hover:bg-secondary w-full"
