@@ -1,9 +1,10 @@
 import { useState, useRef, useEffect } from "react";
 import { useLocation } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Send, MessageCircle, Users, Globe, Loader2, X, Minimize2, Clock } from "lucide-react";
+import { Send, MessageCircle, Users, Globe, Loader2, X, Minimize2, Clock, Maximize2 } from "lucide-react";
 import { useGlobalChat, useGuildChat, ChatMessage } from "@/hooks/useChat";
 import { useMyGuild } from "@/hooks/useGuilds";
 import { useAuth } from "@/contexts/AuthContext";
@@ -14,6 +15,7 @@ import { cn } from "@/lib/utils";
 import { AvatarFace } from "./AvatarFace";
 import { EmotePicker, parseEmotes } from "./chat/GameEmotes";
 import { LevelBadge } from "./chat/LevelBadge";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface ChatMessagesProps {
   messages: ChatMessage[];
@@ -40,85 +42,121 @@ function ChatMessages({ messages, isLoading, currentUserId }: ChatMessagesProps)
 
   if (messages.length === 0) {
     return (
-      <div className="flex items-center justify-center h-full text-muted-foreground">
+      <div className="flex flex-col items-center justify-center h-full text-muted-foreground gap-2">
+        <MessageCircle className="w-10 h-10 opacity-30" />
         <p className="text-sm">Nenhuma mensagem ainda</p>
+        <p className="text-xs">Seja o primeiro a enviar!</p>
       </div>
     );
   }
 
-  const getRoleColor = (role?: 'leader' | 'officer' | 'member' | null) => {
+  const getRoleStyles = (role?: 'leader' | 'officer' | 'member' | null) => {
     switch (role) {
-      case 'leader': return 'text-yellow-400';
-      case 'officer': return 'text-blue-400';
-      case 'member': return 'text-green-400';
-      default: return 'opacity-70';
-    }
-  };
-
-  const getRoleLabel = (role?: 'leader' | 'officer' | 'member' | null) => {
-    switch (role) {
-      case 'leader': return '👑';
-      case 'officer': return '⚔️';
-      default: return '';
+      case 'leader': return { color: 'text-amber-400', bg: 'bg-amber-500/20', icon: '👑' };
+      case 'officer': return { color: 'text-sky-400', bg: 'bg-sky-500/20', icon: '⚔️' };
+      case 'member': return { color: 'text-emerald-400', bg: 'bg-emerald-500/20', icon: '' };
+      default: return { color: 'text-muted-foreground', bg: '', icon: '' };
     }
   };
 
   return (
-    <div ref={scrollRef} className="flex-1 overflow-y-auto space-y-2 p-3">
-      {messages.map((msg) => {
-        const isMe = msg.user_id === currentUserId;
-        const hasAvatar = msg.hair_style && msg.skin_tone;
-        const roleLabel = getRoleLabel(msg.guild_role);
-        const roleColor = getRoleColor(msg.guild_role);
-        
-        return (
-          <div
-            key={msg.id}
-            className={cn("flex gap-2", isMe ? "flex-row-reverse" : "flex-row")}
-          >
-            {/* Avatar */}
-            {hasAvatar ? (
-              <AvatarFace
-                hairStyle={msg.hair_style!}
-                hairColor={msg.hair_color!}
-                eyeColor={msg.eye_color!}
-                skinTone={msg.skin_tone!}
-                faceStyle={msg.face_style!}
-                accessory={msg.accessory}
-                size="xs"
-              />
-            ) : (
-              <div className="w-6 h-6 rounded-full bg-secondary flex items-center justify-center text-[10px] font-bold shrink-0">
-                {msg.sender_name?.charAt(0).toUpperCase()}
-              </div>
-            )}
-            
-            <div className={cn("flex flex-col", isMe ? "items-end" : "items-start")}>
-              <div
-                className={cn(
-                  "max-w-[85%] rounded-lg px-3 py-2",
-                  isMe
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-secondary text-secondary-foreground"
-                )}
+    <ScrollArea className="flex-1 h-full">
+      <div ref={scrollRef} className="space-y-3 p-3">
+        {messages.map((msg, index) => {
+          const isMe = msg.user_id === currentUserId;
+          const hasAvatar = msg.hair_style && msg.skin_tone;
+          const roleStyles = getRoleStyles(msg.guild_role);
+          const showDate = index === 0 || 
+            new Date(msg.created_at).toDateString() !== new Date(messages[index - 1].created_at).toDateString();
+          
+          return (
+            <div key={msg.id}>
+              {showDate && (
+                <div className="flex items-center gap-2 my-3">
+                  <div className="flex-1 h-px bg-border" />
+                  <span className="text-[10px] text-muted-foreground px-2">
+                    {new Date(msg.created_at).toLocaleDateString('pt-BR', { 
+                      day: 'numeric', 
+                      month: 'short' 
+                    })}
+                  </span>
+                  <div className="flex-1 h-px bg-border" />
+                </div>
+              )}
+              
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.2 }}
+                className={cn("flex gap-2", isMe ? "flex-row-reverse" : "flex-row")}
               >
-                <p className={`text-xs font-medium flex items-center gap-1 ${roleColor}`}>
-                  {roleLabel} {msg.sender_name}
-                  {msg.level && <LevelBadge level={msg.level} />}
-                </p>
-                <p className="text-sm break-words">{parseEmotes(msg.message)}</p>
-              </div>
-              <span className="text-[10px] text-muted-foreground mt-1">
-                {formatDistanceToNow(new Date(msg.created_at), {
-                  addSuffix: true,
-                  locale: ptBR,
-                })}
-              </span>
+                {/* Avatar */}
+                <div className="shrink-0">
+                  {hasAvatar ? (
+                    <div className={cn(
+                      "rounded-full p-0.5",
+                      msg.guild_role && roleStyles.bg
+                    )}>
+                      <AvatarFace
+                        hairStyle={msg.hair_style!}
+                        hairColor={msg.hair_color!}
+                        eyeColor={msg.eye_color!}
+                        skinTone={msg.skin_tone!}
+                        faceStyle={msg.face_style!}
+                        accessory={msg.accessory}
+                        size="xs"
+                      />
+                    </div>
+                  ) : (
+                    <div className="w-7 h-7 rounded-full bg-gradient-to-br from-primary to-primary/50 flex items-center justify-center text-[10px] font-bold text-primary-foreground">
+                      {msg.sender_name?.charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                </div>
+                
+                <div className={cn("flex flex-col max-w-[80%]", isMe ? "items-end" : "items-start")}>
+                  {/* Name and level */}
+                  <div className={cn(
+                    "flex items-center gap-1 mb-0.5 px-1",
+                    isMe ? "flex-row-reverse" : "flex-row"
+                  )}>
+                    {roleStyles.icon && (
+                      <span className="text-xs">{roleStyles.icon}</span>
+                    )}
+                    <span className={cn("text-xs font-semibold", roleStyles.color)}>
+                      {msg.sender_name}
+                    </span>
+                    {msg.level && <LevelBadge level={msg.level} />}
+                  </div>
+                  
+                  {/* Message bubble */}
+                  <div
+                    className={cn(
+                      "rounded-2xl px-3 py-2 shadow-sm",
+                      isMe
+                        ? "bg-primary text-primary-foreground rounded-tr-sm"
+                        : "bg-muted rounded-tl-sm"
+                    )}
+                  >
+                    <p className="text-sm break-words whitespace-pre-wrap leading-relaxed">
+                      {parseEmotes(msg.message)}
+                    </p>
+                  </div>
+                  
+                  {/* Timestamp */}
+                  <span className="text-[10px] text-muted-foreground mt-0.5 px-1">
+                    {formatDistanceToNow(new Date(msg.created_at), {
+                      addSuffix: true,
+                      locale: ptBR,
+                    })}
+                  </span>
+                </div>
+              </motion.div>
             </div>
-          </div>
-        );
-      })}
-    </div>
+          );
+        })}
+      </div>
+    </ScrollArea>
   );
 }
 
@@ -131,11 +169,13 @@ interface ChatInputProps {
 
 function ChatInput({ onSend, isPending, placeholder, cooldown = 0 }: ChatInputProps) {
   const [message, setMessage] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const handleSend = () => {
     if (!message.trim()) return;
     onSend(message.trim());
     setMessage("");
+    inputRef.current?.focus();
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -147,31 +187,44 @@ function ChatInput({ onSend, isPending, placeholder, cooldown = 0 }: ChatInputPr
 
   const handleEmoteSelect = (emote: string) => {
     setMessage((prev) => prev + emote);
+    inputRef.current?.focus();
   };
 
   const isDisabled = isPending || cooldown > 0;
 
   return (
-    <div className="flex gap-2 p-3 border-t border-border">
+    <div className="flex gap-2 p-3 border-t border-border bg-muted/30">
       <EmotePicker onEmoteSelect={handleEmoteSelect} />
-      <Input
-        value={message}
-        onChange={(e) => setMessage(e.target.value)}
-        onKeyPress={handleKeyPress}
-        placeholder={cooldown > 0 ? `Aguarde ${cooldown}s...` : placeholder || "Digite sua mensagem..."}
-        maxLength={200}
-        disabled={isDisabled}
-        className="text-sm"
-      />
+      <div className="flex-1 relative">
+        <Input
+          ref={inputRef}
+          value={message}
+          onChange={(e) => setMessage(e.target.value)}
+          onKeyPress={handleKeyPress}
+          placeholder={cooldown > 0 ? `Aguarde ${cooldown}s...` : placeholder || "Digite sua mensagem..."}
+          maxLength={200}
+          disabled={isDisabled}
+          className="text-sm pr-12 bg-background/50"
+        />
+        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground">
+          {message.length}/200
+        </span>
+      </div>
       <Button
         size="icon"
         onClick={handleSend}
         disabled={!message.trim() || isDisabled}
+        className="shrink-0"
       >
         {isPending ? (
           <Loader2 className="w-4 h-4 animate-spin" />
         ) : cooldown > 0 ? (
-          <Clock className="w-4 h-4" />
+          <div className="relative">
+            <Clock className="w-4 h-4" />
+            <span className="absolute -bottom-1 -right-1 text-[8px] font-bold bg-background rounded-full px-0.5">
+              {cooldown}
+            </span>
+          </div>
         ) : (
           <Send className="w-4 h-4" />
         )}
@@ -183,11 +236,12 @@ function ChatInput({ onSend, isPending, placeholder, cooldown = 0 }: ChatInputPr
 export function FloatingChat() {
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
   const { user } = useAuth();
   const location = useLocation();
   const { data: myGuildData } = useMyGuild();
   const { data: character } = useCharacter();
-  const myGuild = myGuildData?.guilds as { id: string } | undefined;
+  const myGuild = myGuildData?.guilds as { id: string; name: string } | undefined;
 
   const {
     messages: globalMessages,
@@ -208,130 +262,190 @@ export function FloatingChat() {
   const publicPaths = ["/", "/login", "/register"];
   const isPublicPage = publicPaths.includes(location.pathname);
 
-  // Don't show chat if not logged in or on public pages
   if (!user || isPublicPage) {
     return null;
   }
 
   const totalUnread = globalUnread + guildUnread;
 
+  // Floating button when closed
   if (!isOpen) {
     return (
-      <Button
+      <motion.button
+        initial={{ scale: 0 }}
+        animate={{ scale: 1 }}
+        whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 0.95 }}
         onClick={() => setIsOpen(true)}
-        size="icon"
-        className="fixed bottom-4 right-4 z-50 h-14 w-14 rounded-full shadow-lg hover:scale-105 transition-transform"
+        className="fixed bottom-20 right-4 z-50 h-14 w-14 rounded-full bg-gradient-to-br from-primary to-primary/80 shadow-lg flex items-center justify-center text-primary-foreground"
       >
         <MessageCircle className="w-6 h-6" />
-        {totalUnread > 0 && (
-          <span className="absolute -top-1 -right-1 min-w-5 h-5 flex items-center justify-center bg-destructive text-destructive-foreground text-xs font-bold rounded-full px-1">
-            {totalUnread > 99 ? "99+" : totalUnread}
-          </span>
-        )}
-      </Button>
+        <AnimatePresence>
+          {totalUnread > 0 && (
+            <motion.span
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              exit={{ scale: 0 }}
+              className="absolute -top-1 -right-1 min-w-5 h-5 flex items-center justify-center bg-destructive text-destructive-foreground text-xs font-bold rounded-full px-1"
+            >
+              {totalUnread > 99 ? "99+" : totalUnread}
+            </motion.span>
+          )}
+        </AnimatePresence>
+      </motion.button>
     );
   }
 
+  const chatWidth = isExpanded ? "w-[28rem]" : "w-80 sm:w-96";
+  const chatHeight = isMinimized ? "h-12" : isExpanded ? "h-[32rem]" : "h-[28rem]";
+
   return (
-    <div
+    <motion.div
+      initial={{ opacity: 0, scale: 0.9, y: 20 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.9, y: 20 }}
       className={cn(
-        "fixed bottom-4 right-4 z-50 bg-card border border-border rounded-xl shadow-2xl transition-all duration-200",
-        isMinimized ? "w-72 h-12" : "w-80 sm:w-96 h-[28rem]"
+        "fixed bottom-20 right-4 z-50 bg-card/95 backdrop-blur-md border border-border rounded-2xl shadow-2xl transition-all duration-300",
+        chatWidth,
+        chatHeight
       )}
     >
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-muted/50 rounded-t-xl">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-gradient-to-r from-muted/80 to-muted/40 rounded-t-2xl">
         <div className="flex items-center gap-2">
-          <MessageCircle className="w-5 h-5 text-primary" />
-          <span className="font-display font-bold text-sm">Chat</span>
+          <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
+            <MessageCircle className="w-4 h-4 text-primary" />
+          </div>
+          <div>
+            <span className="font-display font-bold text-sm">Chat</span>
+            {character?.name && (
+              <p className="text-[10px] text-muted-foreground">
+                Conectado como {character.name}
+              </p>
+            )}
+          </div>
         </div>
         <div className="flex items-center gap-1">
           <Button
             variant="ghost"
             size="icon"
-            className="h-7 w-7"
-            onClick={() => setIsMinimized(!isMinimized)}
+            className="h-7 w-7 rounded-full"
+            onClick={() => setIsExpanded(!isExpanded)}
+            title={isExpanded ? "Reduzir" : "Expandir"}
           >
-            <Minimize2 className="w-4 h-4" />
+            <Maximize2 className={cn("w-3.5 h-3.5 transition-transform", isExpanded && "rotate-180")} />
           </Button>
           <Button
             variant="ghost"
             size="icon"
-            className="h-7 w-7"
+            className="h-7 w-7 rounded-full"
+            onClick={() => setIsMinimized(!isMinimized)}
+          >
+            <Minimize2 className="w-3.5 h-3.5" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7 rounded-full hover:bg-destructive/20 hover:text-destructive"
             onClick={() => setIsOpen(false)}
           >
-            <X className="w-4 h-4" />
+            <X className="w-3.5 h-3.5" />
           </Button>
         </div>
       </div>
 
       {/* Content */}
-      {!isMinimized && (
-        <Tabs defaultValue="global" className="flex flex-col h-[calc(100%-3rem)]">
-          <TabsList className="w-full rounded-none border-b border-border bg-transparent p-0 h-10">
-            <TabsTrigger
-              value="global"
-              className="flex-1 rounded-none data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-primary gap-1 text-xs relative"
-            >
-              <Globe className="w-3 h-3" />
-              Global
-              {globalUnread > 0 && (
-                <span className="ml-1 min-w-4 h-4 flex items-center justify-center bg-destructive text-destructive-foreground text-[10px] font-bold rounded-full px-1">
-                  {globalUnread > 99 ? "99+" : globalUnread}
-                </span>
-              )}
-            </TabsTrigger>
-            <TabsTrigger
-              value="guild"
-              className="flex-1 rounded-none data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-primary gap-1 text-xs relative"
-              disabled={!myGuild}
-            >
-              <Users className="w-3 h-3" />
-              Guilda
-              {guildUnread > 0 && (
-                <span className="ml-1 min-w-4 h-4 flex items-center justify-center bg-destructive text-destructive-foreground text-[10px] font-bold rounded-full px-1">
-                  {guildUnread > 99 ? "99+" : guildUnread}
-                </span>
-              )}
-            </TabsTrigger>
-          </TabsList>
+      <AnimatePresence>
+        {!isMinimized && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            className="flex flex-col h-[calc(100%-3rem)]"
+          >
+            <Tabs defaultValue="global" className="flex flex-col h-full">
+              <TabsList className="w-full rounded-none border-b border-border bg-transparent p-0 h-10 shrink-0">
+                <TabsTrigger
+                  value="global"
+                  className="flex-1 rounded-none data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-primary gap-1.5 text-xs relative h-full"
+                >
+                  <Globe className="w-3.5 h-3.5" />
+                  Global
+                  <AnimatePresence>
+                    {globalUnread > 0 && (
+                      <motion.span
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        exit={{ scale: 0 }}
+                        className="ml-1 min-w-4 h-4 flex items-center justify-center bg-destructive text-destructive-foreground text-[10px] font-bold rounded-full px-1"
+                      >
+                        {globalUnread > 99 ? "99+" : globalUnread}
+                      </motion.span>
+                    )}
+                  </AnimatePresence>
+                </TabsTrigger>
+                <TabsTrigger
+                  value="guild"
+                  className="flex-1 rounded-none data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-primary gap-1.5 text-xs relative h-full"
+                  disabled={!myGuild}
+                >
+                  <Users className="w-3.5 h-3.5" />
+                  {myGuild?.name ? myGuild.name.slice(0, 10) : "Guilda"}
+                  <AnimatePresence>
+                    {guildUnread > 0 && (
+                      <motion.span
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        exit={{ scale: 0 }}
+                        className="ml-1 min-w-4 h-4 flex items-center justify-center bg-destructive text-destructive-foreground text-[10px] font-bold rounded-full px-1"
+                      >
+                        {guildUnread > 99 ? "99+" : guildUnread}
+                      </motion.span>
+                    )}
+                  </AnimatePresence>
+                </TabsTrigger>
+              </TabsList>
 
-          <TabsContent value="global" className="flex-1 flex flex-col m-0 overflow-hidden">
-            <ChatMessages
-              messages={globalMessages}
-              isLoading={globalLoading}
-              currentUserId={user?.id}
-            />
-            <ChatInput
-              onSend={(msg) => sendGlobalMessage.mutate(msg)}
-              isPending={sendGlobalMessage.isPending}
-              placeholder="Mensagem global..."
-              cooldown={cooldownRemaining}
-            />
-          </TabsContent>
-
-          <TabsContent value="guild" className="flex-1 flex flex-col m-0 overflow-hidden">
-            {myGuild ? (
-              <>
+              <TabsContent value="global" className="flex-1 flex flex-col m-0 overflow-hidden">
                 <ChatMessages
-                  messages={guildMessages}
-                  isLoading={guildLoading}
+                  messages={globalMessages}
+                  isLoading={globalLoading}
                   currentUserId={user?.id}
                 />
                 <ChatInput
-                  onSend={(msg) => sendGuildMessage.mutate(msg)}
-                  isPending={sendGuildMessage.isPending}
-                  placeholder="Mensagem para guilda..."
+                  onSend={(msg) => sendGlobalMessage.mutate(msg)}
+                  isPending={sendGlobalMessage.isPending}
+                  placeholder="Mensagem global..."
+                  cooldown={cooldownRemaining}
                 />
-              </>
-            ) : (
-              <div className="flex items-center justify-center h-full text-muted-foreground">
-                <p className="text-sm">Entre em uma guilda para usar o chat</p>
-              </div>
-            )}
-          </TabsContent>
-        </Tabs>
-      )}
-    </div>
+              </TabsContent>
+
+              <TabsContent value="guild" className="flex-1 flex flex-col m-0 overflow-hidden">
+                {myGuild ? (
+                  <>
+                    <ChatMessages
+                      messages={guildMessages}
+                      isLoading={guildLoading}
+                      currentUserId={user?.id}
+                    />
+                    <ChatInput
+                      onSend={(msg) => sendGuildMessage.mutate(msg)}
+                      isPending={sendGuildMessage.isPending}
+                      placeholder={`Mensagem para ${myGuild.name}...`}
+                    />
+                  </>
+                ) : (
+                  <div className="flex flex-col items-center justify-center h-full text-muted-foreground gap-2 p-4">
+                    <Users className="w-12 h-12 opacity-30" />
+                    <p className="text-sm font-medium">Sem guilda</p>
+                    <p className="text-xs text-center">Entre em uma guilda para conversar com seus companheiros</p>
+                  </div>
+                )}
+              </TabsContent>
+            </Tabs>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
   );
 }

@@ -31,9 +31,9 @@ import { useCharacter } from "@/hooks/useCharacter";
 import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useMusicByRoute } from "@/hooks/useMusicByRoute";
 import { setBgmEnabled, isBgmEnabled, stopMusic, resumeMusic } from "@/utils/musicPlayer";
 import { DailyLoginReward } from "@/components/game/DailyLoginReward";
+import { useGlobalMusic } from "@/hooks/useGlobalMusic";
 
 interface NavItem {
   label: string;
@@ -73,8 +73,8 @@ export function GameLayout({ children }: GameLayoutProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [musicEnabled, setMusicEnabled] = useState(() => isBgmEnabled());
 
-  // Play music based on current route
-  useMusicByRoute();
+  // Play global music
+  useGlobalMusic();
 
   const toggleMusic = () => {
     const newState = !musicEnabled;
