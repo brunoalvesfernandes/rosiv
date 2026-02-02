@@ -67,7 +67,7 @@ function ChatMessages({ messages, isLoading, currentUserId }: ChatMessagesProps)
   };
 
   return (
-    <ScrollArea className="flex-1 h-full">
+    <ScrollArea className="flex-1 min-h-0">
       <div ref={scrollRef} className="space-y-3 p-3">
         {messages.map((msg, index) => {
           const isMe = msg.user_id === currentUserId;
