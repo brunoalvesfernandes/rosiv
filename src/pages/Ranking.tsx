@@ -1,5 +1,5 @@
 import { GameLayout } from "@/components/layout/GameLayout";
-import { CharacterAvatar } from "@/components/game/CharacterAvatar";
+import { AvatarFace } from "@/components/game/AvatarFace";
 import { Trophy, Medal, Crown, TrendingUp, Loader2, Shield } from "lucide-react";
 import { useRanking, useCharacter, RankedCharacter } from "@/hooks/useCharacter";
 import { Badge } from "@/components/ui/badge";
@@ -66,7 +66,15 @@ export default function Ranking() {
                 <p className="text-xs text-muted-foreground">Sua posição</p>
               </div>
               <div className="h-12 w-px bg-border" />
-              <CharacterAvatar name={myCharacter.name} level={myCharacter.level} size="sm" />
+              <AvatarFace 
+                hairStyle={myCharacter.hair_style}
+                hairColor={myCharacter.hair_color}
+                eyeColor={myCharacter.eye_color}
+                skinTone={myCharacter.skin_tone}
+                faceStyle={myCharacter.face_style}
+                accessory={myCharacter.accessory}
+                size="sm"
+              />
               <div className="flex-1">
                 <p className="font-display font-bold">{myCharacter.name}</p>
                 <p className="text-sm text-muted-foreground">Nível {myCharacter.level}</p>
@@ -114,7 +122,15 @@ export default function Ranking() {
                       <div className="w-10 flex justify-center">
                         {getRankIcon(rank)}
                       </div>
-                      <CharacterAvatar name={player.name} level={player.level} size="sm" />
+                      <AvatarFace 
+                        hairStyle={player.hair_style}
+                        hairColor={player.hair_color}
+                        eyeColor={player.eye_color}
+                        skinTone={player.skin_tone}
+                        faceStyle={player.face_style}
+                        accessory={player.accessory}
+                        size="sm"
+                      />
                       <div className="flex-1">
                         <p className="font-display font-bold">
                           {player.name}
