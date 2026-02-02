@@ -2,7 +2,7 @@
 // Creates procedural game-themed sounds and background music
 
 let audioContext: AudioContext | null = null;
-let currentBgm: { gainNode: GainNode; oscillators: OscillatorNode[] } | null = null;
+let currentBgm: { gainNode: GainNode; oscillators: OscillatorNode[]; intervalId?: number } | null = null;
 let bgmEnabled = true;
 let sfxEnabled = true;
 
@@ -10,7 +10,24 @@ function getAudioContext(): AudioContext {
   if (!audioContext) {
     audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
   }
+  // Resume if suspended (browser autoplay policy)
+  if (audioContext.state === "suspended") {
+    audioContext.resume();
+  }
   return audioContext;
+}
+
+// Initialize audio on first user interaction
+export function initAudioOnInteraction() {
+  const resume = () => {
+    if (audioContext?.state === "suspended") {
+      audioContext.resume();
+    }
+    document.removeEventListener("click", resume);
+    document.removeEventListener("keydown", resume);
+  };
+  document.addEventListener("click", resume);
+  document.addEventListener("keydown", resume);
 }
 
 // Volume controls
