@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 
 // Regeneration rates (in minutes)
 const HP_REGEN_RATE = 2; // 1 HP every 2 minutes
@@ -38,7 +38,17 @@ export interface Character {
   updated_at: string;
 }
 
-async function applyRegeneration(userId: string, character: Character): Promise<Character> {
+async function fetchAndRegenerate(userId: string): Promise<Character | null> {
+  // Fetch character
+  const { data: character, error } = await supabase
+    .from("characters")
+    .select("*")
+    .eq("user_id", userId)
+    .single();
+
+  if (error) throw error;
+  if (!character) return null;
+
   const now = new Date();
   const lastHpRegen = new Date(character.last_hp_regen);
   const lastEnergyRegen = new Date(character.last_energy_regen);
@@ -51,102 +61,66 @@ async function applyRegeneration(userId: string, character: Character): Promise<
   const hpToRegen = Math.floor(hpMinutesPassed / HP_REGEN_RATE);
   const energyToRegen = Math.floor(energyMinutesPassed / ENERGY_REGEN_RATE);
 
-  // Check if any regeneration is needed
-  if (hpToRegen <= 0 && energyToRegen <= 0) {
-    return character;
+  const needsHpRegen = hpToRegen > 0 && character.current_hp < character.max_hp;
+  const needsEnergyRegen = energyToRegen > 0 && character.current_energy < character.max_energy;
+
+  // If no regeneration needed, return current data
+  if (!needsHpRegen && !needsEnergyRegen) {
+    return character as Character;
   }
 
-  const updates: Partial<Character> = {};
+  const updates: Record<string, unknown> = {};
 
-  if (hpToRegen > 0 && character.current_hp < character.max_hp) {
-    const newHp = Math.min(character.current_hp + hpToRegen, character.max_hp);
-    updates.current_hp = newHp;
+  if (needsHpRegen) {
+    updates.current_hp = Math.min(character.current_hp + hpToRegen, character.max_hp);
     updates.last_hp_regen = now.toISOString();
   }
 
-  if (energyToRegen > 0 && character.current_energy < character.max_energy) {
-    const newEnergy = Math.min(character.current_energy + energyToRegen, character.max_energy);
-    updates.current_energy = newEnergy;
+  if (needsEnergyRegen) {
+    updates.current_energy = Math.min(character.current_energy + energyToRegen, character.max_energy);
     updates.last_energy_regen = now.toISOString();
   }
 
-  // Only update if there are changes
-  if (Object.keys(updates).length === 0) {
-    return character;
-  }
-
-  const { data, error } = await supabase
+  // Apply regeneration
+  const { data: updatedCharacter, error: updateError } = await supabase
     .from("characters")
     .update(updates)
     .eq("user_id", userId)
     .select()
     .single();
 
-  if (error) {
-    console.error("Error applying regeneration:", error);
-    return character;
+  if (updateError) {
+    console.error("Error applying regeneration:", updateError);
+    return character as Character;
   }
 
-  return data as Character;
+  return updatedCharacter as Character;
 }
 
 export function useCharacter() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const regenAppliedRef = useRef(false);
-
-  const query = useQuery({
-    queryKey: ["character", user?.id],
-    queryFn: async () => {
-      if (!user) return null;
-      
-      const { data, error } = await supabase
-        .from("characters")
-        .select("*")
-        .eq("user_id", user.id)
-        .single();
-
-      if (error) throw error;
-      return data as Character;
-    },
-    enabled: !!user,
-  });
-
-  // Apply regeneration when character data is loaded
-  useEffect(() => {
-    if (query.data && user && !regenAppliedRef.current) {
-      regenAppliedRef.current = true;
-      applyRegeneration(user.id, query.data).then((updatedChar) => {
-        if (updatedChar !== query.data) {
-          queryClient.setQueryData(["character", user.id], updatedChar);
-        }
-      });
-    }
-    
-    // Reset ref when user changes
-    if (!user) {
-      regenAppliedRef.current = false;
-    }
-  }, [query.data, user, queryClient]);
 
   // Set up periodic regeneration check (every minute)
   useEffect(() => {
     if (!user) return;
 
-    const interval = setInterval(async () => {
-      const currentData = queryClient.getQueryData<Character>(["character", user.id]);
-      if (currentData) {
-        const updatedChar = await applyRegeneration(user.id, currentData);
-        if (updatedChar !== currentData) {
-          queryClient.setQueryData(["character", user.id], updatedChar);
-        }
-      }
-    }, 60000); // Check every minute
+    const interval = setInterval(() => {
+      queryClient.invalidateQueries({ queryKey: ["character", user.id] });
+    }, 60000);
 
     return () => clearInterval(interval);
   }, [user, queryClient]);
 
-  return query;
+  return useQuery({
+    queryKey: ["character", user?.id],
+    queryFn: async () => {
+      if (!user) return null;
+      return fetchAndRegenerate(user.id);
+    },
+    enabled: !!user,
+    staleTime: 30000, // Consider data fresh for 30 seconds
+  });
 }
 
 export function useUpdateCharacter() {
