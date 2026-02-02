@@ -3,15 +3,13 @@ import { VisualAvatar, AvatarCustomization } from "./VisualAvatar";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Slider } from "@/components/ui/slider";
 import { 
   Scissors, 
   Eye, 
-  Palette, 
+  User,
   Sparkles,
-  Check,
-  ChevronLeft,
-  ChevronRight
+  Shirt,
+  Check
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -84,12 +82,28 @@ const accessoryOptions = [
   { id: "crown", label: "Coroa" },
 ];
 
-type TabType = "hair" | "face" | "eyes" | "accessory";
+const clothingColors = [
+  { id: "#1a1a1a", label: "Preto" },
+  { id: "#4a3728", label: "Marrom" },
+  { id: "#1e3a5f", label: "Azul Escuro" },
+  { id: "#3b82f6", label: "Azul" },
+  { id: "#dc2626", label: "Vermelho" },
+  { id: "#22c55e", label: "Verde" },
+  { id: "#a855f7", label: "Roxo" },
+  { id: "#f59e0b", label: "Laranja" },
+  { id: "#ec4899", label: "Rosa" },
+  { id: "#ffffff", label: "Branco" },
+  { id: "#6b7280", label: "Cinza" },
+  { id: "#ffd700", label: "Dourado" },
+];
+
+type TabType = "hair" | "face" | "eyes" | "accessory" | "clothes";
 
 const tabs: { id: TabType; label: string; icon: typeof Scissors }[] = [
   { id: "hair", label: "Cabelo", icon: Scissors },
-  { id: "face", label: "Rosto", icon: Palette },
+  { id: "face", label: "Rosto", icon: User },
   { id: "eyes", label: "Olhos", icon: Eye },
+  { id: "clothes", label: "Roupas", icon: Shirt },
   { id: "accessory", label: "Acessório", icon: Sparkles },
 ];
 
@@ -187,6 +201,23 @@ export function AvatarCustomizer({
             </div>
           </div>
         );
+      case "clothes":
+        return (
+          <div className="space-y-6">
+            <div>
+              <Label className="text-sm font-medium mb-3 block">Cor da Camisa</Label>
+              {renderColorPicker(clothingColors, customization.shirtColor, (v) => updateCustomization("shirtColor", v))}
+            </div>
+            <div>
+              <Label className="text-sm font-medium mb-3 block">Cor da Calça</Label>
+              {renderColorPicker(clothingColors, customization.pantsColor, (v) => updateCustomization("pantsColor", v))}
+            </div>
+            <div>
+              <Label className="text-sm font-medium mb-3 block">Cor do Sapato</Label>
+              {renderColorPicker(clothingColors, customization.shoesColor, (v) => updateCustomization("shoesColor", v))}
+            </div>
+          </div>
+        );
       case "accessory":
         return (
           <div className="space-y-6">
@@ -223,7 +254,7 @@ export function AvatarCustomizer({
       </div>
 
       {/* Tabs */}
-      <div className="flex justify-center gap-2">
+      <div className="flex justify-center gap-1 flex-wrap">
         {tabs.map((tab) => {
           const Icon = tab.icon;
           return (
@@ -232,7 +263,7 @@ export function AvatarCustomizer({
               variant={activeTab === tab.id ? "default" : "outline"}
               size="sm"
               onClick={() => setActiveTab(tab.id)}
-              className="gap-2"
+              className="gap-1"
             >
               <Icon className="w-4 h-4" />
               <span className="hidden sm:inline">{tab.label}</span>
@@ -242,7 +273,7 @@ export function AvatarCustomizer({
       </div>
 
       {/* Tab Content */}
-      <div className="bg-secondary/30 rounded-xl p-4 min-h-[200px]">
+      <div className="bg-secondary/30 rounded-xl p-4 min-h-[200px] max-h-[300px] overflow-y-auto">
         {renderTabContent()}
       </div>
 

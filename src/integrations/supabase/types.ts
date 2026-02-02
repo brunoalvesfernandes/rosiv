@@ -129,7 +129,10 @@ export type Database = {
           max_mana: number
           missions_completed: number
           name: string
+          pants_color: string
           protection_until: string | null
+          shirt_color: string
+          shoes_color: string
           skin_tone: string
           strength: number
           total_battles: number
@@ -169,7 +172,10 @@ export type Database = {
           max_mana?: number
           missions_completed?: number
           name: string
+          pants_color?: string
           protection_until?: string | null
+          shirt_color?: string
+          shoes_color?: string
           skin_tone?: string
           strength?: number
           total_battles?: number
@@ -209,7 +215,10 @@ export type Database = {
           max_mana?: number
           missions_completed?: number
           name?: string
+          pants_color?: string
           protection_until?: string | null
+          shirt_color?: string
+          shoes_color?: string
           skin_tone?: string
           strength?: number
           total_battles?: number
