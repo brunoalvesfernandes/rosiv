@@ -14,13 +14,345 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      battle_logs: {
+        Row: {
+          arena_points_change: number
+          attacker_damage: number
+          attacker_id: string
+          created_at: string
+          defender_damage: number
+          defender_id: string | null
+          defender_npc_name: string | null
+          gold_gained: number
+          id: string
+          is_pvp: boolean
+          winner_id: string | null
+          xp_gained: number
+        }
+        Insert: {
+          arena_points_change?: number
+          attacker_damage?: number
+          attacker_id: string
+          created_at?: string
+          defender_damage?: number
+          defender_id?: string | null
+          defender_npc_name?: string | null
+          gold_gained?: number
+          id?: string
+          is_pvp?: boolean
+          winner_id?: string | null
+          xp_gained?: number
+        }
+        Update: {
+          arena_points_change?: number
+          attacker_damage?: number
+          attacker_id?: string
+          created_at?: string
+          defender_damage?: number
+          defender_id?: string | null
+          defender_npc_name?: string | null
+          gold_gained?: number
+          id?: string
+          is_pvp?: boolean
+          winner_id?: string | null
+          xp_gained?: number
+        }
+        Relationships: []
+      }
+      characters: {
+        Row: {
+          agility: number
+          arena_points: number
+          available_points: number
+          created_at: string
+          current_energy: number
+          current_hp: number
+          current_xp: number
+          defense: number
+          gold: number
+          id: string
+          is_protected: boolean
+          last_energy_regen: string
+          last_hp_regen: string
+          level: number
+          luck: number
+          max_energy: number
+          max_hp: number
+          missions_completed: number
+          name: string
+          protection_until: string | null
+          strength: number
+          total_battles: number
+          updated_at: string
+          user_id: string
+          vitality: number
+          wins: number
+          xp_to_next_level: number
+        }
+        Insert: {
+          agility?: number
+          arena_points?: number
+          available_points?: number
+          created_at?: string
+          current_energy?: number
+          current_hp?: number
+          current_xp?: number
+          defense?: number
+          gold?: number
+          id?: string
+          is_protected?: boolean
+          last_energy_regen?: string
+          last_hp_regen?: string
+          level?: number
+          luck?: number
+          max_energy?: number
+          max_hp?: number
+          missions_completed?: number
+          name: string
+          protection_until?: string | null
+          strength?: number
+          total_battles?: number
+          updated_at?: string
+          user_id: string
+          vitality?: number
+          wins?: number
+          xp_to_next_level?: number
+        }
+        Update: {
+          agility?: number
+          arena_points?: number
+          available_points?: number
+          created_at?: string
+          current_energy?: number
+          current_hp?: number
+          current_xp?: number
+          defense?: number
+          gold?: number
+          id?: string
+          is_protected?: boolean
+          last_energy_regen?: string
+          last_hp_regen?: string
+          level?: number
+          luck?: number
+          max_energy?: number
+          max_hp?: number
+          missions_completed?: number
+          name?: string
+          protection_until?: string | null
+          strength?: number
+          total_battles?: number
+          updated_at?: string
+          user_id?: string
+          vitality?: number
+          wins?: number
+          xp_to_next_level?: number
+        }
+        Relationships: []
+      }
+      missions: {
+        Row: {
+          category: string
+          cooldown_minutes: number | null
+          created_at: string
+          description: string
+          difficulty: string
+          duration_minutes: number
+          energy_cost: number
+          gold_reward: number
+          id: string
+          is_repeatable: boolean
+          min_level: number
+          title: string
+          xp_reward: number
+        }
+        Insert: {
+          category: string
+          cooldown_minutes?: number | null
+          created_at?: string
+          description: string
+          difficulty: string
+          duration_minutes: number
+          energy_cost?: number
+          gold_reward: number
+          id?: string
+          is_repeatable?: boolean
+          min_level?: number
+          title: string
+          xp_reward: number
+        }
+        Update: {
+          category?: string
+          cooldown_minutes?: number | null
+          created_at?: string
+          description?: string
+          difficulty?: string
+          duration_minutes?: number
+          energy_cost?: number
+          gold_reward?: number
+          id?: string
+          is_repeatable?: boolean
+          min_level?: number
+          title?: string
+          xp_reward?: number
+        }
+        Relationships: []
+      }
+      npcs: {
+        Row: {
+          created_at: string
+          defense: number
+          gold_reward: number
+          hp: number
+          id: string
+          level: number
+          name: string
+          strength: number
+          xp_reward: number
+        }
+        Insert: {
+          created_at?: string
+          defense: number
+          gold_reward: number
+          hp: number
+          id?: string
+          level: number
+          name: string
+          strength: number
+          xp_reward: number
+        }
+        Update: {
+          created_at?: string
+          defense?: number
+          gold_reward?: number
+          hp?: number
+          id?: string
+          level?: number
+          name?: string
+          strength?: number
+          xp_reward?: number
+        }
+        Relationships: []
+      }
+      player_missions: {
+        Row: {
+          completed_at: string | null
+          completes_at: string
+          created_at: string
+          id: string
+          mission_id: string
+          started_at: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          completes_at: string
+          created_at?: string
+          id?: string
+          mission_id: string
+          started_at?: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          completes_at?: string
+          created_at?: string
+          id?: string
+          mission_id?: string
+          started_at?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "player_missions_mission_id_fkey"
+            columns: ["mission_id"]
+            isOneToOne: false
+            referencedRelation: "missions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          email: string | null
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      training_sessions: {
+        Row: {
+          completed_at: string | null
+          completes_at: string
+          created_at: string
+          energy_cost: number
+          id: string
+          started_at: string
+          stat_gain: number
+          stat_type: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          completes_at: string
+          created_at?: string
+          energy_cost?: number
+          id?: string
+          started_at?: string
+          stat_gain?: number
+          stat_type: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          completes_at?: string
+          created_at?: string
+          energy_cost?: number
+          id?: string
+          started_at?: string
+          stat_gain?: number
+          stat_type?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      calculate_power: {
+        Args: {
+          p_agility: number
+          p_defense: number
+          p_level: number
+          p_luck: number
+          p_strength: number
+          p_vitality: number
+        }
+        Returns: number
+      }
     }
     Enums: {
       [_ in never]: never
