@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Swords, Shield, Target, Trophy, Users, Zap } from "lucide-react";
+import { Swords, Shield, Target, Trophy, Users, Zap, ChevronRight } from "lucide-react";
 
 const features = [
   {
@@ -21,73 +21,117 @@ const features = [
   {
     icon: Trophy,
     title: "Ranking",
-    description: "Suba no ranking e prove que você é o melhor guerreiro",
+    description: "Suba no ranking e prove que você é o melhor caçador",
   },
 ];
 
 export default function Index() {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background overflow-hidden">
       {/* Hero Section */}
-      <div className="relative overflow-hidden">
-        {/* Background Effects */}
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-primary/10 rounded-full blur-[100px]" />
-          <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-gold/10 rounded-full blur-[100px]" />
+      <div className="relative min-h-screen flex items-center justify-center">
+        {/* Background Effects - Solo Leveling Style */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+          {/* Main blue glow */}
+          <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[800px] h-[800px] bg-primary/20 rounded-full blur-[150px]" />
+          {/* Purple accent */}
+          <div className="absolute bottom-0 right-1/4 w-[600px] h-[600px] bg-accent/15 rounded-full blur-[120px]" />
+          {/* Dark overlay gradient */}
+          <div className="absolute inset-0 bg-gradient-to-b from-background via-transparent to-background" />
+          {/* Grid pattern overlay */}
+          <div 
+            className="absolute inset-0 opacity-[0.03]"
+            style={{
+              backgroundImage: `linear-gradient(hsl(200 100% 50% / 0.3) 1px, transparent 1px),
+                               linear-gradient(90deg, hsl(200 100% 50% / 0.3) 1px, transparent 1px)`,
+              backgroundSize: '50px 50px'
+            }}
+          />
         </div>
 
-        <div className="relative container mx-auto px-4 py-20 md:py-32">
+        <div className="relative container mx-auto px-4 py-20">
           <div className="max-w-4xl mx-auto text-center">
-            {/* Logo */}
-            <div className="w-24 h-24 mx-auto rounded-2xl bg-gradient-primary flex items-center justify-center shadow-[0_0_50px_hsl(var(--primary)/0.5)] mb-8 animate-float">
-              <Swords className="w-12 h-12 text-primary-foreground" />
+            {/* System Icon */}
+            <div className="relative w-28 h-28 mx-auto mb-8">
+              <div className="absolute inset-0 rounded-lg bg-gradient-primary animate-pulse-glow" />
+              <div className="relative w-full h-full rounded-lg bg-card border border-primary/50 flex items-center justify-center system-border">
+                <Swords className="w-14 h-14 text-primary animate-glow-pulse" />
+              </div>
             </div>
 
-            <h1 className="font-display text-4xl md:text-6xl lg:text-7xl font-bold text-foreground mb-6">
-              Realm of{" "}
-              <span className="text-primary">Shadows</span>
+            {/* System notification style */}
+            <div className="inline-block mb-6 px-4 py-1 rounded border border-primary/30 bg-primary/5 text-primary text-sm font-display tracking-wider uppercase animate-system-flicker">
+              ⟨ SYSTEM ONLINE ⟩
+            </div>
+
+            <h1 className="font-display text-5xl md:text-7xl lg:text-8xl font-bold text-foreground mb-6 tracking-tight">
+              SOLO{" "}
+              <span className="text-transparent bg-clip-text bg-gradient-primary">
+                HUNTER
+              </span>
             </h1>
             
-            <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-8">
-              Entre em um mundo de fantasia sombria. Crie seu personagem, complete missões, 
-              treine seus atributos e lute para se tornar o guerreiro mais poderoso do reino.
+            <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-10 leading-relaxed">
+              Você foi escolhido pelo Sistema. Complete dungeons, derrote monstros 
+              e suba de nível para se tornar o <span className="text-primary">Caçador mais forte</span> de todos.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button asChild size="lg" className="gap-2 px-8">
+              <Button asChild size="lg" className="gap-2 px-8 text-lg font-display tracking-wide system-border hover:shadow-[0_0_30px_hsl(200_100%_50%/0.4)] transition-all duration-300">
                 <Link to="/register">
                   <Shield className="w-5 h-5" />
-                  Criar Personagem
+                  DESPERTAR
+                  <ChevronRight className="w-4 h-4" />
                 </Link>
               </Button>
-              <Button asChild variant="outline" size="lg" className="gap-2 px-8">
+              <Button asChild variant="outline" size="lg" className="gap-2 px-8 text-lg font-display tracking-wide border-accent/50 hover:border-accent hover:bg-accent/10 transition-all duration-300">
                 <Link to="/login">
-                  Entrar
+                  Entrar no Sistema
                 </Link>
               </Button>
             </div>
           </div>
         </div>
+
+        {/* Scroll indicator */}
+        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-float">
+          <div className="w-6 h-10 rounded-full border-2 border-primary/50 flex justify-center pt-2">
+            <div className="w-1 h-2 bg-primary rounded-full animate-pulse" />
+          </div>
+        </div>
       </div>
 
       {/* Features Section */}
-      <div className="py-20 bg-card/50">
-        <div className="container mx-auto px-4">
-          <h2 className="font-display text-3xl md:text-4xl font-bold text-center mb-12">
-            Recursos do Jogo
-          </h2>
+      <div className="relative py-24 bg-card/30">
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-primary/5 to-transparent" />
+        <div className="container mx-auto px-4 relative">
+          <div className="text-center mb-16">
+            <div className="inline-block px-3 py-1 mb-4 text-xs font-display tracking-widest uppercase text-primary border border-primary/30 rounded">
+              Habilidades do Sistema
+            </div>
+            <h2 className="font-display text-4xl md:text-5xl font-bold">
+              FUNCIONALIDADES
+            </h2>
+          </div>
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-            {features.map((feature) => {
+            {features.map((feature, index) => {
               const Icon = feature.icon;
               return (
                 <div 
                   key={feature.title}
-                  className="bg-card border border-border rounded-xl p-6 text-center hover:border-primary/50 hover:shadow-[0_0_30px_hsl(var(--primary)/0.1)] transition-all duration-300"
+                  className="group relative bg-card/80 backdrop-blur border border-border hover:border-primary/50 rounded-sm p-6 transition-all duration-300 hover:shadow-[0_0_30px_hsl(200_100%_50%/0.15)]"
+                  style={{ animationDelay: `${index * 100}ms` }}
                 >
-                  <div className="w-14 h-14 mx-auto rounded-xl bg-secondary flex items-center justify-center mb-4">
+                  {/* Corner accents */}
+                  <div className="absolute top-0 left-0 w-3 h-3 border-t border-l border-primary/50" />
+                  <div className="absolute top-0 right-0 w-3 h-3 border-t border-r border-primary/50" />
+                  <div className="absolute bottom-0 left-0 w-3 h-3 border-b border-l border-primary/50" />
+                  <div className="absolute bottom-0 right-0 w-3 h-3 border-b border-r border-primary/50" />
+                  
+                  <div className="w-14 h-14 rounded-sm bg-secondary flex items-center justify-center mb-4 group-hover:bg-primary/10 transition-colors">
                     <Icon className="w-7 h-7 text-primary" />
                   </div>
-                  <h3 className="font-display text-xl font-bold mb-2">{feature.title}</h3>
+                  <h3 className="font-display text-xl font-bold mb-2 tracking-wide">{feature.title}</h3>
                   <p className="text-sm text-muted-foreground">{feature.description}</p>
                 </div>
               );
@@ -97,47 +141,54 @@ export default function Index() {
       </div>
 
       {/* Stats Section */}
-      <div className="py-20">
+      <div className="py-24">
         <div className="container mx-auto px-4">
           <div className="grid gap-8 md:grid-cols-3 text-center">
-            <div>
-              <p className="font-display text-4xl md:text-5xl font-bold text-primary">1,000+</p>
-              <p className="text-muted-foreground mt-2">Guerreiros Ativos</p>
+            <div className="group">
+              <p className="font-display text-5xl md:text-6xl font-bold text-primary group-hover:animate-pulse-glow transition-all">1,000+</p>
+              <p className="text-muted-foreground mt-2 font-display tracking-wide">Caçadores Ativos</p>
             </div>
-            <div>
-              <p className="font-display text-4xl md:text-5xl font-bold text-gold">50+</p>
-              <p className="text-muted-foreground mt-2">Missões Únicas</p>
+            <div className="group">
+              <p className="font-display text-5xl md:text-6xl font-bold text-gold group-hover:animate-pulse-glow transition-all">50+</p>
+              <p className="text-muted-foreground mt-2 font-display tracking-wide">Dungeons</p>
             </div>
-            <div>
-              <p className="font-display text-4xl md:text-5xl font-bold text-xp">∞</p>
-              <p className="text-muted-foreground mt-2">Aventuras</p>
+            <div className="group">
+              <p className="font-display text-5xl md:text-6xl font-bold text-accent group-hover:animate-pulse-glow transition-all">∞</p>
+              <p className="text-muted-foreground mt-2 font-display tracking-wide">Possibilidades</p>
             </div>
           </div>
         </div>
       </div>
 
       {/* CTA Section */}
-      <div className="py-20 bg-gradient-primary">
-        <div className="container mx-auto px-4 text-center">
-          <h2 className="font-display text-3xl md:text-4xl font-bold text-primary-foreground mb-4">
-            Pronto para a Batalha?
+      <div className="relative py-24 overflow-hidden">
+        {/* Background effect */}
+        <div className="absolute inset-0 bg-gradient-system opacity-90" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,hsl(240_20%_4%)_70%)]" />
+        
+        <div className="container mx-auto px-4 text-center relative">
+          <div className="inline-block px-3 py-1 mb-6 text-xs font-display tracking-widest uppercase text-foreground/80 border border-foreground/30 rounded">
+            Alerta do Sistema
+          </div>
+          <h2 className="font-display text-4xl md:text-5xl font-bold text-foreground mb-4">
+            VOCÊ FOI ESCOLHIDO
           </h2>
-          <p className="text-primary-foreground/80 mb-8 max-w-xl mx-auto">
-            Crie sua conta agora e comece sua jornada para se tornar uma lenda
+          <p className="text-foreground/80 mb-10 max-w-xl mx-auto text-lg">
+            Aceite o poder do Sistema e comece sua jornada para se tornar o Caçador Supremo
           </p>
-          <Button asChild size="lg" variant="secondary" className="gap-2 px-8">
+          <Button asChild size="lg" variant="secondary" className="gap-2 px-10 text-lg font-display tracking-wide bg-foreground text-background hover:bg-foreground/90">
             <Link to="/register">
               <Users className="w-5 h-5" />
-              Começar Agora
+              ACEITAR DESPERTAR
             </Link>
           </Button>
         </div>
       </div>
 
       {/* Footer */}
-      <footer className="py-8 border-t border-border">
+      <footer className="py-8 border-t border-border bg-card/50">
         <div className="container mx-auto px-4 text-center text-sm text-muted-foreground">
-          <p>© 2026 Realm of Shadows. Todos os direitos reservados.</p>
+          <p className="font-display tracking-wide">© 2026 Solo Hunter. Sistema Ativo.</p>
         </div>
       </footer>
     </div>

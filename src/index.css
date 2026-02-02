@@ -8,89 +8,112 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* Dark Fantasy Theme - Blood & Gold */
-    --background: 0 0% 6%;
-    --foreground: 45 20% 90%;
+    /* Solo Leveling Theme - System Interface */
+    --background: 240 20% 4%;
+    --foreground: 210 40% 96%;
 
-    --card: 0 0% 9%;
-    --card-foreground: 45 20% 90%;
+    --card: 240 15% 7%;
+    --card-foreground: 210 40% 96%;
 
-    --popover: 0 0% 8%;
-    --popover-foreground: 45 20% 90%;
+    --popover: 240 18% 6%;
+    --popover-foreground: 210 40% 96%;
 
-    /* Crimson Blood Red */
-    --primary: 0 72% 45%;
-    --primary-foreground: 45 20% 95%;
+    /* System Blue - Signature Solo Leveling color */
+    --primary: 200 100% 50%;
+    --primary-foreground: 240 20% 4%;
 
-    /* Dark Stone */
-    --secondary: 0 0% 14%;
-    --secondary-foreground: 45 15% 80%;
+    /* Dark Purple Stone */
+    --secondary: 260 30% 12%;
+    --secondary-foreground: 210 30% 85%;
 
-    --muted: 0 0% 12%;
-    --muted-foreground: 45 10% 55%;
+    --muted: 250 20% 10%;
+    --muted-foreground: 210 20% 55%;
 
-    /* Ancient Gold */
-    --accent: 43 74% 49%;
-    --accent-foreground: 0 0% 5%;
+    /* Violet Magic */
+    --accent: 270 80% 60%;
+    --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 84% 50%;
+    --destructive: 0 85% 55%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 0 0% 18%;
-    --input: 0 0% 15%;
-    --ring: 0 72% 45%;
+    --border: 250 25% 15%;
+    --input: 250 20% 12%;
+    --ring: 200 100% 50%;
 
-    --radius: 0.375rem;
+    --radius: 0.25rem;
 
-    /* RPG specific tokens */
-    --health: 0 72% 45%;
+    /* RPG specific tokens - Solo Leveling style */
+    --health: 0 85% 50%;
     --health-foreground: 0 0% 100%;
-    --energy: 200 80% 50%;
-    --energy-foreground: 0 0% 100%;
-    --xp: 270 60% 55%;
+    --energy: 200 100% 50%;
+    --energy-foreground: 240 20% 4%;
+    --xp: 270 80% 60%;
     --xp-foreground: 0 0% 100%;
-    --gold: 43 74% 49%;
+    --gold: 45 100% 50%;
     --gold-foreground: 0 0% 5%;
     --bronze: 30 60% 45%;
     --bronze-foreground: 0 0% 100%;
-    --success: 142 70% 40%;
-    --success-foreground: 0 0% 100%;
+    --success: 150 80% 45%;
     --success-foreground: 0 0% 100%;
 
-    /* Gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(0 72% 45%), hsl(0 72% 35%));
-    --gradient-gold: linear-gradient(135deg, hsl(43 74% 49%), hsl(35 80% 40%));
-    --gradient-dark: linear-gradient(180deg, hsl(0 0% 9%), hsl(0 0% 5%));
-    --gradient-epic: linear-gradient(135deg, hsl(270 60% 55%), hsl(280 70% 40%));
+    /* Solo Leveling Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(200 100% 50%), hsl(220 100% 40%));
+    --gradient-gold: linear-gradient(135deg, hsl(45 100% 50%), hsl(35 100% 40%));
+    --gradient-dark: linear-gradient(180deg, hsl(240 15% 7%), hsl(240 20% 3%));
+    --gradient-epic: linear-gradient(135deg, hsl(270 80% 60%), hsl(290 90% 45%));
+    --gradient-system: linear-gradient(135deg, hsl(200 100% 50%), hsl(270 80% 60%));
 
-    --sidebar-background: 0 0% 7%;
-    --sidebar-foreground: 45 15% 80%;
-    --sidebar-primary: 0 72% 45%;
-    --sidebar-primary-foreground: 45 20% 95%;
-    --sidebar-accent: 0 0% 12%;
-    --sidebar-accent-foreground: 45 20% 90%;
-    --sidebar-border: 0 0% 15%;
-    --sidebar-ring: 0 72% 45%;
+    --sidebar-background: 240 18% 5%;
+    --sidebar-foreground: 210 30% 85%;
+    --sidebar-primary: 200 100% 50%;
+    --sidebar-primary-foreground: 240 20% 4%;
+    --sidebar-accent: 260 30% 12%;
+    --sidebar-accent-foreground: 210 40% 96%;
+    --sidebar-border: 250 25% 12%;
+    --sidebar-ring: 200 100% 50%;
   }
 }
 
-/* Custom scrollbar for dark theme */
+/* Custom scrollbar - Solo Leveling style */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: hsl(0 0% 8%);
+  background: hsl(240 20% 4%);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: hsl(0 0% 20%);
-  border-radius: 4px;
+  background: hsl(250 25% 20%);
+  border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: hsl(0 72% 45%);
+  background: hsl(200 100% 50%);
+  box-shadow: 0 0 10px hsl(200 100% 50% / 0.5);
+}
+
+/* Solo Leveling System Glow Effects */
+.system-glow {
+  box-shadow: 
+    0 0 20px hsl(200 100% 50% / 0.3),
+    0 0 40px hsl(200 100% 50% / 0.1),
+    inset 0 0 20px hsl(200 100% 50% / 0.05);
+}
+
+.magic-glow {
+  box-shadow: 
+    0 0 20px hsl(270 80% 60% / 0.4),
+    0 0 40px hsl(270 80% 60% / 0.2);
+}
+
+/* System Interface Border */
+.system-border {
+  border: 1px solid hsl(200 100% 50% / 0.3);
+  box-shadow: 
+    inset 0 0 15px hsl(200 100% 50% / 0.05),
+    0 0 10px hsl(200 100% 50% / 0.1);
 }
 
 @layer base {
@@ -103,7 +126,7 @@ All colors MUST be HSL.
   }
 }
 
-/* Pulse glow animation for rank frames */
+/* Solo Leveling Animations */
 @keyframes pulse-glow-rank {
   0%, 100% {
     opacity: 1;
@@ -112,5 +135,32 @@ All colors MUST be HSL.
   50% {
     opacity: 0.9;
     transform: scale(1.05);
+  }
+}
+
+@keyframes system-pulse {
+  0%, 100% {
+    box-shadow: 0 0 20px hsl(200 100% 50% / 0.3);
+  }
+  50% {
+    box-shadow: 0 0 40px hsl(200 100% 50% / 0.6);
+  }
+}
+
+@keyframes magic-pulse {
+  0%, 100% {
+    box-shadow: 0 0 15px hsl(270 80% 60% / 0.3);
+  }
+  50% {
+    box-shadow: 0 0 30px hsl(270 80% 60% / 0.5);
+  }
+}
+
+@keyframes scan-line {
+  0% {
+    transform: translateY(-100%);
+  }
+  100% {
+    transform: translateY(100%);
   }
 }
