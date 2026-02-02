@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { useCharacter, useArenaOpponents } from "@/hooks/useCharacter";
 import { useNPCs, useAttackNPC, useAttackPlayer, calculateWinChance, NPC, BattleResult } from "@/hooks/useCombat";
-import { playArenaBgm, stopBgm, playBattleHitSound, playVictorySound, playDefeatSound, initAudioOnInteraction } from "@/utils/gameAudio";
+import { playBattleHitSound, playVictorySound, playDefeatSound, initAudioOnInteraction } from "@/utils/gameAudio";
 import { BattleAnimation } from "@/components/game/BattleAnimation";
 
 type CombatMode = "pvp" | "pve";
@@ -31,11 +31,9 @@ export default function Arena() {
   const attackNPC = useAttackNPC();
   const attackPlayer = useAttackPlayer();
 
-  // Initialize audio on interaction and play arena BGM
+  // Initialize audio on interaction
   useEffect(() => {
     initAudioOnInteraction();
-    playArenaBgm();
-    return () => stopBgm();
   }, []);
 
   if (charLoading || !character) {
