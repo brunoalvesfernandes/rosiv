@@ -5,97 +5,41 @@ import { Button } from "@/components/ui/button";
 import { 
   Swords, 
   Shield,
-  Search,
   Skull,
   Trophy,
-  RefreshCw
+  RefreshCw,
+  Loader2,
+  ShieldAlert
 } from "lucide-react";
 import { useState } from "react";
-
-// Mock data
-const mockPlayer = {
-  name: "ShadowSlayer",
-  level: 15,
-  gold: 2450,
-  currentHp: 85,
-  maxHp: 100,
-  stats: {
-    strength: 25,
-    defense: 18,
-  },
-  arenaPoints: 1250,
-  arenaRank: 42,
-};
-
-const mockOpponents = [
-  { 
-    id: 1, 
-    name: "DarkKnight", 
-    level: 14, 
-    strength: 22, 
-    defense: 20,
-    winChance: 65,
-  },
-  { 
-    id: 2, 
-    name: "IronFist", 
-    level: 15, 
-    strength: 24, 
-    defense: 16,
-    winChance: 55,
-  },
-  { 
-    id: 3, 
-    name: "ShadowBane", 
-    level: 16, 
-    strength: 28, 
-    defense: 22,
-    winChance: 35,
-  },
-];
-
-const mockNPCs = [
-  { 
-    id: 1, 
-    name: "Goblin Guerreiro", 
-    level: 10, 
-    strength: 15, 
-    defense: 10,
-    xpReward: 80,
-    goldReward: 25,
-  },
-  { 
-    id: 2, 
-    name: "Orc Berserker", 
-    level: 14, 
-    strength: 20, 
-    defense: 14,
-    xpReward: 120,
-    goldReward: 45,
-  },
-  { 
-    id: 3, 
-    name: "Esqueleto Cavaleiro", 
-    level: 16, 
-    strength: 25, 
-    defense: 18,
-    xpReward: 180,
-    goldReward: 70,
-  },
-];
+import { useCharacter, useArenaOpponents } from "@/hooks/useCharacter";
+import { useNPCs, useAttackNPC, useAttackPlayer, calculateWinChance } from "@/hooks/useCombat";
 
 type CombatMode = "pvp" | "pve";
 
 export default function Arena() {
-  const [mode, setMode] = useState<CombatMode>("pvp");
-  const [isSearching, setIsSearching] = useState(false);
+  const [mode, setMode] = useState<CombatMode>("pve");
+  
+  const { data: character, isLoading: charLoading } = useCharacter();
+  const { data: opponents, isLoading: opponentsLoading, refetch: refetchOpponents } = useArenaOpponents();
+  const { data: npcs, isLoading: npcsLoading } = useNPCs();
+  const attackNPC = useAttackNPC();
+  const attackPlayer = useAttackPlayer();
+
+  if (charLoading || !character) {
+    return (
+      <GameLayout>
+        <div className="flex items-center justify-center min-h-[50vh]">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+      </GameLayout>
+    );
+  }
+
+  const isProtected = character.is_protected && character.protection_until && new Date(character.protection_until) > new Date();
 
   return (
-    <GameLayout 
-      playerName={mockPlayer.name} 
-      playerLevel={mockPlayer.level}
-      playerGold={mockPlayer.gold}
-    >
+    <GameLayout>
       <div className="space-y-6 animate-fade-in">
         {/* Header */}
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
@@ -110,37 +54,46 @@ export default function Arena() {
           </div>
           <div className="flex items-center gap-4">
             <div className="text-center">
-              <p className="text-2xl font-bold text-gold">{mockPlayer.arenaPoints}</p>
+              <p className="text-2xl font-bold text-gold">{character.arena_points}</p>
               <p className="text-xs text-muted-foreground">Pontos de Arena</p>
-            </div>
-            <div className="text-center">
-              <p className="text-2xl font-bold text-primary">#{mockPlayer.arenaRank}</p>
-              <p className="text-xs text-muted-foreground">Ranking</p>
             </div>
           </div>
         </div>
 
+        {/* Protection Warning */}
+        {isProtected && (
+          <div className="bg-success/10 border border-success/30 rounded-xl p-4 flex items-center gap-3">
+            <ShieldAlert className="w-6 h-6 text-success" />
+            <div>
+              <p className="font-medium text-success">Proteção de Novato Ativa</p>
+              <p className="text-sm text-muted-foreground">
+                Você está protegido contra ataques PvP. A proteção expira quando você ataca outro jogador ou após 24h.
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Player Status */}
         <div className="bg-card border border-border rounded-xl p-4">
           <div className="flex items-center gap-4">
-            <CharacterAvatar name={mockPlayer.name} level={mockPlayer.level} size="md" />
+            <CharacterAvatar name={character.name} level={character.level} size="md" />
             <div className="flex-1">
-              <h3 className="font-display font-bold">{mockPlayer.name}</h3>
+              <h3 className="font-display font-bold">{character.name}</h3>
               <ProgressBar 
                 variant="health" 
-                value={mockPlayer.currentHp} 
-                max={mockPlayer.maxHp}
+                value={character.current_hp} 
+                max={character.max_hp}
                 size="sm"
                 showLabel={false}
               />
               <div className="flex gap-4 mt-2 text-sm">
                 <span className="flex items-center gap-1">
                   <Swords className="w-4 h-4 text-primary" />
-                  {mockPlayer.stats.strength}
+                  {character.strength}
                 </span>
                 <span className="flex items-center gap-1">
                   <Shield className="w-4 h-4 text-muted-foreground" />
-                  {mockPlayer.stats.defense}
+                  {character.defense}
                 </span>
               </div>
             </div>
@@ -150,14 +103,6 @@ export default function Arena() {
         {/* Mode Toggle */}
         <div className="flex gap-2">
           <Button 
-            variant={mode === "pvp" ? "default" : "secondary"}
-            onClick={() => setMode("pvp")}
-            className="flex-1 gap-2"
-          >
-            <Trophy className="w-4 h-4" />
-            PvP (Jogadores)
-          </Button>
-          <Button 
             variant={mode === "pve" ? "default" : "secondary"}
             onClick={() => setMode("pve")}
             className="flex-1 gap-2"
@@ -165,7 +110,69 @@ export default function Arena() {
             <Skull className="w-4 h-4" />
             PvE (Monstros)
           </Button>
+          <Button 
+            variant={mode === "pvp" ? "default" : "secondary"}
+            onClick={() => setMode("pvp")}
+            className="flex-1 gap-2"
+          >
+            <Trophy className="w-4 h-4" />
+            PvP (Jogadores)
+          </Button>
         </div>
+
+        {/* PvE Mode */}
+        {mode === "pve" && (
+          <div className="space-y-4">
+            <h2 className="font-display text-xl font-bold">Monstros</h2>
+            
+            {npcsLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="w-6 h-6 animate-spin text-primary" />
+              </div>
+            ) : (
+              <div className="grid gap-4">
+                {npcs?.filter(npc => npc.level <= character.level + 10).map((npc) => (
+                  <div 
+                    key={npc.id}
+                    className="bg-card border border-border rounded-xl p-4 hover:border-primary/50 transition-colors"
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-full bg-destructive/20 flex items-center justify-center">
+                        <Skull className="w-6 h-6 text-destructive" />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="font-display font-bold">{npc.name}</h3>
+                        <p className="text-sm text-muted-foreground">Nível {npc.level}</p>
+                        <div className="flex gap-4 text-sm text-muted-foreground mt-1">
+                          <span className="flex items-center gap-1">
+                            <Swords className="w-4 h-4" />
+                            {npc.strength}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <Shield className="w-4 h-4" />
+                            {npc.defense}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="text-right text-sm">
+                        <p className="text-xp">+{npc.xp_reward} XP</p>
+                        <p className="text-gold">+{npc.gold_reward} Ouro</p>
+                      </div>
+                      <Button 
+                        className="gap-2"
+                        onClick={() => attackNPC.mutate(npc)}
+                        disabled={attackNPC.isPending || character.current_hp <= 0}
+                      >
+                        <Swords className="w-4 h-4" />
+                        Atacar
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* PvP Mode */}
         {mode === "pvp" && (
@@ -175,94 +182,82 @@ export default function Arena() {
               <Button 
                 variant="outline" 
                 size="sm" 
-                onClick={() => setIsSearching(true)}
+                onClick={() => refetchOpponents()}
                 className="gap-2"
               >
-                <RefreshCw className={`w-4 h-4 ${isSearching ? "animate-spin" : ""}`} />
+                <RefreshCw className="w-4 h-4" />
                 Buscar Novos
               </Button>
             </div>
 
-            <div className="grid gap-4">
-              {mockOpponents.map((opponent) => (
-                <div 
-                  key={opponent.id}
-                  className="bg-card border border-border rounded-xl p-4 hover:border-primary/50 transition-colors"
-                >
-                  <div className="flex items-center gap-4">
-                    <CharacterAvatar name={opponent.name} level={opponent.level} size="sm" />
-                    <div className="flex-1">
-                      <h3 className="font-display font-bold">{opponent.name}</h3>
-                      <div className="flex gap-4 text-sm text-muted-foreground">
-                        <span className="flex items-center gap-1">
-                          <Swords className="w-4 h-4" />
-                          {opponent.strength}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Shield className="w-4 h-4" />
-                          {opponent.defense}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="text-center">
-                      <p className={`text-lg font-bold ${
-                        opponent.winChance >= 50 ? "text-success" : "text-destructive"
-                      }`}>
-                        {opponent.winChance}%
-                      </p>
-                      <p className="text-xs text-muted-foreground">Chance</p>
-                    </div>
-                    <Button className="gap-2">
-                      <Swords className="w-4 h-4" />
-                      Atacar
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+            {opponentsLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="w-6 h-6 animate-spin text-primary" />
+              </div>
+            ) : opponents && opponents.length > 0 ? (
+              <div className="grid gap-4">
+                {opponents.map((opponent) => {
+                  const winChance = calculateWinChance(
+                    character.strength,
+                    character.defense,
+                    character.agility,
+                    character.luck,
+                    opponent.strength,
+                    opponent.defense
+                  );
 
-        {/* PvE Mode */}
-        {mode === "pve" && (
-          <div className="space-y-4">
-            <h2 className="font-display text-xl font-bold">Monstros</h2>
-            <div className="grid gap-4">
-              {mockNPCs.map((npc) => (
-                <div 
-                  key={npc.id}
-                  className="bg-card border border-border rounded-xl p-4 hover:border-primary/50 transition-colors"
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-full bg-destructive/20 flex items-center justify-center">
-                      <Skull className="w-6 h-6 text-destructive" />
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="font-display font-bold">{npc.name}</h3>
-                      <p className="text-sm text-muted-foreground">Nível {npc.level}</p>
-                      <div className="flex gap-4 text-sm text-muted-foreground mt-1">
-                        <span className="flex items-center gap-1">
+                  return (
+                    <div 
+                      key={opponent.id}
+                      className="bg-card border border-border rounded-xl p-4 hover:border-primary/50 transition-colors"
+                    >
+                      <div className="flex items-center gap-4">
+                        <CharacterAvatar name={opponent.name} level={opponent.level} size="sm" />
+                        <div className="flex-1">
+                          <h3 className="font-display font-bold">{opponent.name}</h3>
+                          <div className="flex gap-4 text-sm text-muted-foreground">
+                            <span className="flex items-center gap-1">
+                              <Swords className="w-4 h-4" />
+                              {opponent.strength}
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <Shield className="w-4 h-4" />
+                              {opponent.defense}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="text-center">
+                          <p className={`text-lg font-bold ${
+                            winChance >= 50 ? "text-success" : "text-destructive"
+                          }`}>
+                            {winChance}%
+                          </p>
+                          <p className="text-xs text-muted-foreground">Chance</p>
+                        </div>
+                        <Button 
+                          className="gap-2"
+                          onClick={() => attackPlayer.mutate(opponent)}
+                          disabled={attackPlayer.isPending || character.current_hp <= 0}
+                        >
                           <Swords className="w-4 h-4" />
-                          {npc.strength}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Shield className="w-4 h-4" />
-                          {npc.defense}
-                        </span>
+                          Atacar
+                        </Button>
                       </div>
                     </div>
-                    <div className="text-right text-sm">
-                      <p className="text-xp">+{npc.xpReward} XP</p>
-                      <p className="text-gold">+{npc.goldReward} Ouro</p>
-                    </div>
-                    <Button className="gap-2">
-                      <Swords className="w-4 h-4" />
-                      Atacar
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="text-center py-12 bg-card border border-border rounded-xl">
+                <Trophy className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                <p className="text-muted-foreground">
+                  Nenhum oponente disponível no momento
+                </p>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Outros jogadores podem estar protegidos ou fora do seu alcance de nível
+                </p>
+              </div>
+            )}
           </div>
         )}
       </div>
