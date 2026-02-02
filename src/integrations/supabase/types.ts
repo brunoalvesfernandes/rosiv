@@ -104,6 +104,7 @@ export type Database = {
           agility: number
           arena_points: number
           available_points: number
+          avatar_id: string
           class: Database["public"]["Enums"]["character_class"] | null
           created_at: string
           current_energy: number
@@ -143,6 +144,7 @@ export type Database = {
           agility?: number
           arena_points?: number
           available_points?: number
+          avatar_id?: string
           class?: Database["public"]["Enums"]["character_class"] | null
           created_at?: string
           current_energy?: number
@@ -182,6 +184,7 @@ export type Database = {
           agility?: number
           arena_points?: number
           available_points?: number
+          avatar_id?: string
           class?: Database["public"]["Enums"]["character_class"] | null
           created_at?: string
           current_energy?: number

@@ -1,5 +1,5 @@
 import { GameLayout } from "@/components/layout/GameLayout";
-import { VisualAvatar } from "@/components/game/VisualAvatar";
+import { PixelAvatar } from "@/components/game/PixelAvatar";
 import { ProgressBar } from "@/components/ui/progress-bar";
 import { Button } from "@/components/ui/button";
 import { 
@@ -45,18 +45,12 @@ export default function Character() {
         <div className="bg-card border border-border rounded-xl p-6">
           <div className="flex flex-col md:flex-row items-center gap-6">
             <div className="relative">
-              <VisualAvatar 
-                customization={{
-                  hairStyle: character.hair_style,
-                  hairColor: character.hair_color,
-                  eyeColor: character.eye_color,
-                  skinTone: character.skin_tone,
-                  faceStyle: character.face_style,
-                  accessory: character.accessory,
-                }}
+              <PixelAvatar 
+                avatarId={character.avatar_id || "warrior-1"}
                 size="lg"
                 showLevel
                 level={character.level}
+                name={character.name}
               />
               <Button
                 size="icon"
