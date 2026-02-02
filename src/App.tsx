@@ -24,6 +24,8 @@ import Classes from "./pages/Classes";
 import Dungeons from "./pages/Dungeons";
 import Crafting from "./pages/Crafting";
 import Achievements from "./pages/Achievements";
+import Pets from "./pages/Pets";
+import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 
@@ -86,6 +88,12 @@ const App = () => (
             } />
             <Route path="/achievements" element={
               <ProtectedRoute><Achievements /></ProtectedRoute>
+            } />
+            <Route path="/pets" element={
+              <ProtectedRoute><Pets /></ProtectedRoute>
+            } />
+            <Route path="/admin" element={
+              <ProtectedRoute><Admin /></ProtectedRoute>
             } />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />

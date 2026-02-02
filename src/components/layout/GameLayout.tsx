@@ -18,23 +18,29 @@ import {
   Sparkles,
   Castle,
   Hammer,
-  Award
+  Award,
+  PawPrint,
+  Settings
 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCharacter } from "@/hooks/useCharacter";
 import { toast } from "sonner";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 interface NavItem {
   label: string;
   href: string;
   icon: React.ElementType;
+  adminOnly?: boolean;
 }
 
 const navItems: NavItem[] = [
   { label: "Dashboard", href: "/dashboard", icon: Shield },
   { label: "Personagem", href: "/character", icon: User },
+  { label: "Pets", href: "/pets", icon: PawPrint },
   { label: "Classes", href: "/classes", icon: Sparkles },
   { label: "Missões", href: "/missions", icon: Target },
   { label: "Treino", href: "/training", icon: Dumbbell },
@@ -47,6 +53,7 @@ const navItems: NavItem[] = [
   { label: "Inventário", href: "/inventory", icon: Package },
   { label: "Conquistas", href: "/achievements", icon: Award },
   { label: "Ranking", href: "/ranking", icon: Trophy },
+  { label: "Admin", href: "/admin", icon: Settings, adminOnly: true },
 ];
 
 interface GameLayoutProps {
@@ -56,9 +63,20 @@ interface GameLayoutProps {
 export function GameLayout({ children }: GameLayoutProps) {
   const location = useLocation();
   const navigate = useNavigate();
-  const { signOut } = useAuth();
+  const { signOut, user } = useAuth();
   const { data: character, isLoading } = useCharacter();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  // Check if user is admin
+  const { data: isAdmin } = useQuery({
+    queryKey: ["is_admin", user?.id],
+    queryFn: async () => {
+      if (!user) return false;
+      const { data } = await supabase.rpc("is_admin", { _user_id: user.id });
+      return data as boolean;
+    },
+    enabled: !!user,
+  });
 
   const handleLogout = async () => {
     await signOut();
@@ -77,6 +95,9 @@ export function GameLayout({ children }: GameLayoutProps) {
   const playerName = character?.name || "Guerreiro";
   const playerLevel = character?.level || 1;
   const playerGold = character?.gold || 0;
+
+  // Filter nav items based on admin status
+  const filteredNavItems = navItems.filter(item => !item.adminOnly || isAdmin);
 
   return (
     <div className="min-h-screen bg-background">
@@ -146,7 +167,7 @@ export function GameLayout({ children }: GameLayoutProps) {
               </div>
             </div>
             <nav className="space-y-1">
-              {navItems.map((item) => (
+              {filteredNavItems.map((item) => (
                 <Link
                   key={item.href}
                   to={item.href}
@@ -178,7 +199,7 @@ export function GameLayout({ children }: GameLayoutProps) {
         {/* Sidebar (Desktop) */}
         <aside className="hidden md:flex w-64 flex-col border-r border-border bg-card min-h-[calc(100vh-4rem)] p-4">
           <nav className="space-y-1">
-            {navItems.map((item) => (
+            {filteredNavItems.map((item) => (
               <Link
                 key={item.href}
                 to={item.href}
