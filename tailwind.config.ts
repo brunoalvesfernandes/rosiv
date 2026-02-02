@@ -99,11 +99,15 @@ export default {
         },
         "pulse-glow": {
           "0%, 100%": { 
-            boxShadow: "0 0 5px hsl(var(--primary)), 0 0 10px hsl(var(--primary) / 0.5)" 
+            boxShadow: "0 0 10px hsl(var(--primary)), 0 0 20px hsl(var(--primary) / 0.4)" 
           },
           "50%": { 
-            boxShadow: "0 0 20px hsl(var(--primary)), 0 0 30px hsl(var(--primary) / 0.5)" 
+            boxShadow: "0 0 30px hsl(var(--primary)), 0 0 50px hsl(var(--primary) / 0.6)" 
           },
+        },
+        "system-flicker": {
+          "0%, 100%": { opacity: "1" },
+          "50%": { opacity: "0.8" },
         },
         "gold-shimmer": {
           "0%": { backgroundPosition: "200% center" },
@@ -111,12 +115,12 @@ export default {
         },
         "float": {
           "0%, 100%": { transform: "translateY(0)" },
-          "50%": { transform: "translateY(-10px)" },
+          "50%": { transform: "translateY(-8px)" },
         },
         "shake": {
           "0%, 100%": { transform: "translateX(0)" },
-          "25%": { transform: "translateX(-5px)" },
-          "75%": { transform: "translateX(5px)" },
+          "25%": { transform: "translateX(-4px)" },
+          "75%": { transform: "translateX(4px)" },
         },
         "fade-in": {
           from: { opacity: "0", transform: "translateY(10px)" },
@@ -130,26 +134,37 @@ export default {
           from: { width: "0%" },
           to: { width: "var(--progress-width)" },
         },
+        "glow-pulse": {
+          "0%, 100%": { 
+            filter: "drop-shadow(0 0 5px hsl(200 100% 50% / 0.5))" 
+          },
+          "50%": { 
+            filter: "drop-shadow(0 0 15px hsl(200 100% 50% / 0.8))" 
+          },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
         "pulse-glow": "pulse-glow 2s ease-in-out infinite",
+        "system-flicker": "system-flicker 3s ease-in-out infinite",
         "gold-shimmer": "gold-shimmer 3s ease-in-out infinite",
-        "float": "float 3s ease-in-out infinite",
-        "shake": "shake 0.5s ease-in-out",
+        "float": "float 4s ease-in-out infinite",
+        "shake": "shake 0.4s ease-in-out",
         "fade-in": "fade-in 0.3s ease-out",
         "scale-in": "scale-in 0.2s ease-out",
         "progress-fill": "progress-fill 1s ease-out forwards",
+        "glow-pulse": "glow-pulse 2s ease-in-out infinite",
       },
       backgroundImage: {
         "gradient-primary": "var(--gradient-primary)",
         "gradient-gold": "var(--gradient-gold)",
         "gradient-dark": "var(--gradient-dark)",
         "gradient-epic": "var(--gradient-epic)",
+        "gradient-system": "var(--gradient-system)",
       },
       fontFamily: {
-        display: ["Cinzel", "serif"],
+        display: ["Rajdhani", "Cinzel", "sans-serif"],
         body: ["Inter", "sans-serif"],
       },
     },
