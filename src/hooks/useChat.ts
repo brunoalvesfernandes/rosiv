@@ -13,7 +13,16 @@ export interface ChatMessage {
   is_global: boolean;
   created_at: string;
   sender_name?: string;
+  // Avatar appearance
+  hair_style?: string;
+  hair_color?: string;
+  eye_color?: string;
+  skin_tone?: string;
+  face_style?: string;
+  accessory?: string | null;
 }
+
+const GLOBAL_CHAT_COOLDOWN_MS = 20000; // 20 seconds
 
 export function useGlobalChat(isChatOpen: boolean = false) {
   const { user } = useAuth();
@@ -21,6 +30,18 @@ export function useGlobalChat(isChatOpen: boolean = false) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const lastSeenRef = useRef<string | null>(null);
+  const [lastMessageTime, setLastMessageTime] = useState<number>(0);
+  const [cooldownRemaining, setCooldownRemaining] = useState(0);
+
+  // Cooldown timer
+  useEffect(() => {
+    if (cooldownRemaining > 0) {
+      const timer = setTimeout(() => {
+        setCooldownRemaining(prev => Math.max(0, prev - 1));
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [cooldownRemaining]);
 
   // Fetch initial messages
   const { data: initialMessages, isLoading } = useQuery({
@@ -35,15 +56,24 @@ export function useGlobalChat(isChatOpen: boolean = false) {
 
       if (error) throw error;
 
-      // Get sender names
+      // Get sender names and appearance
       const messagesWithNames = await Promise.all(
         (data || []).map(async (msg) => {
           const { data: character } = await supabase
             .from("characters")
-            .select("name")
+            .select("name, hair_style, hair_color, eye_color, skin_tone, face_style, accessory")
             .eq("user_id", msg.user_id)
             .single();
-          return { ...msg, sender_name: character?.name || "Desconhecido" };
+          return { 
+            ...msg, 
+            sender_name: character?.name || "Desconhecido",
+            hair_style: character?.hair_style,
+            hair_color: character?.hair_color,
+            eye_color: character?.eye_color,
+            skin_tone: character?.skin_tone,
+            face_style: character?.face_style,
+            accessory: character?.accessory,
+          };
         })
       );
 
@@ -90,11 +120,20 @@ export function useGlobalChat(isChatOpen: boolean = false) {
           
           const { data: character } = await supabase
             .from("characters")
-            .select("name")
+            .select("name, hair_style, hair_color, eye_color, skin_tone, face_style, accessory")
             .eq("user_id", newMessage.user_id)
             .single();
 
-          const messageWithName = { ...newMessage, sender_name: character?.name || "Desconhecido" };
+          const messageWithName = { 
+            ...newMessage, 
+            sender_name: character?.name || "Desconhecido",
+            hair_style: character?.hair_style,
+            hair_color: character?.hair_color,
+            eye_color: character?.eye_color,
+            skin_tone: character?.skin_tone,
+            face_style: character?.face_style,
+            accessory: character?.accessory,
+          };
 
           setMessages((prev) => [...prev, messageWithName]);
           
@@ -113,10 +152,18 @@ export function useGlobalChat(isChatOpen: boolean = false) {
   }, [user?.id, isChatOpen]);
 
 
-  // Send message mutation
+  // Send message mutation with cooldown
   const sendMessage = useMutation({
     mutationFn: async (message: string) => {
       if (!user) throw new Error("Não autenticado");
+
+      // Check cooldown
+      const now = Date.now();
+      const timeSinceLastMessage = now - lastMessageTime;
+      if (timeSinceLastMessage < GLOBAL_CHAT_COOLDOWN_MS) {
+        const remainingSeconds = Math.ceil((GLOBAL_CHAT_COOLDOWN_MS - timeSinceLastMessage) / 1000);
+        throw new Error(`Aguarde ${remainingSeconds}s para enviar outra mensagem`);
+      }
 
       const { error } = await supabase.from("chat_messages").insert({
         user_id: user.id,
@@ -125,6 +172,10 @@ export function useGlobalChat(isChatOpen: boolean = false) {
       });
 
       if (error) throw error;
+      
+      // Update last message time and start cooldown
+      setLastMessageTime(now);
+      setCooldownRemaining(GLOBAL_CHAT_COOLDOWN_MS / 1000);
     },
     onError: (error: Error) => {
       toast.error(error.message);
@@ -144,6 +195,7 @@ export function useGlobalChat(isChatOpen: boolean = false) {
     sendMessage,
     unreadCount,
     clearUnread,
+    cooldownRemaining,
   };
 }
 
@@ -172,10 +224,19 @@ export function useGuildChat(guildId: string | undefined, isChatOpen: boolean = 
         (data || []).map(async (msg) => {
           const { data: character } = await supabase
             .from("characters")
-            .select("name")
+            .select("name, hair_style, hair_color, eye_color, skin_tone, face_style, accessory")
             .eq("user_id", msg.user_id)
             .single();
-          return { ...msg, sender_name: character?.name || "Desconhecido" };
+          return { 
+            ...msg, 
+            sender_name: character?.name || "Desconhecido",
+            hair_style: character?.hair_style,
+            hair_color: character?.hair_color,
+            eye_color: character?.eye_color,
+            skin_tone: character?.skin_tone,
+            face_style: character?.face_style,
+            accessory: character?.accessory,
+          };
         })
       );
 
@@ -222,11 +283,20 @@ export function useGuildChat(guildId: string | undefined, isChatOpen: boolean = 
           
           const { data: character } = await supabase
             .from("characters")
-            .select("name")
+            .select("name, hair_style, hair_color, eye_color, skin_tone, face_style, accessory")
             .eq("user_id", newMessage.user_id)
             .single();
 
-          const messageWithName = { ...newMessage, sender_name: character?.name || "Desconhecido" };
+          const messageWithName = { 
+            ...newMessage, 
+            sender_name: character?.name || "Desconhecido",
+            hair_style: character?.hair_style,
+            hair_color: character?.hair_color,
+            eye_color: character?.eye_color,
+            skin_tone: character?.skin_tone,
+            face_style: character?.face_style,
+            accessory: character?.accessory,
+          };
 
           setMessages((prev) => [...prev, messageWithName]);
           
