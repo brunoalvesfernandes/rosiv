@@ -11,6 +11,7 @@ import {
   Check,
   X,
   Sparkles,
+  Pickaxe,
 } from "lucide-react";
 import {
   useMaterials,
@@ -22,6 +23,7 @@ import {
 } from "@/hooks/useCrafting";
 import { useCharacter } from "@/hooks/useCharacter";
 import { cn } from "@/lib/utils";
+import { MiningGame } from "@/components/game/MiningGame";
 
 const rarityColors: Record<string, string> = {
   common: "text-muted-foreground border-muted",
@@ -205,8 +207,12 @@ export default function Crafting() {
           </div>
         </div>
 
-        <Tabs defaultValue="recipes">
-          <TabsList className="w-full max-w-md">
+        <Tabs defaultValue="mining">
+          <TabsList className="w-full max-w-lg">
+            <TabsTrigger value="mining" className="flex-1">
+              <Pickaxe className="w-4 h-4 mr-1" />
+              Mineração
+            </TabsTrigger>
             <TabsTrigger value="recipes" className="flex-1">
               <Hammer className="w-4 h-4 mr-1" />
               Receitas
@@ -221,6 +227,10 @@ export default function Crafting() {
               )}
             </TabsTrigger>
           </TabsList>
+
+          <TabsContent value="mining" className="mt-6">
+            <MiningGame />
+          </TabsContent>
 
           <TabsContent value="recipes" className="mt-6">
             {isLoading ? (

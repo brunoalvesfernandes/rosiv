@@ -733,6 +733,81 @@ export type Database = {
         }
         Relationships: []
       }
+      mining_drops: {
+        Row: {
+          drop_chance: number
+          id: string
+          material_id: string
+          max_quantity: number
+          min_quantity: number
+          node_id: string
+        }
+        Insert: {
+          drop_chance?: number
+          id?: string
+          material_id: string
+          max_quantity?: number
+          min_quantity?: number
+          node_id: string
+        }
+        Update: {
+          drop_chance?: number
+          id?: string
+          material_id?: string
+          max_quantity?: number
+          min_quantity?: number
+          node_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mining_drops_material_id_fkey"
+            columns: ["material_id"]
+            isOneToOne: false
+            referencedRelation: "materials"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mining_drops_node_id_fkey"
+            columns: ["node_id"]
+            isOneToOne: false
+            referencedRelation: "mining_nodes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mining_nodes: {
+        Row: {
+          created_at: string
+          description: string
+          hp: number
+          icon: string | null
+          id: string
+          name: string
+          required_mining_power: number
+          tier: number
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          hp?: number
+          icon?: string | null
+          id?: string
+          name: string
+          required_mining_power?: number
+          tier?: number
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          hp?: number
+          icon?: string | null
+          id?: string
+          name?: string
+          required_mining_power?: number
+          tier?: number
+        }
+        Relationships: []
+      }
       missions: {
         Row: {
           category: string
@@ -865,6 +940,45 @@ export type Database = {
           rarity?: string
           strength_bonus?: number
           vitality_bonus?: number
+        }
+        Relationships: []
+      }
+      pickaxes: {
+        Row: {
+          created_at: string
+          description: string
+          icon: string | null
+          id: string
+          is_craftable: boolean
+          max_durability: number
+          mining_power: number
+          name: string
+          price: number | null
+          rarity: string
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          icon?: string | null
+          id?: string
+          is_craftable?: boolean
+          max_durability?: number
+          mining_power?: number
+          name: string
+          price?: number | null
+          rarity?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          icon?: string | null
+          id?: string
+          is_craftable?: boolean
+          max_durability?: number
+          mining_power?: number
+          name?: string
+          price?: number | null
+          rarity?: string
         }
         Relationships: []
       }
@@ -1054,6 +1168,41 @@ export type Database = {
             columns: ["pet_id"]
             isOneToOne: false
             referencedRelation: "pets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      player_pickaxes: {
+        Row: {
+          created_at: string
+          current_durability: number
+          id: string
+          is_equipped: boolean
+          pickaxe_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          current_durability: number
+          id?: string
+          is_equipped?: boolean
+          pickaxe_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          current_durability?: number
+          id?: string
+          is_equipped?: boolean
+          pickaxe_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "player_pickaxes_pickaxe_id_fkey"
+            columns: ["pickaxe_id"]
+            isOneToOne: false
+            referencedRelation: "pickaxes"
             referencedColumns: ["id"]
           },
         ]
