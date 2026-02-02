@@ -50,13 +50,38 @@ const rarityColors: Record<string, string> = {
   legendary: "text-amber-500 border-amber-500/50",
 };
 
-// Block visual styles per tier
-const blockStyles: Record<number, { bg: string; border: string }> = {
-  1: { bg: "bg-stone-700", border: "border-stone-600" },
-  2: { bg: "bg-zinc-600", border: "border-zinc-500" },
-  3: { bg: "bg-amber-800", border: "border-amber-600" },
-  4: { bg: "bg-cyan-800", border: "border-cyan-600" },
-  5: { bg: "bg-purple-800", border: "border-purple-600" },
+// Block visual styles per tier - more distinct colors and textures
+const blockStyles: Record<number, { bg: string; border: string; gradient: string; label: string }> = {
+  1: { 
+    bg: "bg-stone-600", 
+    border: "border-stone-500", 
+    gradient: "bg-gradient-to-br from-stone-500 to-stone-700",
+    label: "Pedra"
+  },
+  2: { 
+    bg: "bg-amber-700", 
+    border: "border-amber-500", 
+    gradient: "bg-gradient-to-br from-amber-600 to-amber-800",
+    label: "Cobre"
+  },
+  3: { 
+    bg: "bg-slate-500", 
+    border: "border-slate-400", 
+    gradient: "bg-gradient-to-br from-slate-400 to-slate-600",
+    label: "Ferro"
+  },
+  4: { 
+    bg: "bg-yellow-500", 
+    border: "border-yellow-400", 
+    gradient: "bg-gradient-to-br from-yellow-400 to-yellow-600",
+    label: "Ouro"
+  },
+  5: { 
+    bg: "bg-purple-600", 
+    border: "border-purple-400", 
+    gradient: "bg-gradient-to-br from-purple-500 to-purple-700",
+    label: "Ametista"
+  },
 };
 
 interface Block {
@@ -175,7 +200,7 @@ export function MiningGame() {
     return block?.isMined ?? false;
   }, [blocks]);
 
-  // Gravity system - player falls if no ground below
+  // Gravity system - player falls if no ground below (slower gravity)
   useEffect(() => {
     if (gravityRef.current) {
       clearInterval(gravityRef.current);
@@ -192,7 +217,7 @@ export function MiningGame() {
         }
         return prev;
       });
-    }, 150); // Fall speed
+    }, 350); // Slower fall speed (was 150ms, now 350ms)
 
     return () => {
       if (gravityRef.current) {
@@ -201,12 +226,12 @@ export function MiningGame() {
     };
   }, [hasGroundBelow, isEmptyAt]);
 
-  // Helper: count consecutive empty blocks above player for jump
+  // Helper: check if can jump/climb to target position
   const canJumpTo = useCallback((targetY: number) => {
     const currentY = playerPos.y;
     const jumpHeight = currentY - targetY;
     
-    // Can only jump up to 2 blocks
+    // Can jump up to 2 blocks normally
     if (jumpHeight > 2 || jumpHeight < 1) return false;
     
     // Check all blocks between current and target are empty
@@ -218,7 +243,38 @@ export function MiningGame() {
     return hasGroundBelow(playerPos.x, currentY);
   }, [playerPos, isEmptyAt, hasGroundBelow]);
 
-  // Keyboard controls with jump physics
+  // Helper: check if can climb (wall climb for 3 blocks)
+  const canClimbTo = useCallback((targetY: number, direction: "left" | "right") => {
+    const currentY = playerPos.y;
+    const climbHeight = currentY - targetY;
+    
+    // Climbing allows going up to 3 blocks
+    if (climbHeight > 3 || climbHeight < 1) return false;
+    
+    // Check if there's a wall to climb on the side
+    const wallX = direction === "left" ? playerPos.x - 1 : playerPos.x + 1;
+    if (wallX < 0 || wallX >= GRID_WIDTH) return false;
+    
+    // Need at least one solid block on the wall side to climb
+    let hasWall = false;
+    for (let y = currentY; y >= targetY; y--) {
+      const wallBlock = blocks.find((b) => b.x === wallX && b.y === y);
+      if (wallBlock && !wallBlock.isMined) {
+        hasWall = true;
+        break;
+      }
+    }
+    if (!hasWall) return false;
+    
+    // Check all blocks in climb path are empty
+    for (let y = currentY - 1; y >= targetY; y--) {
+      if (!isEmptyAt(playerPos.x, y)) return false;
+    }
+    
+    return true;
+  }, [playerPos, blocks, isEmptyAt]);
+
+  // Keyboard controls with jump and climb physics
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (isMining) return;
@@ -231,12 +287,23 @@ export function MiningGame() {
         case "w":
         case "arrowup":
         case " ": // Space for jump
-          // Try to jump 1 or 2 blocks up
+          // Try to jump 1 or 2 blocks up first
           if (canJumpTo(playerPos.y - 1)) {
             newY = playerPos.y - 1;
             moved = true;
           } else if (canJumpTo(playerPos.y - 2)) {
             newY = playerPos.y - 2;
+            moved = true;
+          } 
+          // Try to climb up to 3 blocks if there's a wall nearby
+          else if (canClimbTo(playerPos.y - 1, "left") || canClimbTo(playerPos.y - 1, "right")) {
+            newY = playerPos.y - 1;
+            moved = true;
+          } else if (canClimbTo(playerPos.y - 2, "left") || canClimbTo(playerPos.y - 2, "right")) {
+            newY = playerPos.y - 2;
+            moved = true;
+          } else if (canClimbTo(playerPos.y - 3, "left") || canClimbTo(playerPos.y - 3, "right")) {
+            newY = playerPos.y - 3;
             moved = true;
           }
           break;
@@ -275,7 +342,7 @@ export function MiningGame() {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [playerPos, blocks, isMining, canJumpTo, isEmptyAt]);
+  }, [playerPos, blocks, isMining, canJumpTo, canClimbTo, isEmptyAt]);
 
   // Check if block is adjacent to player
   const isAdjacent = (x: number, y: number) => {
@@ -463,42 +530,57 @@ export function MiningGame() {
         />
 
         {/* Blocks */}
-        {blocks.map((block) => (
-          <motion.button
-            key={block.id}
-            className={cn(
-              "absolute flex items-center justify-center transition-all border-2",
-              block.isMined
-                ? "bg-transparent border-transparent"
-                : cn(
-                    blockStyles[block.node?.tier || 1].bg,
-                    blockStyles[block.node?.tier || 1].border,
-                    isAdjacent(block.x, block.y) && "ring-2 ring-primary ring-offset-1 ring-offset-background cursor-pointer hover:brightness-125"
-                  )
-            )}
-            style={{
-              left: block.x * CELL_SIZE,
-              top: block.y * CELL_SIZE,
-              width: CELL_SIZE,
-              height: CELL_SIZE,
-            }}
-            onClick={() => handleMineBlock(block)}
-            disabled={block.isMined || !isAdjacent(block.x, block.y) || isMining}
-            whileTap={!block.isMined && isAdjacent(block.x, block.y) ? { scale: 0.9 } : {}}
-          >
-            {!block.isMined && block.node && (
-              <>
-                <span className="text-xl">{block.node.icon}</span>
-                {block.currentHp < block.node.hp && (
-                  <div
-                    className="absolute bottom-0 left-0 right-0 h-1 bg-destructive/80"
-                    style={{ width: `${(block.currentHp / block.node.hp) * 100}%` }}
-                  />
-                )}
-              </>
-            )}
-          </motion.button>
-        ))}
+        {blocks.map((block) => {
+          const style = blockStyles[block.node?.tier || 1];
+          return (
+            <motion.button
+              key={block.id}
+              className={cn(
+                "absolute flex flex-col items-center justify-center transition-all border-2 overflow-hidden",
+                block.isMined
+                  ? "bg-transparent border-transparent"
+                  : cn(
+                      style.gradient,
+                      style.border,
+                      isAdjacent(block.x, block.y) && "ring-2 ring-primary ring-offset-1 ring-offset-background cursor-pointer hover:brightness-125"
+                    )
+              )}
+              style={{
+                left: block.x * CELL_SIZE,
+                top: block.y * CELL_SIZE,
+                width: CELL_SIZE,
+                height: CELL_SIZE,
+              }}
+              onClick={() => handleMineBlock(block)}
+              disabled={block.isMined || !isAdjacent(block.x, block.y) || isMining}
+              whileTap={!block.isMined && isAdjacent(block.x, block.y) ? { scale: 0.9 } : {}}
+            >
+              {!block.isMined && block.node && (
+                <>
+                  {/* Block icon */}
+                  <span className="text-lg drop-shadow-md">{block.node.icon}</span>
+                  {/* Tier indicator */}
+                  <span className="text-[8px] font-bold text-white/80 drop-shadow-sm">
+                    T{block.node.tier}
+                  </span>
+                  {/* HP bar when damaged */}
+                  {block.currentHp < block.node.hp && (
+                    <div className="absolute bottom-0 left-0 right-0 h-1 bg-black/50">
+                      <div
+                        className="h-full bg-green-500 transition-all"
+                        style={{ width: `${(block.currentHp / block.node.hp) * 100}%` }}
+                      />
+                    </div>
+                  )}
+                  {/* Crack overlay when damaged */}
+                  {block.currentHp < block.node.hp * 0.5 && (
+                    <div className="absolute inset-0 bg-black/20 pointer-events-none" />
+                  )}
+                </>
+              )}
+            </motion.button>
+          );
+        })}
 
         {/* Player Character */}
         <motion.div
@@ -595,7 +677,7 @@ export function MiningGame() {
           <kbd className="px-1.5 py-0.5 bg-muted rounded text-[10px]">W</kbd>
           <span>/</span>
           <kbd className="px-1.5 py-0.5 bg-muted rounded text-[10px]">Espaço</kbd>
-          <span>Pular (2 blocos)</span>
+          <span>Pular/Escalar</span>
         </div>
         <div className="flex items-center gap-1">
           <kbd className="px-1.5 py-0.5 bg-muted rounded text-[10px]">A</kbd>
@@ -604,8 +686,18 @@ export function MiningGame() {
         </div>
         <div className="flex items-center gap-1">
           <span>🖱️</span>
-          <span>Minerar adjacente</span>
+          <span>Minerar</span>
         </div>
+      </div>
+
+      {/* Block legend */}
+      <div className="flex justify-center gap-2 flex-wrap">
+        {Object.entries(blockStyles).map(([tier, style]) => (
+          <div key={tier} className={cn("flex items-center gap-1 px-2 py-1 rounded text-xs", style.gradient, "text-white")}>
+            <span className="font-bold">T{tier}</span>
+            <span>{style.label}</span>
+          </div>
+        ))}
       </div>
 
       {/* Touch controls for mobile */}
@@ -613,11 +705,17 @@ export function MiningGame() {
         <div className="grid grid-cols-3 gap-1">
           <div />
           <Button size="icon" variant="outline" onClick={() => {
-            // Jump up to 2 blocks
+            // Jump up to 2 blocks or climb up to 3
             if (canJumpTo(playerPos.y - 1)) {
               setPlayerPos({ x: playerPos.x, y: playerPos.y - 1 });
             } else if (canJumpTo(playerPos.y - 2)) {
               setPlayerPos({ x: playerPos.x, y: playerPos.y - 2 });
+            } else if (canClimbTo(playerPos.y - 1, "left") || canClimbTo(playerPos.y - 1, "right")) {
+              setPlayerPos({ x: playerPos.x, y: playerPos.y - 1 });
+            } else if (canClimbTo(playerPos.y - 2, "left") || canClimbTo(playerPos.y - 2, "right")) {
+              setPlayerPos({ x: playerPos.x, y: playerPos.y - 2 });
+            } else if (canClimbTo(playerPos.y - 3, "left") || canClimbTo(playerPos.y - 3, "right")) {
+              setPlayerPos({ x: playerPos.x, y: playerPos.y - 3 });
             }
           }}>
             <ArrowUp className="w-4 h-4" />
