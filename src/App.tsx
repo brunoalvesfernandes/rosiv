@@ -20,6 +20,8 @@ import Guilds from "./pages/Guilds";
 import GuildWars from "./pages/GuildWars";
 import Classes from "./pages/Classes";
 import Dungeons from "./pages/Dungeons";
+import Crafting from "./pages/Crafting";
+import Achievements from "./pages/Achievements";
 import NotFound from "./pages/NotFound";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 
@@ -72,6 +74,12 @@ const App = () => (
             } />
             <Route path="/dungeons" element={
               <ProtectedRoute><Dungeons /></ProtectedRoute>
+            } />
+            <Route path="/crafting" element={
+              <ProtectedRoute><Crafting /></ProtectedRoute>
+            } />
+            <Route path="/achievements" element={
+              <ProtectedRoute><Achievements /></ProtectedRoute>
             } />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
