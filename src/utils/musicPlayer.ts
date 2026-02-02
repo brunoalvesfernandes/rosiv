@@ -39,13 +39,21 @@ export function playMusic(url: string | null) {
     return;
   }
 
-  // If same URL is already playing, don't restart
-  if (currentUrl === url && currentAudio && !currentAudio.paused) {
+  // CRITICAL: If same URL is already playing, absolutely don't restart
+  if (currentUrl === url && currentAudio) {
+    // Even if paused (due to autoplay block), don't recreate
+    if (!currentAudio.paused) {
+      return;
+    }
+    // If paused but same track, try to resume instead of recreating
+    currentAudio.play().catch(() => {});
     return;
   }
 
-  // Stop any currently playing music
-  stopMusic();
+  // Stop any currently playing music only if it's a DIFFERENT track
+  if (currentUrl !== url) {
+    stopMusic();
+  }
 
   try {
     currentUrl = url;
