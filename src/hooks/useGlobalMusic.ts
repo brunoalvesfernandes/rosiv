@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 import { useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { playMusic, stopMusic, isBgmEnabled } from "@/utils/musicPlayer";
+import { playMusic, stopMusic, isBgmEnabled, getCurrentUrl } from "@/utils/musicPlayer";
 
 // Fetch the global music URL from area_music table (using 'global' area)
 export function useGlobalMusic() {
@@ -20,12 +20,15 @@ export function useGlobalMusic() {
 
       return data?.music_url || null;
     },
+    staleTime: Infinity, // Don't refetch on every navigation
+    refetchOnWindowFocus: false,
   });
 
   // Public pages that shouldn't play music
   const publicPaths = ["/", "/login", "/register"];
   const isPublicPage = publicPaths.includes(location.pathname);
 
+  // Handle music on public/private page transitions
   useEffect(() => {
     if (isLoading) return;
 
@@ -36,12 +39,15 @@ export function useGlobalMusic() {
       return;
     }
 
-    // Start music once when entering game pages
-    if (!hasStartedRef.current && globalMusicUrl && isBgmEnabled()) {
-      playMusic(globalMusicUrl);
+    // Start music once when entering game pages (if not already playing same track)
+    if (globalMusicUrl && isBgmEnabled()) {
+      // Only play if not already playing this URL
+      if (getCurrentUrl() !== globalMusicUrl) {
+        playMusic(globalMusicUrl);
+      }
       hasStartedRef.current = true;
     }
-  }, [location.pathname, globalMusicUrl, isLoading, isPublicPage]);
+  }, [isPublicPage, globalMusicUrl, isLoading]);
 
   // Cleanup on unmount
   useEffect(() => {

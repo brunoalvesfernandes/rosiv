@@ -2,6 +2,7 @@
 // Replaces procedural Web Audio API music with uploaded audio files
 
 let currentAudio: HTMLAudioElement | null = null;
+let currentUrl: string | null = null;
 let bgmEnabled = true;
 let currentVolume = 0.3;
 
@@ -27,16 +28,27 @@ export function getVolume() {
   return currentVolume;
 }
 
-export function playMusic(url: string | null) {
-  // Stop any currently playing music
-  stopMusic();
+export function getCurrentUrl() {
+  return currentUrl;
+}
 
+export function playMusic(url: string | null) {
   // If no URL or BGM disabled, don't play anything (silence fallback)
   if (!url || !bgmEnabled) {
+    stopMusic();
     return;
   }
 
+  // If same URL is already playing, don't restart
+  if (currentUrl === url && currentAudio && !currentAudio.paused) {
+    return;
+  }
+
+  // Stop any currently playing music
+  stopMusic();
+
   try {
+    currentUrl = url;
     currentAudio = new Audio(url);
     currentAudio.loop = true;
     currentAudio.volume = currentVolume;
@@ -67,6 +79,7 @@ export function stopMusic() {
     currentAudio.currentTime = 0;
     currentAudio = null;
   }
+  currentUrl = null;
 }
 
 export function pauseMusic() {

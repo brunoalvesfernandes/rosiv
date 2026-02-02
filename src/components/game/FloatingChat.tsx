@@ -356,7 +356,7 @@ export function FloatingChat() {
       animate={{ opacity: 1, scale: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.9, y: 20 }}
       className={cn(
-        "fixed bottom-20 right-4 z-50 bg-card/95 backdrop-blur-md border border-border rounded-2xl shadow-2xl transition-all duration-300 overflow-hidden",
+        "fixed bottom-20 right-4 z-50 bg-card/95 backdrop-blur-md border border-border rounded-2xl shadow-2xl transition-all duration-300 flex flex-col",
         chatWidth,
         chatHeight
       )}
@@ -406,15 +406,9 @@ export function FloatingChat() {
       </div>
 
       {/* Content */}
-      <AnimatePresence>
-        {!isMinimized && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            className="flex flex-col flex-1 min-h-0 overflow-hidden"
-          >
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-col flex-1 min-h-0 overflow-hidden">
+      {!isMinimized && (
+        <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-col flex-1 min-h-0 overflow-hidden">
               <TabsList className="w-full rounded-none border-b border-border bg-transparent p-0 h-10 shrink-0">
                 <TabsTrigger
                   value="global"
@@ -517,9 +511,8 @@ export function FloatingChat() {
                 <PrivateMessagePanel onClose={() => setActiveTab("global")} />
               </TabsContent>
             </Tabs>
-          </motion.div>
+          </div>
         )}
-      </AnimatePresence>
     </motion.div>
   );
 }
