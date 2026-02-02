@@ -20,6 +20,7 @@ import { LevelBadge } from "./chat/LevelBadge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { MentionAutocomplete } from "./chat/MentionAutocomplete";
 import { PrivateMessagePanel } from "./chat/PrivateMessagePanel";
+import { censorProfanity } from "@/utils/profanityFilter";
 
 const MESSAGE_MAX_LENGTH = 500;
 
@@ -145,7 +146,7 @@ function ChatMessages({ messages, isLoading, currentUserId }: ChatMessagesProps)
                     )}
                   >
                     <p className="text-sm break-words whitespace-pre-wrap leading-relaxed overflow-hidden" style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}>
-                      {parseEmotes(msg.message)}
+                      {parseEmotes(censorProfanity(msg.message))}
                     </p>
                   </div>
                   
@@ -347,7 +348,7 @@ export function FloatingChat() {
   }
 
   const chatWidth = isExpanded ? "w-[28rem]" : "w-80 sm:w-96";
-  const chatHeight = isMinimized ? "h-12" : isExpanded ? "h-[32rem]" : "h-[28rem]";
+  const chatHeight = isMinimized ? "h-12" : isExpanded ? "h-[500px]" : "h-[420px]";
 
   return (
     <motion.div
@@ -411,9 +412,9 @@ export function FloatingChat() {
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
-            className="flex flex-col h-[calc(100%-3rem)] overflow-hidden"
+            className="flex flex-col flex-1 min-h-0 overflow-hidden"
           >
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-col h-full overflow-hidden">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-col flex-1 min-h-0 overflow-hidden">
               <TabsList className="w-full rounded-none border-b border-border bg-transparent p-0 h-10 shrink-0">
                 <TabsTrigger
                   value="global"
@@ -475,7 +476,7 @@ export function FloatingChat() {
                 </TabsTrigger>
               </TabsList>
 
-              <TabsContent value="global" className="flex-1 flex flex-col m-0 overflow-hidden">
+              <TabsContent value="global" className="flex-1 flex flex-col m-0 min-h-0 overflow-hidden data-[state=inactive]:hidden">
                 <ChatMessages
                   messages={globalMessages}
                   isLoading={globalLoading}
@@ -489,7 +490,7 @@ export function FloatingChat() {
                 />
               </TabsContent>
 
-              <TabsContent value="guild" className="flex-1 flex flex-col m-0 overflow-hidden">
+              <TabsContent value="guild" className="flex-1 flex flex-col m-0 min-h-0 overflow-hidden data-[state=inactive]:hidden">
                 {myGuild ? (
                   <>
                     <ChatMessages
@@ -512,7 +513,7 @@ export function FloatingChat() {
                 )}
               </TabsContent>
 
-              <TabsContent value="private" className="flex-1 flex flex-col m-0 overflow-hidden">
+              <TabsContent value="private" className="flex-1 flex flex-col m-0 min-h-0 overflow-hidden data-[state=inactive]:hidden">
                 <PrivateMessagePanel onClose={() => setActiveTab("global")} />
               </TabsContent>
             </Tabs>

@@ -23,6 +23,7 @@ import { parseEmotes } from "./GameEmotes";
 import { LevelBadge } from "./LevelBadge";
 import { EmotePicker } from "./GameEmotes";
 import { MentionAutocomplete } from "./MentionAutocomplete";
+import { censorProfanity } from "@/utils/profanityFilter";
 
 interface PrivateMessagePanelProps {
   onClose: () => void;
@@ -376,8 +377,8 @@ function ConversationView({ partnerId, onBack }: ConversationViewProps) {
                         : "bg-muted rounded-tl-sm"
                     )}
                   >
-                    <p className="text-sm break-words whitespace-pre-wrap leading-relaxed overflow-hidden">
-                      {parseEmotes(msg.message)}
+                    <p className="text-sm break-words whitespace-pre-wrap leading-relaxed overflow-hidden" style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}>
+                      {parseEmotes(censorProfanity(msg.message))}
                     </p>
                     <span className={cn(
                       "text-[9px] mt-1 block",
