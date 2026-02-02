@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Gift, Coins, Sparkles, Check, Calendar, X } from "lucide-react";
+import { Gift, Coins, Sparkles, Check, Calendar, X, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useDailyLogin } from "@/hooks/useDailyLogin";
 
@@ -79,8 +79,8 @@ export function DailyLoginReward() {
                 {dailyRewards.map((reward, index) => {
                   const isPast = index < currentDayIndex;
                   const isCurrent = index === currentDayIndex;
-                  const isFuture = index > currentDayIndex;
                   const isClaimed = isCurrent && loginData.rewardClaimed;
+                  const isDay7 = index === 6;
 
                   return (
                     <div
@@ -90,6 +90,8 @@ export function DailyLoginReward() {
                           ? "border-primary bg-primary/10 ring-2 ring-primary/50"
                           : isPast || isClaimed
                           ? "border-green-500/50 bg-green-500/10"
+                          : isDay7
+                          ? "border-amber-500/50 bg-amber-500/10"
                           : "border-border bg-muted/30"
                       }`}
                     >
@@ -102,10 +104,14 @@ export function DailyLoginReward() {
                           ? "bg-gradient-to-r from-amber-500 to-orange-500"
                           : isPast || isClaimed
                           ? "bg-green-500"
+                          : isDay7
+                          ? "bg-gradient-to-r from-purple-500 to-pink-500"
                           : "bg-muted"
                       }`}>
                         {isPast || isClaimed ? (
                           <Check className="w-4 h-4 text-white" />
+                        ) : isDay7 ? (
+                          <Package className="w-4 h-4 text-white" />
                         ) : (
                           <Gift className={`w-4 h-4 ${isCurrent ? "text-white" : "text-muted-foreground"}`} />
                         )}
@@ -121,9 +127,9 @@ export function DailyLoginReward() {
                       </div>
 
                       {/* Day 7 special indicator */}
-                      {index === 6 && (
-                        <div className="absolute -top-1 -right-1 w-3 h-3 bg-amber-400 rounded-full flex items-center justify-center">
-                          <span className="text-[6px] text-black font-bold">★</span>
+                      {isDay7 && (
+                        <div className="absolute -top-1 -right-1 w-4 h-4 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center animate-pulse">
+                          <span className="text-[8px] text-white font-bold">★</span>
                         </div>
                       )}
                     </div>
@@ -132,23 +138,35 @@ export function DailyLoginReward() {
               </div>
 
               {/* Today's Reward */}
-              <div className="bg-muted/50 rounded-xl p-4 mb-4">
+              <div className={`rounded-xl p-4 mb-4 ${
+                loginData.todayReward.itemReward 
+                  ? "bg-gradient-to-r from-purple-500/20 to-pink-500/20 border border-purple-500/30" 
+                  : "bg-muted/50"
+              }`}>
                 <p className="text-sm text-muted-foreground text-center mb-2">
-                  Recompensa de hoje
+                  {loginData.todayReward.itemReward ? "🎁 Recompensa Especial!" : "Recompensa de hoje"}
                 </p>
-                <div className="flex items-center justify-center gap-6">
+                <div className="flex items-center justify-center gap-4 flex-wrap">
                   <div className="flex items-center gap-2">
-                    <Coins className="w-6 h-6 text-gold" />
-                    <span className="text-xl font-bold text-gold">
+                    <Coins className="w-5 h-5 text-gold" />
+                    <span className="text-lg font-bold text-gold">
                       +{loginData.todayReward.gold}
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Sparkles className="w-6 h-6 text-purple-400" />
-                    <span className="text-xl font-bold text-purple-400">
+                    <Sparkles className="w-5 h-5 text-purple-400" />
+                    <span className="text-lg font-bold text-purple-400">
                       +{loginData.todayReward.xp} XP
                     </span>
                   </div>
+                  {loginData.todayReward.itemName && (
+                    <div className="flex items-center gap-2 bg-purple-500/20 px-3 py-1 rounded-full">
+                      <Package className="w-5 h-5 text-purple-300" />
+                      <span className="text-sm font-bold text-purple-300">
+                        {loginData.todayReward.itemName}
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
 
