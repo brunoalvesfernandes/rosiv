@@ -13,6 +13,8 @@ import Missions from "./pages/Missions";
 import Training from "./pages/Training";
 import Arena from "./pages/Arena";
 import Ranking from "./pages/Ranking";
+import Shop from "./pages/Shop";
+import Inventory from "./pages/Inventory";
 import NotFound from "./pages/NotFound";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 
@@ -46,6 +48,12 @@ const App = () => (
             } />
             <Route path="/ranking" element={
               <ProtectedRoute><Ranking /></ProtectedRoute>
+            } />
+            <Route path="/shop" element={
+              <ProtectedRoute><Shop /></ProtectedRoute>
+            } />
+            <Route path="/inventory" element={
+              <ProtectedRoute><Inventory /></ProtectedRoute>
             } />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />

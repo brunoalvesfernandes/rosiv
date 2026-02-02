@@ -67,6 +67,7 @@ export type Database = {
           created_at: string
           current_energy: number
           current_hp: number
+          current_mana: number
           current_xp: number
           defense: number
           gold: number
@@ -74,10 +75,12 @@ export type Database = {
           is_protected: boolean
           last_energy_regen: string
           last_hp_regen: string
+          last_mana_regen: string
           level: number
           luck: number
           max_energy: number
           max_hp: number
+          max_mana: number
           missions_completed: number
           name: string
           protection_until: string | null
@@ -96,6 +99,7 @@ export type Database = {
           created_at?: string
           current_energy?: number
           current_hp?: number
+          current_mana?: number
           current_xp?: number
           defense?: number
           gold?: number
@@ -103,10 +107,12 @@ export type Database = {
           is_protected?: boolean
           last_energy_regen?: string
           last_hp_regen?: string
+          last_mana_regen?: string
           level?: number
           luck?: number
           max_energy?: number
           max_hp?: number
+          max_mana?: number
           missions_completed?: number
           name: string
           protection_until?: string | null
@@ -125,6 +131,7 @@ export type Database = {
           created_at?: string
           current_energy?: number
           current_hp?: number
+          current_mana?: number
           current_xp?: number
           defense?: number
           gold?: number
@@ -132,10 +139,12 @@ export type Database = {
           is_protected?: boolean
           last_energy_regen?: string
           last_hp_regen?: string
+          last_mana_regen?: string
           level?: number
           luck?: number
           max_energy?: number
           max_hp?: number
+          max_mana?: number
           missions_completed?: number
           name?: string
           protection_until?: string | null
@@ -146,6 +155,72 @@ export type Database = {
           vitality?: number
           wins?: number
           xp_to_next_level?: number
+        }
+        Relationships: []
+      }
+      items: {
+        Row: {
+          agility_bonus: number
+          created_at: string
+          defense_bonus: number
+          description: string
+          energy_restore: number
+          hp_restore: number
+          icon: string | null
+          id: string
+          is_consumable: boolean
+          luck_bonus: number
+          mana_bonus: number
+          mana_restore: number
+          min_level: number
+          name: string
+          price: number
+          rarity: string
+          strength_bonus: number
+          type: string
+          vitality_bonus: number
+        }
+        Insert: {
+          agility_bonus?: number
+          created_at?: string
+          defense_bonus?: number
+          description: string
+          energy_restore?: number
+          hp_restore?: number
+          icon?: string | null
+          id?: string
+          is_consumable?: boolean
+          luck_bonus?: number
+          mana_bonus?: number
+          mana_restore?: number
+          min_level?: number
+          name: string
+          price: number
+          rarity?: string
+          strength_bonus?: number
+          type: string
+          vitality_bonus?: number
+        }
+        Update: {
+          agility_bonus?: number
+          created_at?: string
+          defense_bonus?: number
+          description?: string
+          energy_restore?: number
+          hp_restore?: number
+          icon?: string | null
+          id?: string
+          is_consumable?: boolean
+          luck_bonus?: number
+          mana_bonus?: number
+          mana_restore?: number
+          min_level?: number
+          name?: string
+          price?: number
+          rarity?: string
+          strength_bonus?: number
+          type?: string
+          vitality_bonus?: number
         }
         Relationships: []
       }
@@ -232,6 +307,44 @@ export type Database = {
           xp_reward?: number
         }
         Relationships: []
+      }
+      player_inventory: {
+        Row: {
+          acquired_at: string
+          created_at: string
+          id: string
+          is_equipped: boolean
+          item_id: string
+          quantity: number
+          user_id: string
+        }
+        Insert: {
+          acquired_at?: string
+          created_at?: string
+          id?: string
+          is_equipped?: boolean
+          item_id: string
+          quantity?: number
+          user_id: string
+        }
+        Update: {
+          acquired_at?: string
+          created_at?: string
+          id?: string
+          is_equipped?: boolean
+          item_id?: string
+          quantity?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "player_inventory_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       player_missions: {
         Row: {

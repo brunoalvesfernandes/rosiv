@@ -7,6 +7,7 @@ import { useEffect } from "react";
 // Regeneration rates (in minutes)
 const HP_REGEN_RATE = 2; // 1 HP every 2 minutes
 const ENERGY_REGEN_RATE = 1; // 1 Energy every 1 minute
+const MANA_REGEN_RATE = 1.5; // 1 Mana every 1.5 minutes
 
 export interface Character {
   id: string;
@@ -34,6 +35,9 @@ export interface Character {
   protection_until: string | null;
   last_hp_regen: string;
   last_energy_regen: string;
+  last_mana_regen: string;
+  current_mana: number;
+  max_mana: number;
   created_at: string;
   updated_at: string;
 }
@@ -52,17 +56,26 @@ async function fetchAndRegenerate(userId: string): Promise<Character | null> {
   const now = new Date();
   const lastHpRegen = new Date(character.last_hp_regen);
   const lastEnergyRegen = new Date(character.last_energy_regen);
+  const lastManaRegen = new Date(character.last_mana_regen);
 
   // Calculate minutes passed
   const hpMinutesPassed = Math.floor((now.getTime() - lastHpRegen.getTime()) / 60000);
   const energyMinutesPassed = Math.floor((now.getTime() - lastEnergyRegen.getTime()) / 60000);
+  const manaMinutesPassed = Math.floor((now.getTime() - lastManaRegen.getTime()) / 60000);
 
   // Calculate regeneration
   const hpToRegen = Math.floor(hpMinutesPassed / HP_REGEN_RATE);
   const energyToRegen = Math.floor(energyMinutesPassed / ENERGY_REGEN_RATE);
+  const manaToRegen = Math.floor(manaMinutesPassed / MANA_REGEN_RATE);
 
   const needsHpRegen = hpToRegen > 0 && character.current_hp < character.max_hp;
   const needsEnergyRegen = energyToRegen > 0 && character.current_energy < character.max_energy;
+  const needsManaRegen = manaToRegen > 0 && character.current_mana < character.max_mana;
+
+  // If no regeneration needed, return current data
+  if (!needsHpRegen && !needsEnergyRegen && !needsManaRegen) {
+    return character as Character;
+  }
 
   // If no regeneration needed, return current data
   if (!needsHpRegen && !needsEnergyRegen) {
@@ -79,6 +92,11 @@ async function fetchAndRegenerate(userId: string): Promise<Character | null> {
   if (needsEnergyRegen) {
     updates.current_energy = Math.min(character.current_energy + energyToRegen, character.max_energy);
     updates.last_energy_regen = now.toISOString();
+  }
+
+  if (needsManaRegen) {
+    updates.current_mana = Math.min(character.current_mana + manaToRegen, character.max_mana);
+    updates.last_mana_regen = now.toISOString();
   }
 
   // Apply regeneration

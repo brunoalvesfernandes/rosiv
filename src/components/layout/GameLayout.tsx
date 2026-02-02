@@ -11,7 +11,9 @@ import {
   Coins,
   Menu,
   X,
-  Loader2
+  Loader2,
+  Store,
+  Package
 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -31,6 +33,8 @@ const navItems: NavItem[] = [
   { label: "Missões", href: "/missions", icon: Target },
   { label: "Treino", href: "/training", icon: Dumbbell },
   { label: "Arena", href: "/arena", icon: Swords },
+  { label: "Loja", href: "/shop", icon: Store },
+  { label: "Inventário", href: "/inventory", icon: Package },
   { label: "Ranking", href: "/ranking", icon: Trophy },
 ];
 
