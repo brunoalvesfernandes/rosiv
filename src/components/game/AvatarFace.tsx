@@ -9,6 +9,7 @@ export interface AvatarFaceProps {
   accessory?: string | null;
   size?: "xs" | "sm" | "md" | "lg";
   className?: string;
+  rank?: number; // 1, 2, 3 for special frames
 }
 
 const sizeConfig = {
@@ -16,6 +17,21 @@ const sizeConfig = {
   sm: 36,
   md: 48,
   lg: 64,
+};
+
+const getRankFrame = (rank: number | undefined, size: number) => {
+  if (!rank || rank > 3) return null;
+  
+  const colors = {
+    1: { outer: "#ffd700", inner: "#ffec8b", glow: "0 0 12px #ffd700" }, // Gold
+    2: { outer: "#c0c0c0", inner: "#e8e8e8", glow: "0 0 10px #c0c0c0" }, // Silver
+    3: { outer: "#cd7f32", inner: "#daa06d", glow: "0 0 8px #cd7f32" },  // Bronze
+  };
+  
+  const color = colors[rank as 1 | 2 | 3];
+  const strokeWidth = size > 40 ? 3 : 2;
+  
+  return { color, strokeWidth };
 };
 
 // Hair style paths - anime style
@@ -170,38 +186,66 @@ export function AvatarFace({
   faceStyle, 
   accessory,
   size = "md",
-  className
+  className,
+  rank
 }: AvatarFaceProps) {
   const dimension = sizeConfig[size];
   const HairComponent = hairStyles[hairStyle] || hairStyles.short;
   const facePath = faceShapes[faceStyle] || faceShapes.round;
+  const frameConfig = getRankFrame(rank, dimension);
 
   return (
-    <svg 
-      width={dimension} 
-      height={dimension} 
-      viewBox="0 0 100 120"
-      className={cn("rounded-full overflow-hidden", className)}
-      style={{ background: "linear-gradient(180deg, hsl(var(--secondary)) 0%, hsl(var(--card)) 100%)" }}
+    <div 
+      className={cn("relative rounded-full", className)}
+      style={frameConfig ? { 
+        boxShadow: frameConfig.color.glow,
+      } : undefined}
     >
-      {/* Face base */}
-      <path d={facePath} fill={skinTone} />
+      <svg 
+        width={dimension} 
+        height={dimension} 
+        viewBox="0 0 100 120"
+        className="rounded-full overflow-hidden"
+        style={{ 
+          background: "linear-gradient(180deg, hsl(var(--secondary)) 0%, hsl(var(--card)) 100%)",
+          border: frameConfig 
+            ? `${frameConfig.strokeWidth}px solid ${frameConfig.color.outer}` 
+            : undefined,
+        }}
+      >
+        {/* Face base */}
+        <path d={facePath} fill={skinTone} />
+        
+        {/* Ears */}
+        <ellipse cx="10" cy="66" rx="6" ry="10" fill={skinTone} />
+        <ellipse cx="90" cy="66" rx="6" ry="10" fill={skinTone} />
+        
+        {/* Eyes */}
+        {renderEyes(eyeColor)}
+        
+        {/* Face features */}
+        {renderFaceFeatures()}
+        
+        {/* Hair */}
+        {HairComponent(hairColor)}
+        
+        {/* Accessory */}
+        {accessory && accessories[accessory]}
+      </svg>
       
-      {/* Ears */}
-      <ellipse cx="10" cy="66" rx="6" ry="10" fill={skinTone} />
-      <ellipse cx="90" cy="66" rx="6" ry="10" fill={skinTone} />
-      
-      {/* Eyes */}
-      {renderEyes(eyeColor)}
-      
-      {/* Face features */}
-      {renderFaceFeatures()}
-      
-      {/* Hair */}
-      {HairComponent(hairColor)}
-      
-      {/* Accessory */}
-      {accessory && accessories[accessory]}
-    </svg>
+      {/* Rank badge */}
+      {rank && rank <= 3 && (
+        <div 
+          className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-bold"
+          style={{ 
+            background: frameConfig?.color.outer,
+            color: rank === 1 ? "#1a1a1a" : "#fff",
+            boxShadow: `0 1px 3px rgba(0,0,0,0.3)`
+          }}
+        >
+          {rank}
+        </div>
+      )}
+    </div>
   );
 }

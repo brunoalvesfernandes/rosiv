@@ -130,6 +130,7 @@ export default function Ranking() {
                         faceStyle={player.face_style}
                         accessory={player.accessory}
                         size="sm"
+                        rank={rank <= 3 ? rank : undefined}
                       />
                       <div className="flex-1">
                         <p className="font-display font-bold">
