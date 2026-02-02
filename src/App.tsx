@@ -19,6 +19,7 @@ import Inventory from "./pages/Inventory";
 import Guilds from "./pages/Guilds";
 import GuildWars from "./pages/GuildWars";
 import Classes from "./pages/Classes";
+import Dungeons from "./pages/Dungeons";
 import NotFound from "./pages/NotFound";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 
@@ -68,6 +69,9 @@ const App = () => (
             } />
             <Route path="/classes" element={
               <ProtectedRoute><Classes /></ProtectedRoute>
+            } />
+            <Route path="/dungeons" element={
+              <ProtectedRoute><Dungeons /></ProtectedRoute>
             } />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />

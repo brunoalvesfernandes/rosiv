@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { playNotificationSound } from "@/utils/notificationSound";
 
 export interface ChatMessage {
   id: string;
@@ -14,10 +15,12 @@ export interface ChatMessage {
   sender_name?: string;
 }
 
-export function useGlobalChat() {
+export function useGlobalChat(isChatOpen: boolean = false) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const lastSeenRef = useRef<string | null>(null);
 
   // Fetch initial messages
   const { data: initialMessages, isLoading } = useQuery({
@@ -52,8 +55,20 @@ export function useGlobalChat() {
   useEffect(() => {
     if (initialMessages) {
       setMessages(initialMessages);
+      // Set last seen to most recent message
+      if (initialMessages.length > 0) {
+        lastSeenRef.current = initialMessages[initialMessages.length - 1].id;
+      }
     }
   }, [initialMessages]);
+
+  // Reset unread count when chat is opened
+  useEffect(() => {
+    if (isChatOpen && messages.length > 0) {
+      setUnreadCount(0);
+      lastSeenRef.current = messages[messages.length - 1].id;
+    }
+  }, [isChatOpen, messages]);
 
   // Subscribe to realtime updates
   useEffect(() => {
@@ -69,16 +84,25 @@ export function useGlobalChat() {
         },
         async (payload) => {
           const newMessage = payload.new as ChatMessage;
+          
+          // Don't notify for own messages
+          const isOwnMessage = newMessage.user_id === user?.id;
+          
           const { data: character } = await supabase
             .from("characters")
             .select("name")
             .eq("user_id", newMessage.user_id)
             .single();
 
-          setMessages((prev) => [
-            ...prev,
-            { ...newMessage, sender_name: character?.name || "Desconhecido" },
-          ]);
+          const messageWithName = { ...newMessage, sender_name: character?.name || "Desconhecido" };
+
+          setMessages((prev) => [...prev, messageWithName]);
+          
+          // Update unread count and play sound if chat is closed and not own message
+          if (!isChatOpen && !isOwnMessage) {
+            setUnreadCount((prev) => prev + 1);
+            playNotificationSound();
+          }
         }
       )
       .subscribe();
@@ -86,7 +110,8 @@ export function useGlobalChat() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [user?.id, isChatOpen]);
+
 
   // Send message mutation
   const sendMessage = useMutation({
@@ -106,16 +131,27 @@ export function useGlobalChat() {
     },
   });
 
+  const clearUnread = useCallback(() => {
+    setUnreadCount(0);
+    if (messages.length > 0) {
+      lastSeenRef.current = messages[messages.length - 1].id;
+    }
+  }, [messages]);
+
   return {
     messages,
     isLoading,
     sendMessage,
+    unreadCount,
+    clearUnread,
   };
 }
 
-export function useGuildChat(guildId: string | undefined) {
+export function useGuildChat(guildId: string | undefined, isChatOpen: boolean = false) {
   const { user } = useAuth();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const lastSeenRef = useRef<string | null>(null);
 
   const { data: initialMessages, isLoading } = useQuery({
     queryKey: ["guild-chat", guildId],
@@ -151,8 +187,19 @@ export function useGuildChat(guildId: string | undefined) {
   useEffect(() => {
     if (initialMessages) {
       setMessages(initialMessages);
+      if (initialMessages.length > 0) {
+        lastSeenRef.current = initialMessages[initialMessages.length - 1].id;
+      }
     }
   }, [initialMessages]);
+
+  // Reset unread count when chat is opened
+  useEffect(() => {
+    if (isChatOpen && messages.length > 0) {
+      setUnreadCount(0);
+      lastSeenRef.current = messages[messages.length - 1].id;
+    }
+  }, [isChatOpen, messages]);
 
   useEffect(() => {
     if (!guildId) return;
@@ -169,16 +216,25 @@ export function useGuildChat(guildId: string | undefined) {
         },
         async (payload) => {
           const newMessage = payload.new as ChatMessage;
+          
+          // Don't notify for own messages
+          const isOwnMessage = newMessage.user_id === user?.id;
+          
           const { data: character } = await supabase
             .from("characters")
             .select("name")
             .eq("user_id", newMessage.user_id)
             .single();
 
-          setMessages((prev) => [
-            ...prev,
-            { ...newMessage, sender_name: character?.name || "Desconhecido" },
-          ]);
+          const messageWithName = { ...newMessage, sender_name: character?.name || "Desconhecido" };
+
+          setMessages((prev) => [...prev, messageWithName]);
+          
+          // Update unread count and play sound if chat is closed and not own message
+          if (!isChatOpen && !isOwnMessage) {
+            setUnreadCount((prev) => prev + 1);
+            playNotificationSound();
+          }
         }
       )
       .subscribe();
@@ -186,7 +242,7 @@ export function useGuildChat(guildId: string | undefined) {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [guildId]);
+  }, [guildId, user?.id, isChatOpen]);
 
   const sendMessage = useMutation({
     mutationFn: async (message: string) => {
@@ -206,9 +262,18 @@ export function useGuildChat(guildId: string | undefined) {
     },
   });
 
+  const clearUnread = useCallback(() => {
+    setUnreadCount(0);
+    if (messages.length > 0) {
+      lastSeenRef.current = messages[messages.length - 1].id;
+    }
+  }, [messages]);
+
   return {
     messages,
     isLoading,
     sendMessage,
+    unreadCount,
+    clearUnread,
   };
 }

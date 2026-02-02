@@ -196,6 +196,136 @@ export type Database = {
           },
         ]
       }
+      dungeon_participants: {
+        Row: {
+          damage_dealt: number
+          id: string
+          is_ready: boolean
+          joined_at: string
+          run_id: string
+          user_id: string
+        }
+        Insert: {
+          damage_dealt?: number
+          id?: string
+          is_ready?: boolean
+          joined_at?: string
+          run_id: string
+          user_id: string
+        }
+        Update: {
+          damage_dealt?: number
+          id?: string
+          is_ready?: boolean
+          joined_at?: string
+          run_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dungeon_participants_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "dungeon_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dungeon_runs: {
+        Row: {
+          created_at: string
+          created_by: string
+          current_boss_hp: number
+          dungeon_id: string
+          ends_at: string | null
+          id: string
+          started_at: string | null
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          current_boss_hp: number
+          dungeon_id: string
+          ends_at?: string | null
+          id?: string
+          started_at?: string | null
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          current_boss_hp?: number
+          dungeon_id?: string
+          ends_at?: string | null
+          id?: string
+          started_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dungeon_runs_dungeon_id_fkey"
+            columns: ["dungeon_id"]
+            isOneToOne: false
+            referencedRelation: "dungeons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dungeons: {
+        Row: {
+          boss_defense: number
+          boss_hp: number
+          boss_name: string
+          boss_strength: number
+          created_at: string
+          description: string
+          duration_minutes: number
+          gold_reward: number
+          icon: string | null
+          id: string
+          max_players: number
+          min_level: number
+          min_players: number
+          name: string
+          xp_reward: number
+        }
+        Insert: {
+          boss_defense: number
+          boss_hp: number
+          boss_name: string
+          boss_strength: number
+          created_at?: string
+          description: string
+          duration_minutes?: number
+          gold_reward: number
+          icon?: string | null
+          id?: string
+          max_players?: number
+          min_level?: number
+          min_players?: number
+          name: string
+          xp_reward: number
+        }
+        Update: {
+          boss_defense?: number
+          boss_hp?: number
+          boss_name?: string
+          boss_strength?: number
+          created_at?: string
+          description?: string
+          duration_minutes?: number
+          gold_reward?: number
+          icon?: string | null
+          id?: string
+          max_players?: number
+          min_level?: number
+          min_players?: number
+          name?: string
+          xp_reward?: number
+        }
+        Relationships: []
+      }
       guild_members: {
         Row: {
           contribution: number
