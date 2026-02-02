@@ -102,3 +102,15 @@ All colors MUST be HSL.
     @apply bg-background text-foreground;
   }
 }
+
+/* Pulse glow animation for rank frames */
+@keyframes pulse-glow-rank {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.9;
+    transform: scale(1.05);
+  }
+}

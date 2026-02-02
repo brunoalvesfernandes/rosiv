@@ -4,12 +4,13 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Send, MessageCircle, Users, Globe, Loader2 } from "lucide-react";
+import { Send, MessageCircle, Users, Globe, Loader2, Clock } from "lucide-react";
 import { useGlobalChat, useGuildChat, ChatMessage } from "@/hooks/useChat";
 import { useMyGuild } from "@/hooks/useGuilds";
 import { useAuth } from "@/contexts/AuthContext";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { AvatarFace } from "./AvatarFace";
 
 interface ChatMessagesProps {
   messages: ChatMessage[];
@@ -46,27 +47,49 @@ function ChatMessages({ messages, isLoading, currentUserId }: ChatMessagesProps)
     <div ref={scrollRef} className="h-48 overflow-y-auto space-y-2 pr-2">
       {messages.map((msg) => {
         const isMe = msg.user_id === currentUserId;
+        const hasAvatar = msg.hair_style && msg.skin_tone;
+        
         return (
           <div
             key={msg.id}
-            className={`flex flex-col ${isMe ? "items-end" : "items-start"}`}
+            className={`flex gap-2 ${isMe ? "flex-row-reverse" : "flex-row"}`}
           >
-            <div
-              className={`max-w-[80%] rounded-lg px-3 py-2 ${
-                isMe
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-secondary text-secondary-foreground"
-              }`}
-            >
-              <p className="text-xs font-medium opacity-70">{msg.sender_name}</p>
-              <p className="text-sm break-words">{msg.message}</p>
+            {/* Avatar */}
+            {hasAvatar ? (
+              <AvatarFace
+                hairStyle={msg.hair_style!}
+                hairColor={msg.hair_color!}
+                eyeColor={msg.eye_color!}
+                skinTone={msg.skin_tone!}
+                faceStyle={msg.face_style!}
+                accessory={msg.accessory}
+                size="xs"
+              />
+            ) : (
+              <div className="w-7 h-7 rounded-full bg-secondary flex items-center justify-center text-xs font-bold shrink-0">
+                {msg.sender_name?.charAt(0).toUpperCase()}
+              </div>
+            )}
+            
+            {/* Message content */}
+            <div className={`flex flex-col ${isMe ? "items-end" : "items-start"}`}>
+              <div
+                className={`max-w-[180px] rounded-lg px-3 py-2 ${
+                  isMe
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-secondary text-secondary-foreground"
+                }`}
+              >
+                <p className="text-xs font-medium opacity-70">{msg.sender_name}</p>
+                <p className="text-sm break-words">{msg.message}</p>
+              </div>
+              <span className="text-[10px] text-muted-foreground mt-1">
+                {formatDistanceToNow(new Date(msg.created_at), {
+                  addSuffix: true,
+                  locale: ptBR,
+                })}
+              </span>
             </div>
-            <span className="text-[10px] text-muted-foreground mt-1">
-              {formatDistanceToNow(new Date(msg.created_at), {
-                addSuffix: true,
-                locale: ptBR,
-              })}
-            </span>
           </div>
         );
       })}
@@ -78,9 +101,10 @@ interface ChatInputProps {
   onSend: (message: string) => void;
   isPending: boolean;
   placeholder?: string;
+  cooldown?: number; // Seconds remaining
 }
 
-function ChatInput({ onSend, isPending, placeholder }: ChatInputProps) {
+function ChatInput({ onSend, isPending, placeholder, cooldown = 0 }: ChatInputProps) {
   const [message, setMessage] = useState("");
 
   const handleSend = () => {
@@ -96,23 +120,28 @@ function ChatInput({ onSend, isPending, placeholder }: ChatInputProps) {
     }
   };
 
+  const isDisabled = isPending || cooldown > 0;
+
   return (
     <div className="flex gap-2 mt-3">
       <Input
         value={message}
         onChange={(e) => setMessage(e.target.value)}
         onKeyPress={handleKeyPress}
-        placeholder={placeholder || "Digite sua mensagem..."}
+        placeholder={cooldown > 0 ? `Aguarde ${cooldown}s...` : placeholder || "Digite sua mensagem..."}
         maxLength={200}
-        disabled={isPending}
+        disabled={isDisabled}
       />
       <Button
         size="icon"
         onClick={handleSend}
-        disabled={!message.trim() || isPending}
+        disabled={!message.trim() || isDisabled}
+        title={cooldown > 0 ? `Aguarde ${cooldown}s` : undefined}
       >
         {isPending ? (
           <Loader2 className="w-4 h-4 animate-spin" />
+        ) : cooldown > 0 ? (
+          <Clock className="w-4 h-4" />
         ) : (
           <Send className="w-4 h-4" />
         )}
@@ -130,6 +159,7 @@ export function ChatBox() {
     messages: globalMessages,
     isLoading: globalLoading,
     sendMessage: sendGlobalMessage,
+    cooldownRemaining,
   } = useGlobalChat();
 
   const {
@@ -173,6 +203,7 @@ export function ChatBox() {
               onSend={(msg) => sendGlobalMessage.mutate(msg)}
               isPending={sendGlobalMessage.isPending}
               placeholder="Mensagem global..."
+              cooldown={cooldownRemaining}
             />
           </TabsContent>
 

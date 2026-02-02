@@ -23,9 +23,9 @@ const getRankFrame = (rank: number | undefined, size: number) => {
   if (!rank || rank > 3) return null;
   
   const colors = {
-    1: { outer: "#ffd700", inner: "#ffec8b", glow: "0 0 12px #ffd700" }, // Gold
-    2: { outer: "#c0c0c0", inner: "#e8e8e8", glow: "0 0 10px #c0c0c0" }, // Silver
-    3: { outer: "#cd7f32", inner: "#daa06d", glow: "0 0 8px #cd7f32" },  // Bronze
+    1: { outer: "#ffd700", inner: "#ffec8b", glow: "0 0 12px #ffd700, 0 0 20px #ffd70066" }, // Gold
+    2: { outer: "#c0c0c0", inner: "#e8e8e8", glow: "0 0 10px #c0c0c0, 0 0 16px #c0c0c066" }, // Silver
+    3: { outer: "#cd7f32", inner: "#daa06d", glow: "0 0 8px #cd7f32, 0 0 14px #cd7f3266" },  // Bronze
   };
   
   const color = colors[rank as 1 | 2 | 3];
@@ -196,9 +196,10 @@ export function AvatarFace({
 
   return (
     <div 
-      className={cn("relative rounded-full", className)}
+      className={cn("relative rounded-full", frameConfig ? "animate-pulse-glow-rank" : "", className)}
       style={frameConfig ? { 
         boxShadow: frameConfig.color.glow,
+        animation: "pulse-glow-rank 2s ease-in-out infinite",
       } : undefined}
     >
       <svg 
