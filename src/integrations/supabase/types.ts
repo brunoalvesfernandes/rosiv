@@ -925,6 +925,42 @@ export type Database = {
         }
         Relationships: []
       }
+      pet_foods: {
+        Row: {
+          created_at: string
+          description: string
+          happiness_restore: number
+          hunger_restore: number
+          icon: string | null
+          id: string
+          name: string
+          price: number
+          rarity: string
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          happiness_restore?: number
+          hunger_restore?: number
+          icon?: string | null
+          id?: string
+          name: string
+          price?: number
+          rarity?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          happiness_restore?: number
+          hunger_restore?: number
+          icon?: string | null
+          id?: string
+          name?: string
+          price?: number
+          rarity?: string
+        }
+        Relationships: []
+      }
       pets: {
         Row: {
           ability_cooldown: number
@@ -1158,14 +1194,49 @@ export type Database = {
           },
         ]
       }
+      player_pet_foods: {
+        Row: {
+          created_at: string
+          food_id: string
+          id: string
+          quantity: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          food_id: string
+          id?: string
+          quantity?: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          food_id?: string
+          id?: string
+          quantity?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "player_pet_foods_food_id_fkey"
+            columns: ["food_id"]
+            isOneToOne: false
+            referencedRelation: "pet_foods"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       player_pets: {
         Row: {
           acquired_at: string
           created_at: string
           experience: number
+          happiness: number
+          hunger: number
           id: string
           is_active: boolean
           last_ability_use: string | null
+          last_fed: string | null
           level: number
           nickname: string | null
           pet_id: string
@@ -1175,9 +1246,12 @@ export type Database = {
           acquired_at?: string
           created_at?: string
           experience?: number
+          happiness?: number
+          hunger?: number
           id?: string
           is_active?: boolean
           last_ability_use?: string | null
+          last_fed?: string | null
           level?: number
           nickname?: string | null
           pet_id: string
@@ -1187,9 +1261,12 @@ export type Database = {
           acquired_at?: string
           created_at?: string
           experience?: number
+          happiness?: number
+          hunger?: number
           id?: string
           is_active?: boolean
           last_ability_use?: string | null
+          last_fed?: string | null
           level?: number
           nickname?: string | null
           pet_id?: string

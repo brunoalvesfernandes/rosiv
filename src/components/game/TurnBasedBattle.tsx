@@ -165,6 +165,7 @@ export function TurnBasedBattle({
     let damage = 0;
     let logMessage = "";
     let newPetCooldown = battleState.petCooldown;
+    let newPlayerHp = battleState.playerHp;
 
     switch (skill) {
       case "attack":
@@ -186,9 +187,33 @@ export function TurnBasedBattle({
         break;
       case "pet_ability":
         if (activePet && battleState.petCooldown === 0) {
-          const petDamage = calculateDamage(activePet.pet.strength_bonus * 5 + playerStats.strength * 0.5, npc.defense * 0.5);
-          damage = petDamage;
-          logMessage = `${activePet.nickname || activePet.pet.name} atacou causando ${petDamage} de dano!`;
+          const abilityType = activePet.pet.ability_type;
+          const abilityValue = activePet.pet.ability_value;
+          
+          switch (abilityType) {
+            case "heal":
+              // Heal ability - restores HP based on ability value percentage
+              const healAmount = Math.floor(playerStats.maxHp * (abilityValue / 100));
+              newPlayerHp = Math.min(playerStats.maxHp, battleState.playerHp + healAmount);
+              logMessage = `${activePet.nickname || activePet.pet.name} curou você em ${healAmount} HP! ❤️`;
+              break;
+            case "strength_boost":
+              // Temporary strength boost - deals extra damage this turn
+              damage = calculateDamage(playerStats.strength * (1 + abilityValue / 100), npc.defense, 1.5);
+              logMessage = `${activePet.nickname || activePet.pet.name} potencializou seu ataque! ${damage} de dano! ⚔️`;
+              break;
+            case "shield":
+              // Shield ability - activates defense and deals some damage
+              damage = calculateDamage(playerStats.strength * 0.5, npc.defense * 0.5);
+              setBattleState(prev => ({ ...prev, playerDefending: true }));
+              logMessage = `${activePet.nickname || activePet.pet.name} criou um escudo e atacou causando ${damage}! 🛡️`;
+              break;
+            default:
+              // Default attack for other ability types
+              const petDamage = calculateDamage(activePet.pet.strength_bonus * 5 + playerStats.strength * 0.5, npc.defense * 0.5);
+              damage = petDamage;
+              logMessage = `${activePet.nickname || activePet.pet.name} atacou causando ${petDamage} de dano!`;
+          }
           newPetCooldown = 3; // 3 turns cooldown
         }
         break;
@@ -198,6 +223,7 @@ export function TurnBasedBattle({
 
     setBattleState(prev => ({
       ...prev,
+      playerHp: newPlayerHp,
       enemyHp: newEnemyHp,
       petCooldown: newPetCooldown,
       logs: [...prev.logs, logMessage],
