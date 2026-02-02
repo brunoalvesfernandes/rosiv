@@ -158,6 +158,121 @@ export type Database = {
         }
         Relationships: []
       }
+      guild_members: {
+        Row: {
+          contribution: number
+          created_at: string
+          guild_id: string
+          id: string
+          joined_at: string
+          role: Database["public"]["Enums"]["guild_role"]
+          user_id: string
+        }
+        Insert: {
+          contribution?: number
+          created_at?: string
+          guild_id: string
+          id?: string
+          joined_at?: string
+          role?: Database["public"]["Enums"]["guild_role"]
+          user_id: string
+        }
+        Update: {
+          contribution?: number
+          created_at?: string
+          guild_id?: string
+          id?: string
+          joined_at?: string
+          role?: Database["public"]["Enums"]["guild_role"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "guild_members_guild_id_fkey"
+            columns: ["guild_id"]
+            isOneToOne: false
+            referencedRelation: "guilds"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      guild_requests: {
+        Row: {
+          created_at: string
+          guild_id: string
+          id: string
+          message: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          guild_id: string
+          id?: string
+          message?: string | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          guild_id?: string
+          id?: string
+          message?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "guild_requests_guild_id_fkey"
+            columns: ["guild_id"]
+            isOneToOne: false
+            referencedRelation: "guilds"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      guilds: {
+        Row: {
+          created_at: string
+          description: string | null
+          experience: number
+          gold_bank: number
+          icon: string | null
+          id: string
+          leader_id: string
+          level: number
+          max_members: number
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          experience?: number
+          gold_bank?: number
+          icon?: string | null
+          id?: string
+          leader_id: string
+          level?: number
+          max_members?: number
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          experience?: number
+          gold_bank?: number
+          icon?: string | null
+          id?: string
+          leader_id?: string
+          level?: number
+          max_members?: number
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       items: {
         Row: {
           agility_bonus: number
@@ -468,7 +583,7 @@ export type Database = {
       }
     }
     Enums: {
-      [_ in never]: never
+      guild_role: "leader" | "officer" | "member"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -595,6 +710,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      guild_role: ["leader", "officer", "member"],
+    },
   },
 } as const

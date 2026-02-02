@@ -27,12 +27,15 @@ interface NavItem {
   icon: React.ElementType;
 }
 
+import { Users } from "lucide-react";
+
 const navItems: NavItem[] = [
   { label: "Dashboard", href: "/dashboard", icon: Shield },
   { label: "Personagem", href: "/character", icon: User },
   { label: "Missões", href: "/missions", icon: Target },
   { label: "Treino", href: "/training", icon: Dumbbell },
   { label: "Arena", href: "/arena", icon: Swords },
+  { label: "Guildas", href: "/guilds", icon: Users },
   { label: "Loja", href: "/shop", icon: Store },
   { label: "Inventário", href: "/inventory", icon: Package },
   { label: "Ranking", href: "/ranking", icon: Trophy },

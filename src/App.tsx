@@ -15,6 +15,7 @@ import Arena from "./pages/Arena";
 import Ranking from "./pages/Ranking";
 import Shop from "./pages/Shop";
 import Inventory from "./pages/Inventory";
+import Guilds from "./pages/Guilds";
 import NotFound from "./pages/NotFound";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 
@@ -54,6 +55,9 @@ const App = () => (
             } />
             <Route path="/inventory" element={
               <ProtectedRoute><Inventory /></ProtectedRoute>
+            } />
+            <Route path="/guilds" element={
+              <ProtectedRoute><Guilds /></ProtectedRoute>
             } />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
