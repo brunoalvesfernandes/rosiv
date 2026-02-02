@@ -43,11 +43,37 @@ function ChatMessages({ messages, isLoading, currentUserId }: ChatMessagesProps)
     );
   }
 
+  const getRoleColor = (role?: 'leader' | 'officer' | 'member' | null) => {
+    switch (role) {
+      case 'leader':
+        return 'text-yellow-400'; // Gold for leader
+      case 'officer':
+        return 'text-blue-400'; // Blue for officer
+      case 'member':
+        return 'text-green-400'; // Green for member
+      default:
+        return 'opacity-70'; // Default
+    }
+  };
+
+  const getRoleLabel = (role?: 'leader' | 'officer' | 'member' | null) => {
+    switch (role) {
+      case 'leader':
+        return '👑';
+      case 'officer':
+        return '⚔️';
+      default:
+        return '';
+    }
+  };
+
   return (
     <div ref={scrollRef} className="h-48 overflow-y-auto space-y-2 pr-2">
       {messages.map((msg) => {
         const isMe = msg.user_id === currentUserId;
         const hasAvatar = msg.hair_style && msg.skin_tone;
+        const roleLabel = getRoleLabel(msg.guild_role);
+        const roleColor = getRoleColor(msg.guild_role);
         
         return (
           <div
@@ -80,7 +106,9 @@ function ChatMessages({ messages, isLoading, currentUserId }: ChatMessagesProps)
                     : "bg-secondary text-secondary-foreground"
                 }`}
               >
-                <p className="text-xs font-medium opacity-70">{msg.sender_name}</p>
+                <p className={`text-xs font-medium ${roleColor}`}>
+                  {roleLabel} {msg.sender_name}
+                </p>
                 <p className="text-sm break-words">{msg.message}</p>
               </div>
               <span className="text-[10px] text-muted-foreground mt-1">

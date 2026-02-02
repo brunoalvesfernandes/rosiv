@@ -20,6 +20,8 @@ export interface ChatMessage {
   skin_tone?: string;
   face_style?: string;
   accessory?: string | null;
+  // Guild role
+  guild_role?: 'leader' | 'officer' | 'member' | null;
 }
 
 const GLOBAL_CHAT_COOLDOWN_MS = 20000; // 20 seconds
@@ -227,6 +229,15 @@ export function useGuildChat(guildId: string | undefined, isChatOpen: boolean = 
             .select("name, hair_style, hair_color, eye_color, skin_tone, face_style, accessory")
             .eq("user_id", msg.user_id)
             .single();
+          
+          // Get guild role for this user
+          const { data: memberData } = await supabase
+            .from("guild_members")
+            .select("role")
+            .eq("guild_id", guildId)
+            .eq("user_id", msg.user_id)
+            .single();
+
           return { 
             ...msg, 
             sender_name: character?.name || "Desconhecido",
@@ -236,6 +247,7 @@ export function useGuildChat(guildId: string | undefined, isChatOpen: boolean = 
             skin_tone: character?.skin_tone,
             face_style: character?.face_style,
             accessory: character?.accessory,
+            guild_role: memberData?.role as 'leader' | 'officer' | 'member' | null,
           };
         })
       );
@@ -287,6 +299,14 @@ export function useGuildChat(guildId: string | undefined, isChatOpen: boolean = 
             .eq("user_id", newMessage.user_id)
             .single();
 
+          // Get guild role for this user
+          const { data: memberData } = await supabase
+            .from("guild_members")
+            .select("role")
+            .eq("guild_id", guildId)
+            .eq("user_id", newMessage.user_id)
+            .single();
+
           const messageWithName = { 
             ...newMessage, 
             sender_name: character?.name || "Desconhecido",
@@ -296,6 +316,7 @@ export function useGuildChat(guildId: string | undefined, isChatOpen: boolean = 
             skin_tone: character?.skin_tone,
             face_style: character?.face_style,
             accessory: character?.accessory,
+            guild_role: memberData?.role as 'leader' | 'officer' | 'member' | null,
           };
 
           setMessages((prev) => [...prev, messageWithName]);
