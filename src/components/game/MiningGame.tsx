@@ -29,10 +29,12 @@ import {
   usePickaxes,
   usePlayerPickaxes,
   useMiningNodes,
+  useMiningDrops,
   useBuyPickaxe,
   useEquipPickaxe,
   useUpdateDurability,
   useRepairPickaxe,
+  useAddMinedMaterial,
   MiningNode,
   PlayerPickaxe,
   Pickaxe as PickaxeType,
@@ -50,52 +52,29 @@ const rarityColors: Record<string, string> = {
   legendary: "text-amber-500 border-amber-500/50",
 };
 
-// Block visual styles per tier - more distinct colors and textures
-const blockStyles: Record<number, { bg: string; border: string; gradient: string; label: string }> = {
-  1: { 
-    bg: "bg-stone-600", 
-    border: "border-stone-500", 
-    gradient: "bg-gradient-to-br from-stone-500 to-stone-700",
-    label: "Pedra"
-  },
-  2: { 
-    bg: "bg-amber-700", 
-    border: "border-amber-500", 
-    gradient: "bg-gradient-to-br from-amber-600 to-amber-800",
-    label: "Cobre"
-  },
-  3: { 
-    bg: "bg-slate-500", 
-    border: "border-slate-400", 
-    gradient: "bg-gradient-to-br from-slate-400 to-slate-600",
-    label: "Ferro"
-  },
-  4: { 
-    bg: "bg-yellow-500", 
-    border: "border-yellow-400", 
-    gradient: "bg-gradient-to-br from-yellow-400 to-yellow-600",
-    label: "Ouro"
-  },
-  5: { 
-    bg: "bg-purple-600", 
-    border: "border-purple-400", 
-    gradient: "bg-gradient-to-br from-purple-500 to-purple-700",
-    label: "Ametista"
-  },
+// Block visual styles per tier - simple solid colors
+const blockStyles: Record<number, { color: string; name: string; icon: string }> = {
+  1: { color: "bg-stone-500", name: "Pedra/Cobre", icon: "🪨" },
+  2: { color: "bg-slate-400", name: "Prata/Ferro", icon: "⬛" },
+  3: { color: "bg-yellow-500", name: "Ouro/Cristal", icon: "🟡" },
+  4: { color: "bg-cyan-400", name: "Diamante", icon: "💎" },
+  5: { color: "bg-purple-500", name: "Sombrio/Elemental", icon: "🔮" },
 };
 
 interface Block {
   id: string;
   x: number;
   y: number;
-  node: MiningNode | null; // null = empty/mined
+  node: MiningNode | null;
   currentHp: number;
   isMined: boolean;
 }
 
 interface DropPopup {
   id: string;
+  name: string;
   icon: string;
+  quantity: number;
   x: number;
   y: number;
 }
@@ -108,11 +87,13 @@ export function MiningGame() {
   const { data: pickaxes, isLoading: pickaxesLoading } = usePickaxes();
   const { data: playerPickaxes, isLoading: playerPickaxesLoading } = usePlayerPickaxes();
   const { data: miningNodes, isLoading: nodesLoading } = useMiningNodes();
+  const { data: miningDrops } = useMiningDrops();
   const { data: character } = useCharacter();
   const buyPickaxe = useBuyPickaxe();
   const equipPickaxe = useEquipPickaxe();
   const updateDurability = useUpdateDurability();
   const repairPickaxe = useRepairPickaxe();
+  const addMinedMaterial = useAddMinedMaterial();
 
   const [blocks, setBlocks] = useState<Block[]>([]);
   const [playerPos, setPlayerPos] = useState({ x: 4, y: 0 });
@@ -395,16 +376,39 @@ export function MiningGame() {
 
     // Block destroyed
     if (newHp <= 0) {
-      // Show drop popup
-      const dropId = `drop-${Date.now()}`;
-      setDropPopups((prev) => [
-        ...prev,
-        { id: dropId, icon: block.node!.icon, x: block.x, y: block.y },
-      ]);
+      // Find the drop for this node
+      const nodeDrop = miningDrops?.find(d => d.node_id === block.node!.id);
+      
+      if (nodeDrop && nodeDrop.material) {
+        // Calculate random quantity
+        const quantity = Math.floor(
+          Math.random() * (nodeDrop.max_quantity - nodeDrop.min_quantity + 1)
+        ) + nodeDrop.min_quantity;
 
-      setTimeout(() => {
-        setDropPopups((prev) => prev.filter((d) => d.id !== dropId));
-      }, 800);
+        // Add to player inventory
+        await addMinedMaterial.mutateAsync({
+          materialId: nodeDrop.material_id,
+          quantity,
+        });
+
+        // Show drop popup
+        const dropId = `drop-${Date.now()}`;
+        setDropPopups((prev) => [
+          ...prev,
+          { 
+            id: dropId, 
+            name: nodeDrop.material.name,
+            icon: nodeDrop.material.icon, 
+            quantity,
+            x: block.x, 
+            y: block.y 
+          },
+        ]);
+
+        setTimeout(() => {
+          setDropPopups((prev) => prev.filter((d) => d.id !== dropId));
+        }, 1200);
+      }
 
       // Mark as mined
       setBlocks((prev) =>
@@ -536,12 +540,12 @@ export function MiningGame() {
             <motion.button
               key={block.id}
               className={cn(
-                "absolute flex flex-col items-center justify-center transition-all border-2 overflow-hidden",
+                "absolute flex items-center justify-center transition-all overflow-hidden rounded-sm",
                 block.isMined
-                  ? "bg-transparent border-transparent"
+                  ? "bg-transparent"
                   : cn(
-                      style.gradient,
-                      style.border,
+                      style.color,
+                      "border border-black/30",
                       isAdjacent(block.x, block.y) && "ring-2 ring-primary ring-offset-1 ring-offset-background cursor-pointer hover:brightness-125"
                     )
               )}
@@ -557,12 +561,6 @@ export function MiningGame() {
             >
               {!block.isMined && block.node && (
                 <>
-                  {/* Block icon */}
-                  <span className="text-lg drop-shadow-md">{block.node.icon}</span>
-                  {/* Tier indicator */}
-                  <span className="text-[8px] font-bold text-white/80 drop-shadow-sm">
-                    T{block.node.tier}
-                  </span>
                   {/* HP bar when damaged */}
                   {block.currentHp < block.node.hp && (
                     <div className="absolute bottom-0 left-0 right-0 h-1 bg-black/50">
@@ -574,7 +572,7 @@ export function MiningGame() {
                   )}
                   {/* Crack overlay when damaged */}
                   {block.currentHp < block.node.hp * 0.5 && (
-                    <div className="absolute inset-0 bg-black/20 pointer-events-none" />
+                    <div className="absolute inset-0 bg-black/30 pointer-events-none" />
                   )}
                 </>
               )}
@@ -639,18 +637,18 @@ export function MiningGame() {
           {dropPopups.map((drop) => (
             <motion.div
               key={drop.id}
-              className="absolute z-20 flex items-center gap-1 bg-primary text-primary-foreground px-2 py-1 rounded text-sm font-bold pointer-events-none"
+              className="absolute z-20 flex items-center gap-1 bg-primary text-primary-foreground px-2 py-1 rounded text-sm font-bold pointer-events-none shadow-lg"
               style={{
                 left: drop.x * CELL_SIZE + CELL_SIZE / 2,
                 top: drop.y * CELL_SIZE,
               }}
               initial={{ opacity: 0, y: 0, scale: 0.5, x: "-50%" }}
-              animate={{ opacity: 1, y: -20, scale: 1 }}
-              exit={{ opacity: 0, y: -40 }}
-              transition={{ duration: 0.4 }}
+              animate={{ opacity: 1, y: -30, scale: 1 }}
+              exit={{ opacity: 0, y: -50 }}
+              transition={{ duration: 0.6 }}
             >
               <Sparkles className="w-3 h-3" />
-              +1 {drop.icon}
+              +{drop.quantity} {drop.icon} {drop.name}
             </motion.div>
           ))}
         </AnimatePresence>
@@ -691,11 +689,13 @@ export function MiningGame() {
       </div>
 
       {/* Block legend */}
-      <div className="flex justify-center gap-2 flex-wrap">
+      <div className="flex justify-center gap-2 flex-wrap p-2 bg-card/50 rounded-lg border border-border">
         {Object.entries(blockStyles).map(([tier, style]) => (
-          <div key={tier} className={cn("flex items-center gap-1 px-2 py-1 rounded text-xs", style.gradient, "text-white")}>
-            <span className="font-bold">T{tier}</span>
-            <span>{style.label}</span>
+          <div key={tier} className="flex items-center gap-1.5 px-2 py-1">
+            <div className={cn("w-4 h-4 rounded-sm border border-black/30", style.color)} />
+            <span className="text-xs text-foreground">
+              <span className="font-bold">T{tier}</span> {style.name}
+            </span>
           </div>
         ))}
       </div>
