@@ -99,17 +99,68 @@ export function useMiningNodes() {
   });
 }
 
-// Fetch mining drops
+// Fetch mining drops with material info
 export function useMiningDrops() {
   return useQuery({
     queryKey: ["mining-drops"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("mining_drops")
-        .select("*");
+        .select("*, material:materials(*)");
 
       if (error) throw error;
-      return data as MiningDrop[];
+      return data as (MiningDrop & { material: { id: string; name: string; icon: string; rarity: string } })[];
+    },
+  });
+}
+
+// Add mined materials to player inventory
+export function useAddMinedMaterial() {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ materialId, quantity }: { materialId: string; quantity: number }) => {
+      if (!user) throw new Error("Não autenticado");
+
+      // Check if player already has this material
+      const { data: existing, error: fetchError } = await supabase
+        .from("player_materials")
+        .select("id, quantity")
+        .eq("user_id", user.id)
+        .eq("material_id", materialId)
+        .maybeSingle();
+
+      if (fetchError) throw fetchError;
+
+      if (existing) {
+        // Update quantity
+        const { error: updateError } = await supabase
+          .from("player_materials")
+          .update({ quantity: existing.quantity + quantity })
+          .eq("id", existing.id);
+
+        if (updateError) throw updateError;
+      } else {
+        // Insert new record
+        const { error: insertError } = await supabase
+          .from("player_materials")
+          .insert({
+            user_id: user.id,
+            material_id: materialId,
+            quantity: quantity,
+          });
+
+        if (insertError) throw insertError;
+      }
+
+      return { materialId, quantity };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["player-materials"] });
+    },
+    onError: (error: Error) => {
+      console.error("Error adding material:", error);
     },
   });
 }
