@@ -53,6 +53,33 @@ export type Database = {
         }
         Relationships: []
       }
+      admin_logs: {
+        Row: {
+          action: string
+          admin_id: string
+          created_at: string
+          details: Json | null
+          id: string
+          target_user_id: string | null
+        }
+        Insert: {
+          action: string
+          admin_id: string
+          created_at?: string
+          details?: Json | null
+          id?: string
+          target_user_id?: string | null
+        }
+        Update: {
+          action?: string
+          admin_id?: string
+          created_at?: string
+          details?: Json | null
+          id?: string
+          target_user_id?: string | null
+        }
+        Relationships: []
+      }
       battle_logs: {
         Row: {
           arena_points_change: number
@@ -105,6 +132,8 @@ export type Database = {
           arena_points: number
           available_points: number
           avatar_id: string
+          ban_reason: string | null
+          banned_at: string | null
           class: Database["public"]["Enums"]["character_class"] | null
           created_at: string
           current_energy: number
@@ -118,6 +147,7 @@ export type Database = {
           hair_color: string
           hair_style: string
           id: string
+          is_banned: boolean
           is_protected: boolean
           last_energy_regen: string
           last_hp_regen: string
@@ -148,6 +178,8 @@ export type Database = {
           arena_points?: number
           available_points?: number
           avatar_id?: string
+          ban_reason?: string | null
+          banned_at?: string | null
           class?: Database["public"]["Enums"]["character_class"] | null
           created_at?: string
           current_energy?: number
@@ -161,6 +193,7 @@ export type Database = {
           hair_color?: string
           hair_style?: string
           id?: string
+          is_banned?: boolean
           is_protected?: boolean
           last_energy_regen?: string
           last_hp_regen?: string
@@ -191,6 +224,8 @@ export type Database = {
           arena_points?: number
           available_points?: number
           avatar_id?: string
+          ban_reason?: string | null
+          banned_at?: string | null
           class?: Database["public"]["Enums"]["character_class"] | null
           created_at?: string
           current_energy?: number
@@ -204,6 +239,7 @@ export type Database = {
           hair_color?: string
           hair_style?: string
           id?: string
+          is_banned?: boolean
           is_protected?: boolean
           last_energy_regen?: string
           last_hp_regen?: string
@@ -754,6 +790,57 @@ export type Database = {
         }
         Relationships: []
       }
+      pets: {
+        Row: {
+          ability_cooldown: number
+          ability_type: string
+          ability_value: number
+          agility_bonus: number
+          created_at: string
+          defense_bonus: number
+          description: string
+          icon: string | null
+          id: string
+          luck_bonus: number
+          name: string
+          rarity: string
+          strength_bonus: number
+          vitality_bonus: number
+        }
+        Insert: {
+          ability_cooldown?: number
+          ability_type: string
+          ability_value?: number
+          agility_bonus?: number
+          created_at?: string
+          defense_bonus?: number
+          description: string
+          icon?: string | null
+          id?: string
+          luck_bonus?: number
+          name: string
+          rarity?: string
+          strength_bonus?: number
+          vitality_bonus?: number
+        }
+        Update: {
+          ability_cooldown?: number
+          ability_type?: string
+          ability_value?: number
+          agility_bonus?: number
+          created_at?: string
+          defense_bonus?: number
+          description?: string
+          icon?: string | null
+          id?: string
+          luck_bonus?: number
+          name?: string
+          rarity?: string
+          strength_bonus?: number
+          vitality_bonus?: number
+        }
+        Relationships: []
+      }
       player_achievements: {
         Row: {
           achievement_id: string
@@ -893,6 +980,53 @@ export type Database = {
             columns: ["mission_id"]
             isOneToOne: false
             referencedRelation: "missions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      player_pets: {
+        Row: {
+          acquired_at: string
+          created_at: string
+          experience: number
+          id: string
+          is_active: boolean
+          last_ability_use: string | null
+          level: number
+          nickname: string | null
+          pet_id: string
+          user_id: string
+        }
+        Insert: {
+          acquired_at?: string
+          created_at?: string
+          experience?: number
+          id?: string
+          is_active?: boolean
+          last_ability_use?: string | null
+          level?: number
+          nickname?: string | null
+          pet_id: string
+          user_id: string
+        }
+        Update: {
+          acquired_at?: string
+          created_at?: string
+          experience?: number
+          id?: string
+          is_active?: boolean
+          last_ability_use?: string | null
+          level?: number
+          nickname?: string | null
+          pet_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "player_pets_pet_id_fkey"
+            columns: ["pet_id"]
+            isOneToOne: false
+            referencedRelation: "pets"
             referencedColumns: ["id"]
           },
         ]
@@ -1037,6 +1171,27 @@ export type Database = {
         }
         Relationships: []
       }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
       war_battles: {
         Row: {
           attacker_damage: number
@@ -1094,8 +1249,17 @@ export type Database = {
         }
         Returns: number
       }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      is_admin: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
+      app_role: "admin" | "moderator" | "user"
       character_class: "warrior" | "mage" | "archer"
       guild_role: "leader" | "officer" | "member"
     }
@@ -1225,6 +1389,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      app_role: ["admin", "moderator", "user"],
       character_class: ["warrior", "mage", "archer"],
       guild_role: ["leader", "officer", "member"],
     },
