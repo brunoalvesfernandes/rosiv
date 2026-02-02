@@ -3,13 +3,17 @@ import { useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Send, MessageCircle, Users, Globe, Loader2, X, Minimize2 } from "lucide-react";
+import { Send, MessageCircle, Users, Globe, Loader2, X, Minimize2, Clock } from "lucide-react";
 import { useGlobalChat, useGuildChat, ChatMessage } from "@/hooks/useChat";
 import { useMyGuild } from "@/hooks/useGuilds";
 import { useAuth } from "@/contexts/AuthContext";
+import { useCharacter } from "@/hooks/useCharacter";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
+import { AvatarFace } from "./AvatarFace";
+import { EmotePicker, parseEmotes } from "./chat/GameEmotes";
+import { LevelBadge } from "./chat/LevelBadge";
 
 interface ChatMessagesProps {
   messages: ChatMessage[];
@@ -42,32 +46,75 @@ function ChatMessages({ messages, isLoading, currentUserId }: ChatMessagesProps)
     );
   }
 
+  const getRoleColor = (role?: 'leader' | 'officer' | 'member' | null) => {
+    switch (role) {
+      case 'leader': return 'text-yellow-400';
+      case 'officer': return 'text-blue-400';
+      case 'member': return 'text-green-400';
+      default: return 'opacity-70';
+    }
+  };
+
+  const getRoleLabel = (role?: 'leader' | 'officer' | 'member' | null) => {
+    switch (role) {
+      case 'leader': return '👑';
+      case 'officer': return '⚔️';
+      default: return '';
+    }
+  };
+
   return (
     <div ref={scrollRef} className="flex-1 overflow-y-auto space-y-2 p-3">
       {messages.map((msg) => {
         const isMe = msg.user_id === currentUserId;
+        const hasAvatar = msg.hair_style && msg.skin_tone;
+        const roleLabel = getRoleLabel(msg.guild_role);
+        const roleColor = getRoleColor(msg.guild_role);
+        
         return (
           <div
             key={msg.id}
-            className={cn("flex flex-col", isMe ? "items-end" : "items-start")}
+            className={cn("flex gap-2", isMe ? "flex-row-reverse" : "flex-row")}
           >
-            <div
-              className={cn(
-                "max-w-[85%] rounded-lg px-3 py-2",
-                isMe
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-secondary text-secondary-foreground"
-              )}
-            >
-              <p className="text-xs font-medium opacity-70">{msg.sender_name}</p>
-              <p className="text-sm break-words">{msg.message}</p>
+            {/* Avatar */}
+            {hasAvatar ? (
+              <AvatarFace
+                hairStyle={msg.hair_style!}
+                hairColor={msg.hair_color!}
+                eyeColor={msg.eye_color!}
+                skinTone={msg.skin_tone!}
+                faceStyle={msg.face_style!}
+                accessory={msg.accessory}
+                size="xs"
+              />
+            ) : (
+              <div className="w-6 h-6 rounded-full bg-secondary flex items-center justify-center text-[10px] font-bold shrink-0">
+                {msg.sender_name?.charAt(0).toUpperCase()}
+              </div>
+            )}
+            
+            <div className={cn("flex flex-col", isMe ? "items-end" : "items-start")}>
+              <div
+                className={cn(
+                  "max-w-[85%] rounded-lg px-3 py-2",
+                  isMe
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-secondary text-secondary-foreground"
+                )}
+              >
+                <p className={`text-xs font-medium flex items-center gap-1 ${roleColor}`}>
+                  {roleLabel} {msg.sender_name}
+                  {msg.level && <LevelBadge level={msg.level} />}
+                </p>
+                <p className="text-sm break-words">{parseEmotes(msg.message)}</p>
+              </div>
+              <span className="text-[10px] text-muted-foreground mt-1">
+                {formatDistanceToNow(new Date(msg.created_at), {
+                  addSuffix: true,
+                  locale: ptBR,
+                })}
+              </span>
             </div>
-            <span className="text-[10px] text-muted-foreground mt-1">
-              {formatDistanceToNow(new Date(msg.created_at), {
-                addSuffix: true,
-                locale: ptBR,
-              })}
-            </span>
           </div>
         );
       })}
@@ -79,9 +126,10 @@ interface ChatInputProps {
   onSend: (message: string) => void;
   isPending: boolean;
   placeholder?: string;
+  cooldown?: number;
 }
 
-function ChatInput({ onSend, isPending, placeholder }: ChatInputProps) {
+function ChatInput({ onSend, isPending, placeholder, cooldown = 0 }: ChatInputProps) {
   const [message, setMessage] = useState("");
 
   const handleSend = () => {
@@ -97,24 +145,33 @@ function ChatInput({ onSend, isPending, placeholder }: ChatInputProps) {
     }
   };
 
+  const handleEmoteSelect = (emote: string) => {
+    setMessage((prev) => prev + emote);
+  };
+
+  const isDisabled = isPending || cooldown > 0;
+
   return (
     <div className="flex gap-2 p-3 border-t border-border">
+      <EmotePicker onEmoteSelect={handleEmoteSelect} />
       <Input
         value={message}
         onChange={(e) => setMessage(e.target.value)}
         onKeyPress={handleKeyPress}
-        placeholder={placeholder || "Digite sua mensagem..."}
+        placeholder={cooldown > 0 ? `Aguarde ${cooldown}s...` : placeholder || "Digite sua mensagem..."}
         maxLength={200}
-        disabled={isPending}
+        disabled={isDisabled}
         className="text-sm"
       />
       <Button
         size="icon"
         onClick={handleSend}
-        disabled={!message.trim() || isPending}
+        disabled={!message.trim() || isDisabled}
       >
         {isPending ? (
           <Loader2 className="w-4 h-4 animate-spin" />
+        ) : cooldown > 0 ? (
+          <Clock className="w-4 h-4" />
         ) : (
           <Send className="w-4 h-4" />
         )}
@@ -129,6 +186,7 @@ export function FloatingChat() {
   const { user } = useAuth();
   const location = useLocation();
   const { data: myGuildData } = useMyGuild();
+  const { data: character } = useCharacter();
   const myGuild = myGuildData?.guilds as { id: string } | undefined;
 
   const {
@@ -136,14 +194,15 @@ export function FloatingChat() {
     isLoading: globalLoading,
     sendMessage: sendGlobalMessage,
     unreadCount: globalUnread,
-  } = useGlobalChat(isOpen);
+    cooldownRemaining,
+  } = useGlobalChat(isOpen, character?.name);
 
   const {
     messages: guildMessages,
     isLoading: guildLoading,
     sendMessage: sendGuildMessage,
     unreadCount: guildUnread,
-  } = useGuildChat(myGuild?.id, isOpen);
+  } = useGuildChat(myGuild?.id, isOpen, character?.name);
 
   // Hide chat on public pages
   const publicPaths = ["/", "/login", "/register"];
@@ -247,6 +306,7 @@ export function FloatingChat() {
               onSend={(msg) => sendGlobalMessage.mutate(msg)}
               isPending={sendGlobalMessage.isPending}
               placeholder="Mensagem global..."
+              cooldown={cooldownRemaining}
             />
           </TabsContent>
 

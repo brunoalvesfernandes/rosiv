@@ -4,6 +4,15 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { playNotificationSound } from "@/utils/notificationSound";
+import { playMentionSound } from "@/utils/gameAudio";
+
+// Helper function to check if a message mentions a player name
+function checkForMention(message: string, playerName: string): boolean {
+  if (!playerName) return false;
+  const lowerMessage = message.toLowerCase();
+  const lowerName = playerName.toLowerCase();
+  return lowerMessage.includes(`@${lowerName}`) || lowerMessage.includes(lowerName);
+}
 
 export interface ChatMessage {
   id: string;
@@ -28,7 +37,7 @@ export interface ChatMessage {
 
 const GLOBAL_CHAT_COOLDOWN_MS = 20000; // 20 seconds
 
-export function useGlobalChat(isChatOpen: boolean = false) {
+export function useGlobalChat(isChatOpen: boolean = false, myCharacterName?: string) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -143,10 +152,20 @@ export function useGlobalChat(isChatOpen: boolean = false) {
 
           setMessages((prev) => [...prev, messageWithName]);
           
+          // Check for mention
+          if (!isOwnMessage && myCharacterName && checkForMention(newMessage.message, myCharacterName)) {
+            playMentionSound();
+            toast.info(`💬 ${character?.name || "Alguém"} mencionou você no chat!`, {
+              description: newMessage.message.slice(0, 50) + (newMessage.message.length > 50 ? "..." : ""),
+            });
+          }
+          
           // Update unread count and play sound if chat is closed and not own message
           if (!isChatOpen && !isOwnMessage) {
             setUnreadCount((prev) => prev + 1);
-            playNotificationSound();
+            if (!myCharacterName || !checkForMention(newMessage.message, myCharacterName)) {
+              playNotificationSound();
+            }
           }
         }
       )
@@ -155,7 +174,7 @@ export function useGlobalChat(isChatOpen: boolean = false) {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user?.id, isChatOpen]);
+  }, [user?.id, isChatOpen, myCharacterName]);
 
 
   // Send message mutation with cooldown
@@ -205,7 +224,7 @@ export function useGlobalChat(isChatOpen: boolean = false) {
   };
 }
 
-export function useGuildChat(guildId: string | undefined, isChatOpen: boolean = false) {
+export function useGuildChat(guildId: string | undefined, isChatOpen: boolean = false, myCharacterName?: string) {
   const { user } = useAuth();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -327,10 +346,20 @@ export function useGuildChat(guildId: string | undefined, isChatOpen: boolean = 
 
           setMessages((prev) => [...prev, messageWithName]);
           
+          // Check for mention
+          if (!isOwnMessage && myCharacterName && checkForMention(newMessage.message, myCharacterName)) {
+            playMentionSound();
+            toast.info(`💬 ${character?.name || "Alguém"} mencionou você no chat da guilda!`, {
+              description: newMessage.message.slice(0, 50) + (newMessage.message.length > 50 ? "..." : ""),
+            });
+          }
+          
           // Update unread count and play sound if chat is closed and not own message
           if (!isChatOpen && !isOwnMessage) {
             setUnreadCount((prev) => prev + 1);
-            playNotificationSound();
+            if (!myCharacterName || !checkForMention(newMessage.message, myCharacterName)) {
+              playNotificationSound();
+            }
           }
         }
       )
@@ -339,7 +368,7 @@ export function useGuildChat(guildId: string | undefined, isChatOpen: boolean = 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [guildId, user?.id, isChatOpen]);
+  }, [guildId, user?.id, isChatOpen, myCharacterName]);
 
   const sendMessage = useMutation({
     mutationFn: async (message: string) => {
