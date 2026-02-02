@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { GameLayout } from "@/components/layout/GameLayout";
 import { AvatarFace } from "@/components/game/AvatarFace";
 import { ProgressBar } from "@/components/ui/progress-bar";
@@ -14,6 +15,7 @@ import {
 import { useState } from "react";
 import { useCharacter, useArenaOpponents } from "@/hooks/useCharacter";
 import { useNPCs, useAttackNPC, useAttackPlayer, calculateWinChance } from "@/hooks/useCombat";
+import { playArenaBgm, stopBgm, playBattleHitSound, playVictorySound, playDefeatSound } from "@/utils/gameAudio";
 
 type CombatMode = "pvp" | "pve";
 
@@ -25,6 +27,12 @@ export default function Arena() {
   const { data: npcs, isLoading: npcsLoading } = useNPCs();
   const attackNPC = useAttackNPC();
   const attackPlayer = useAttackPlayer();
+
+  // Play arena background music
+  useEffect(() => {
+    playArenaBgm();
+    return () => stopBgm();
+  }, []);
 
   if (charLoading || !character) {
     return (

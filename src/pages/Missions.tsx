@@ -1,10 +1,11 @@
+import { useState, useEffect } from "react";
 import { GameLayout } from "@/components/layout/GameLayout";
 import { MissionCard } from "@/components/game/MissionCard";
 import { Button } from "@/components/ui/button";
 import { Target, Clock, Star, Trophy, Loader2, CheckCircle } from "lucide-react";
-import { useState } from "react";
 import { useMissions, usePlayerMissions, useStartMission, useCompleteMission, Mission, PlayerMission } from "@/hooks/useMissions";
 import { useCharacter } from "@/hooks/useCharacter";
+import { playMissionBgm, stopBgm, playMissionCompleteSound } from "@/utils/gameAudio";
 
 type MissionCategory = "all" | "story" | "daily" | "grind" | "boss";
 
@@ -24,6 +25,12 @@ export default function Missions() {
   const { data: character } = useCharacter();
   const startMission = useStartMission();
   const completeMission = useCompleteMission();
+
+  // Play mission background music
+  useEffect(() => {
+    playMissionBgm();
+    return () => stopBgm();
+  }, []);
 
   const activeMissionIds = new Set(
     playerMissions?.filter(pm => pm.status === "active").map(pm => pm.mission_id) || []

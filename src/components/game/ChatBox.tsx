@@ -7,6 +7,7 @@ import { Send, MessageCircle, Users, Globe, Loader2, Clock } from "lucide-react"
 import { useGlobalChat, useGuildChat, ChatMessage } from "@/hooks/useChat";
 import { useMyGuild } from "@/hooks/useGuilds";
 import { useAuth } from "@/contexts/AuthContext";
+import { useCharacter } from "@/hooks/useCharacter";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { AvatarFace } from "./AvatarFace";
@@ -188,6 +189,7 @@ function ChatInput({ onSend, isPending, placeholder, cooldown = 0 }: ChatInputPr
 export function ChatBox() {
   const { user } = useAuth();
   const { data: myGuildData } = useMyGuild();
+  const { data: character } = useCharacter();
   const myGuild = myGuildData?.guilds as { id: string } | undefined;
 
   const {
@@ -195,13 +197,13 @@ export function ChatBox() {
     isLoading: globalLoading,
     sendMessage: sendGlobalMessage,
     cooldownRemaining,
-  } = useGlobalChat();
+  } = useGlobalChat(false, character?.name);
 
   const {
     messages: guildMessages,
     isLoading: guildLoading,
     sendMessage: sendGuildMessage,
-  } = useGuildChat(myGuild?.id);
+  } = useGuildChat(myGuild?.id, false, character?.name);
 
   return (
     <Card className="bg-card/50 backdrop-blur border-primary/20">
