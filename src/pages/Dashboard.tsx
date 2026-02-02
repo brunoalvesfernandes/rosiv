@@ -1,8 +1,8 @@
 import { GameLayout } from "@/components/layout/GameLayout";
 import { StatCard } from "@/components/ui/stat-card";
 import { ProgressBar } from "@/components/ui/progress-bar";
-import { MissionCard } from "@/components/game/MissionCard";
 import { CharacterAvatar } from "@/components/game/CharacterAvatar";
+import { ChatBox } from "@/components/game/ChatBox";
 import { 
   Swords, 
   Shield, 
@@ -183,6 +183,9 @@ export default function Dashboard() {
             </div>
           )}
         </div>
+
+        {/* Chat */}
+        <ChatBox />
       </div>
     </GameLayout>
   );
