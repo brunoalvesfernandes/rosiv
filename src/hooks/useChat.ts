@@ -22,6 +22,8 @@ export interface ChatMessage {
   accessory?: string | null;
   // Guild role
   guild_role?: 'leader' | 'officer' | 'member' | null;
+  // Player level
+  level?: number;
 }
 
 const GLOBAL_CHAT_COOLDOWN_MS = 20000; // 20 seconds
@@ -63,7 +65,7 @@ export function useGlobalChat(isChatOpen: boolean = false) {
         (data || []).map(async (msg) => {
           const { data: character } = await supabase
             .from("characters")
-            .select("name, hair_style, hair_color, eye_color, skin_tone, face_style, accessory")
+            .select("name, hair_style, hair_color, eye_color, skin_tone, face_style, accessory, level")
             .eq("user_id", msg.user_id)
             .single();
           return { 
@@ -75,6 +77,7 @@ export function useGlobalChat(isChatOpen: boolean = false) {
             skin_tone: character?.skin_tone,
             face_style: character?.face_style,
             accessory: character?.accessory,
+            level: character?.level,
           };
         })
       );
@@ -122,7 +125,7 @@ export function useGlobalChat(isChatOpen: boolean = false) {
           
           const { data: character } = await supabase
             .from("characters")
-            .select("name, hair_style, hair_color, eye_color, skin_tone, face_style, accessory")
+            .select("name, hair_style, hair_color, eye_color, skin_tone, face_style, accessory, level")
             .eq("user_id", newMessage.user_id)
             .single();
 
@@ -135,6 +138,7 @@ export function useGlobalChat(isChatOpen: boolean = false) {
             skin_tone: character?.skin_tone,
             face_style: character?.face_style,
             accessory: character?.accessory,
+            level: character?.level,
           };
 
           setMessages((prev) => [...prev, messageWithName]);
@@ -226,7 +230,7 @@ export function useGuildChat(guildId: string | undefined, isChatOpen: boolean = 
         (data || []).map(async (msg) => {
           const { data: character } = await supabase
             .from("characters")
-            .select("name, hair_style, hair_color, eye_color, skin_tone, face_style, accessory")
+            .select("name, hair_style, hair_color, eye_color, skin_tone, face_style, accessory, level")
             .eq("user_id", msg.user_id)
             .single();
           
@@ -248,6 +252,7 @@ export function useGuildChat(guildId: string | undefined, isChatOpen: boolean = 
             face_style: character?.face_style,
             accessory: character?.accessory,
             guild_role: memberData?.role as 'leader' | 'officer' | 'member' | null,
+            level: character?.level,
           };
         })
       );
@@ -295,7 +300,7 @@ export function useGuildChat(guildId: string | undefined, isChatOpen: boolean = 
           
           const { data: character } = await supabase
             .from("characters")
-            .select("name, hair_style, hair_color, eye_color, skin_tone, face_style, accessory")
+            .select("name, hair_style, hair_color, eye_color, skin_tone, face_style, accessory, level")
             .eq("user_id", newMessage.user_id)
             .single();
 
@@ -317,6 +322,7 @@ export function useGuildChat(guildId: string | undefined, isChatOpen: boolean = 
             face_style: character?.face_style,
             accessory: character?.accessory,
             guild_role: memberData?.role as 'leader' | 'officer' | 'member' | null,
+            level: character?.level,
           };
 
           setMessages((prev) => [...prev, messageWithName]);
