@@ -41,15 +41,18 @@ export interface Character {
   class: "warrior" | "mage" | "archer";
   created_at: string;
   updated_at: string;
-  // Avatar ID for pixel art system
-  avatar_id: string;
-  // Legacy customization fields (kept for compatibility)
+  // Appearance customization
   hair_style: string;
   hair_color: string;
   eye_color: string;
   skin_tone: string;
   face_style: string;
   accessory: string | null;
+  // Clothing customization
+  shirt_color: string;
+  pants_color: string;
+  shoes_color: string;
+  avatar_id: string;
 }
 
 async function fetchAndRegenerate(userId: string): Promise<Character | null> {

@@ -7,6 +7,9 @@ export interface AvatarCustomization {
   skinTone: string;
   faceStyle: string;
   accessory?: string | null;
+  shirtColor: string;
+  pantsColor: string;
+  shoesColor: string;
 }
 
 interface VisualAvatarProps {
@@ -18,83 +21,83 @@ interface VisualAvatarProps {
 }
 
 const sizeConfig = {
-  sm: { width: 48, height: 48, scale: 0.4 },
-  md: { width: 80, height: 80, scale: 0.67 },
-  lg: { width: 128, height: 128, scale: 1.07 },
-  xl: { width: 200, height: 200, scale: 1.67 },
+  sm: { width: 48, height: 64 },
+  md: { width: 80, height: 110 },
+  lg: { width: 120, height: 165 },
+  xl: { width: 180, height: 250 },
 };
 
 // Hair style paths
 const hairStyles: Record<string, (color: string) => JSX.Element> = {
   short: (color) => (
     <g>
-      <ellipse cx="60" cy="35" rx="32" ry="20" fill={color} />
-      <path d="M28 45 Q30 30, 60 25 Q90 30, 92 45" fill={color} />
+      <ellipse cx="50" cy="18" rx="28" ry="14" fill={color} />
+      <path d="M22 28 Q25 15, 50 10 Q75 15, 78 28" fill={color} />
     </g>
   ),
   long: (color) => (
     <g>
-      <ellipse cx="60" cy="35" rx="35" ry="22" fill={color} />
-      <path d="M25 45 Q28 30, 60 22 Q92 30, 95 45 L95 85 Q90 95, 80 90 L80 55 L40 55 L40 90 Q30 95, 25 85 Z" fill={color} />
+      <ellipse cx="50" cy="18" rx="30" ry="16" fill={color} />
+      <path d="M20 28 Q23 14, 50 8 Q77 14, 80 28 L80 55 Q75 60, 70 55 L70 35 L30 35 L30 55 Q25 60, 20 55 Z" fill={color} />
     </g>
   ),
   spiky: (color) => (
     <g>
-      <path d="M30 50 L25 20 L40 40 L45 10 L55 38 L60 5 L65 38 L75 10 L80 40 L95 20 L90 50" fill={color} />
-      <ellipse cx="60" cy="42" rx="30" ry="15" fill={color} />
+      <path d="M25 30 L18 5 L35 22 L40 -2 L48 20 L50 -5 L52 20 L60 -2 L65 22 L82 5 L75 30" fill={color} />
+      <ellipse cx="50" cy="22" rx="26" ry="12" fill={color} />
     </g>
   ),
   curly: (color) => (
     <g>
-      <circle cx="35" cy="35" r="12" fill={color} />
-      <circle cx="50" cy="28" r="14" fill={color} />
-      <circle cx="70" cy="28" r="14" fill={color} />
-      <circle cx="85" cy="35" r="12" fill={color} />
-      <circle cx="30" cy="50" r="10" fill={color} />
-      <circle cx="90" cy="50" r="10" fill={color} />
-      <ellipse cx="60" cy="40" rx="28" ry="15" fill={color} />
+      <circle cx="30" cy="18" r="10" fill={color} />
+      <circle cx="45" cy="12" r="12" fill={color} />
+      <circle cx="65" cy="12" r="12" fill={color} />
+      <circle cx="75" cy="18" r="10" fill={color} />
+      <circle cx="25" cy="32" r="8" fill={color} />
+      <circle cx="80" cy="32" r="8" fill={color} />
+      <ellipse cx="50" cy="22" rx="24" ry="12" fill={color} />
     </g>
   ),
   mohawk: (color) => (
     <g>
-      <path d="M50 50 L45 5 L55 20 L60 0 L65 20 L75 5 L70 50" fill={color} />
-      <path d="M35 48 Q40 42, 60 40 Q80 42, 85 48" fill={color} />
+      <path d="M42 30 L38 0 L46 12 L50 -5 L54 12 L62 0 L58 30" fill={color} />
+      <path d="M30 28 Q35 24, 50 22 Q65 24, 70 28" fill={color} />
     </g>
   ),
   ponytail: (color) => (
     <g>
-      <ellipse cx="60" cy="35" rx="32" ry="20" fill={color} />
-      <path d="M28 45 Q30 30, 60 25 Q90 30, 92 45" fill={color} />
-      <ellipse cx="90" cy="60" rx="8" ry="25" fill={color} />
+      <ellipse cx="50" cy="18" rx="28" ry="14" fill={color} />
+      <path d="M22 28 Q25 15, 50 10 Q75 15, 78 28" fill={color} />
+      <ellipse cx="78" cy="40" rx="6" ry="20" fill={color} />
     </g>
   ),
   bald: () => <g></g>,
 };
 
-// Face shape paths
+// Face shape paths  
 const faceShapes: Record<string, string> = {
-  round: "M60 30 C90 30, 100 60, 95 85 C90 105, 75 115, 60 115 C45 115, 30 105, 25 85 C20 60, 30 30, 60 30",
-  oval: "M60 25 C85 25, 95 55, 92 80 C88 105, 75 120, 60 120 C45 120, 32 105, 28 80 C25 55, 35 25, 60 25",
-  square: "M30 35 L90 35 C95 35, 95 40, 95 45 L95 95 C95 110, 85 115, 60 115 C35 115, 25 110, 25 95 L25 45 C25 40, 25 35, 30 35",
-  heart: "M60 25 C90 25, 100 55, 95 75 C90 100, 70 120, 60 120 C50 120, 30 100, 25 75 C20 55, 30 25, 60 25",
+  round: "M50 15 C75 15, 85 40, 82 60 C78 80, 65 90, 50 90 C35 90, 22 80, 18 60 C15 40, 25 15, 50 15",
+  oval: "M50 12 C72 12, 82 38, 80 58 C76 82, 65 95, 50 95 C35 95, 24 82, 20 58 C18 38, 28 12, 50 12",
+  square: "M25 18 L75 18 C80 18, 82 22, 82 28 L82 70 C82 85, 72 90, 50 90 C28 90, 18 85, 18 70 L18 28 C18 22, 20 18, 25 18",
+  heart: "M50 12 C75 12, 85 38, 82 55 C78 78, 62 95, 50 95 C38 95, 22 78, 18 55 C15 38, 25 12, 50 12",
 };
 
 // Eye styles
-const renderEyes = (eyeColor: string) => (
+const renderEyes = (eyeColor: string, skinTone: string) => (
   <g>
     {/* Left eye */}
-    <ellipse cx="45" cy="65" rx="10" ry="7" fill="white" />
-    <circle cx="47" cy="65" r="5" fill={eyeColor} />
-    <circle cx="48" cy="64" r="2" fill="white" opacity="0.8" />
+    <ellipse cx="38" cy="48" rx="8" ry="6" fill="white" />
+    <circle cx="40" cy="48" r="4" fill={eyeColor} />
+    <circle cx="41" cy="47" r="1.5" fill="white" opacity="0.8" />
     
     {/* Right eye */}
-    <ellipse cx="75" cy="65" rx="10" ry="7" fill="white" />
-    <circle cx="73" cy="65" r="5" fill={eyeColor} />
-    <circle cx="74" cy="64" r="2" fill="white" opacity="0.8" />
+    <ellipse cx="62" cy="48" rx="8" ry="6" fill="white" />
+    <circle cx="60" cy="48" r="4" fill={eyeColor} />
+    <circle cx="61" cy="47" r="1.5" fill="white" opacity="0.8" />
     
     {/* Eyebrows */}
-    <path d="M35 55 Q45 50, 55 55" stroke="#3d3d3d" strokeWidth="2" fill="none" />
-    <path d="M65 55 Q75 50, 85 55" stroke="#3d3d3d" strokeWidth="2" fill="none" />
+    <path d="M30 40 Q38 36, 46 40" stroke="#3d3d3d" strokeWidth="2" fill="none" />
+    <path d="M54 40 Q62 36, 70 40" stroke="#3d3d3d" strokeWidth="2" fill="none" />
   </g>
 );
 
@@ -102,10 +105,56 @@ const renderEyes = (eyeColor: string) => (
 const renderFaceFeatures = () => (
   <g>
     {/* Nose */}
-    <path d="M58 70 Q60 78, 62 70" stroke="#c9a07a" strokeWidth="2" fill="none" />
+    <path d="M48 55 Q50 62, 52 55" stroke="#c9a07a" strokeWidth="1.5" fill="none" />
     
     {/* Mouth */}
-    <path d="M50 90 Q60 98, 70 90" stroke="#c97878" strokeWidth="2.5" fill="none" />
+    <path d="M42 72 Q50 78, 58 72" stroke="#c97878" strokeWidth="2" fill="none" />
+  </g>
+);
+
+// Body (torso with shirt)
+const renderBody = (shirtColor: string, skinTone: string) => (
+  <g>
+    {/* Neck */}
+    <rect x="42" y="92" width="16" height="15" fill={skinTone} />
+    
+    {/* Torso/Shirt */}
+    <path d="M25 107 L42 100 L42 107 L58 107 L58 100 L75 107 L80 180 L20 180 Z" fill={shirtColor} />
+    
+    {/* Shirt collar */}
+    <path d="M42 107 L50 115 L58 107" stroke={shirtColor} strokeWidth="2" fill="none" />
+    <path d="M42 107 L50 118 L58 107" fill={skinTone} />
+    
+    {/* Arms */}
+    <path d="M25 107 L15 160 L22 162 L30 115" fill={skinTone} />
+    <path d="M75 107 L85 160 L78 162 L70 115" fill={skinTone} />
+    
+    {/* Shirt sleeves */}
+    <path d="M25 107 L18 135 L28 138 L32 112" fill={shirtColor} />
+    <path d="M75 107 L82 135 L72 138 L68 112" fill={shirtColor} />
+  </g>
+);
+
+// Pants
+const renderPants = (pantsColor: string) => (
+  <g>
+    {/* Pants */}
+    <path d="M20 180 L25 250 L40 250 L50 200 L60 250 L75 250 L80 180 Z" fill={pantsColor} />
+    
+    {/* Belt */}
+    <rect x="20" y="178" width="60" height="6" fill="#4a3728" />
+    <rect x="46" y="177" width="8" height="8" rx="1" fill="#ffd700" />
+  </g>
+);
+
+// Shoes
+const renderShoes = (shoesColor: string) => (
+  <g>
+    {/* Left shoe */}
+    <path d="M25 248 L25 260 L10 262 L8 255 L22 252 L40 252 L40 248" fill={shoesColor} />
+    
+    {/* Right shoe */}
+    <path d="M60 248 L60 260 L90 262 L92 255 L78 252 L75 252 L75 248" fill={shoesColor} />
   </g>
 );
 
@@ -113,37 +162,37 @@ const renderFaceFeatures = () => (
 const accessories: Record<string, JSX.Element> = {
   glasses: (
     <g>
-      <circle cx="45" cy="65" r="14" fill="none" stroke="#333" strokeWidth="2" />
-      <circle cx="75" cy="65" r="14" fill="none" stroke="#333" strokeWidth="2" />
-      <path d="M59 65 L61 65" stroke="#333" strokeWidth="2" />
-      <path d="M31 65 L25 60" stroke="#333" strokeWidth="2" />
-      <path d="M89 65 L95 60" stroke="#333" strokeWidth="2" />
+      <circle cx="38" cy="48" r="11" fill="none" stroke="#333" strokeWidth="2" />
+      <circle cx="62" cy="48" r="11" fill="none" stroke="#333" strokeWidth="2" />
+      <path d="M49 48 L51 48" stroke="#333" strokeWidth="2" />
+      <path d="M27 48 L22 44" stroke="#333" strokeWidth="2" />
+      <path d="M73 48 L78 44" stroke="#333" strokeWidth="2" />
     </g>
   ),
   earring: (
     <g>
-      <circle cx="22" cy="75" r="4" fill="#ffd700" />
-      <circle cx="98" cy="75" r="4" fill="#ffd700" />
+      <circle cx="18" cy="55" r="3" fill="#ffd700" />
+      <circle cx="82" cy="55" r="3" fill="#ffd700" />
     </g>
   ),
   scar: (
-    <path d="M75 50 L85 70" stroke="#a86b5c" strokeWidth="2" opacity="0.7" />
+    <path d="M62 38 L70 52" stroke="#a86b5c" strokeWidth="2" opacity="0.7" />
   ),
   eyepatch: (
     <g>
-      <ellipse cx="75" cy="65" rx="12" ry="9" fill="#222" />
-      <path d="M25 55 L87 55" stroke="#222" strokeWidth="2" />
+      <ellipse cx="62" cy="48" rx="10" ry="8" fill="#222" />
+      <path d="M20 40 L72 40" stroke="#222" strokeWidth="2" />
     </g>
   ),
   headband: (
-    <rect x="25" y="42" width="70" height="8" rx="2" fill="#dc2626" />
+    <rect x="20" y="26" width="60" height="6" rx="2" fill="#dc2626" />
   ),
   crown: (
     <g>
-      <path d="M30 38 L35 25 L45 35 L55 18 L65 35 L75 25 L90 38 L85 45 L35 45 Z" fill="#ffd700" />
-      <circle cx="45" cy="35" r="3" fill="#dc2626" />
-      <circle cx="60" cy="28" r="4" fill="#3b82f6" />
-      <circle cx="75" cy="35" r="3" fill="#22c55e" />
+      <path d="M25 22 L28 8 L38 18 L48 2 L52 2 L62 18 L72 8 L75 22 L72 28 L28 28 Z" fill="#ffd700" />
+      <circle cx="38" cy="18" r="2.5" fill="#dc2626" />
+      <circle cx="50" cy="12" r="3" fill="#3b82f6" />
+      <circle cx="62" cy="18" r="2.5" fill="#22c55e" />
     </g>
   ),
 };
@@ -155,8 +204,18 @@ export function VisualAvatar({
   showLevel = false,
   level = 1
 }: VisualAvatarProps) {
-  const { width, height, scale } = sizeConfig[size];
-  const { hairStyle, hairColor, eyeColor, skinTone, faceStyle, accessory } = customization;
+  const { width, height } = sizeConfig[size];
+  const { 
+    hairStyle, 
+    hairColor, 
+    eyeColor, 
+    skinTone, 
+    faceStyle, 
+    accessory,
+    shirtColor,
+    pantsColor,
+    shoesColor
+  } = customization;
 
   const HairComponent = hairStyles[hairStyle] || hairStyles.short;
   const facePath = faceShapes[faceStyle] || faceShapes.round;
@@ -166,35 +225,37 @@ export function VisualAvatar({
       <svg 
         width={width} 
         height={height} 
-        viewBox="0 0 120 120"
-        className="rounded-full border-2 border-primary shadow-[0_0_20px_hsl(var(--primary)/0.4)]"
-        style={{ background: "linear-gradient(135deg, hsl(var(--secondary)) 0%, hsl(var(--card)) 100%)" }}
+        viewBox="0 0 100 270"
+        className="rounded-xl border-2 border-primary shadow-[0_0_20px_hsl(var(--primary)/0.4)]"
+        style={{ background: "linear-gradient(180deg, hsl(var(--secondary)) 0%, hsl(var(--card)) 100%)" }}
       >
-        <g transform={`scale(${scale * 0.9}) translate(${(1/scale) * 6}, ${(1/scale) * 2})`}>
-          {/* Face base */}
-          <path d={facePath} fill={skinTone} />
-          
-          {/* Ears */}
-          <ellipse cx="22" cy="70" rx="6" ry="10" fill={skinTone} />
-          <ellipse cx="98" cy="70" rx="6" ry="10" fill={skinTone} />
-          
-          {/* Hair (back layer for some styles) */}
-          {hairStyle === "long" && (
-            <path d="M25 45 L25 90 Q30 100, 40 95 L40 55 L80 55 L80 95 Q90 100, 95 90 L95 45" fill={hairColor} opacity="0.3" />
-          )}
-          
-          {/* Eyes */}
-          {renderEyes(eyeColor)}
-          
-          {/* Face features */}
-          {renderFaceFeatures()}
-          
-          {/* Hair (front layer) */}
-          {HairComponent(hairColor)}
-          
-          {/* Accessory */}
-          {accessory && accessories[accessory]}
-        </g>
+        {/* Shoes */}
+        {renderShoes(shoesColor)}
+        
+        {/* Pants */}
+        {renderPants(pantsColor)}
+        
+        {/* Body */}
+        {renderBody(shirtColor, skinTone)}
+        
+        {/* Face base */}
+        <path d={facePath} fill={skinTone} />
+        
+        {/* Ears */}
+        <ellipse cx="18" cy="52" rx="5" ry="8" fill={skinTone} />
+        <ellipse cx="82" cy="52" rx="5" ry="8" fill={skinTone} />
+        
+        {/* Eyes */}
+        {renderEyes(eyeColor, skinTone)}
+        
+        {/* Face features */}
+        {renderFaceFeatures()}
+        
+        {/* Hair */}
+        {HairComponent(hairColor)}
+        
+        {/* Accessory */}
+        {accessory && accessories[accessory]}
       </svg>
       
       {showLevel && (
