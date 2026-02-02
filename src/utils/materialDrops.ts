@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { triggerMaterialDropAnimation } from "@/components/game/MaterialDropAnimation";
 
 // Material IDs by rarity
 const MATERIALS = {
@@ -245,6 +246,11 @@ export async function generateMaterialDrops(
         quantity: drop.quantity,
       });
     }
+  }
+
+  // Trigger animation for the drops
+  if (drops.length > 0) {
+    triggerMaterialDropAnimation(drops);
   }
 
   return drops;
