@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Music, Upload, Trash2, Play, Pause, Volume2 } from "lucide-react";
 import { useAreaMusic } from "@/hooks/useAreaMusic";
@@ -7,33 +7,34 @@ import { Slider } from "@/components/ui/slider";
 
 export function MusicManager() {
   const { areaMusic, isLoading, uploadMusic, removeMusic } = useAreaMusic();
-  const [playingArea, setPlayingArea] = useState<string | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
   const [volume, setVolume] = useState(0.5);
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  const handleFileSelect = async (areaName: string, file: File) => {
+  // Find the global music entry
+  const globalMusic = areaMusic?.find(a => a.area_name === "global");
+
+  const handleFileSelect = async (file: File) => {
     if (!file.type.startsWith("audio/")) {
       return;
     }
-    uploadMusic.mutate({ areaName, file });
+    uploadMusic.mutate({ areaName: "global", file });
   };
 
-  const handlePlay = (areaName: string, url: string) => {
-    if (playingArea === areaName) {
-      // Stop playing
+  const handlePlay = (url: string) => {
+    if (isPlaying) {
       audioRef.current?.pause();
-      setPlayingArea(null);
+      setIsPlaying(false);
     } else {
-      // Play new audio
       if (audioRef.current) {
         audioRef.current.pause();
       }
       audioRef.current = new Audio(url);
       audioRef.current.volume = volume;
       audioRef.current.play();
-      audioRef.current.onended = () => setPlayingArea(null);
-      setPlayingArea(areaName);
+      audioRef.current.onended = () => setIsPlaying(false);
+      setIsPlaying(true);
     }
   };
 
@@ -45,24 +46,12 @@ export function MusicManager() {
     }
   };
 
-  const handleRemove = (areaName: string) => {
-    if (playingArea === areaName) {
+  const handleRemove = () => {
+    if (isPlaying) {
       audioRef.current?.pause();
-      setPlayingArea(null);
+      setIsPlaying(false);
     }
-    removeMusic.mutate(areaName);
-  };
-
-  const areaIcons: Record<string, string> = {
-    arena: "⚔️",
-    dungeon: "🏰",
-    mission: "📜",
-    guild_war: "🛡️",
-    training: "💪",
-    pets: "🐾",
-    shop: "🛒",
-    crafting: "🔨",
-    dashboard: "🏠",
+    removeMusic.mutate("global");
   };
 
   if (isLoading) {
@@ -74,13 +63,17 @@ export function MusicManager() {
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-lg">
           <Music className="h-5 w-5 text-primary" />
-          Gerenciar Músicas
+          Música do Jogo
         </CardTitle>
+        <CardDescription>
+          Configure a trilha sonora que toca em todas as páginas do jogo
+        </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
+        {/* Volume control */}
         <div className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg">
           <Volume2 className="h-4 w-4 text-muted-foreground" />
-          <span className="text-sm text-muted-foreground">Preview:</span>
+          <span className="text-sm text-muted-foreground">Volume Preview:</span>
           <Slider
             value={[volume]}
             onValueChange={handleVolumeChange}
@@ -92,86 +85,80 @@ export function MusicManager() {
           <span className="text-xs text-muted-foreground w-8">{Math.round(volume * 100)}%</span>
         </div>
 
-        <div className="grid gap-3">
-          {areaMusic?.map((area) => (
-            <div
-              key={area.id}
-              className="flex items-center gap-3 p-3 bg-muted/20 rounded-lg border border-border/50"
-            >
-              <span className="text-xl" title={area.area_name}>
-                {areaIcons[area.area_name] || "🎵"}
-              </span>
-              
-              <div className="flex-1 min-w-0">
-                <p className="font-medium text-sm">{area.area_label}</p>
-                {area.music_url ? (
-                  <p className="text-xs text-muted-foreground truncate">
-                    Música configurada ✓
-                  </p>
-                ) : (
-                  <p className="text-xs text-muted-foreground">
-                    Sem música (silêncio)
-                  </p>
-                )}
-              </div>
+        {/* Music status */}
+        <div className="flex items-center gap-4 p-4 bg-gradient-to-r from-primary/10 to-transparent rounded-xl border border-primary/20">
+          <div className="w-14 h-14 rounded-xl bg-primary/20 flex items-center justify-center">
+            <Music className="w-7 h-7 text-primary" />
+          </div>
+          
+          <div className="flex-1">
+            <p className="font-display font-bold">Trilha Sonora Global</p>
+            {globalMusic?.music_url ? (
+              <p className="text-sm text-green-400 flex items-center gap-1">
+                ✓ Música configurada
+              </p>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                Nenhuma música configurada (silêncio)
+              </p>
+            )}
+          </div>
 
-              <div className="flex items-center gap-2">
-                {area.music_url && (
-                  <>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8"
-                      onClick={() => handlePlay(area.area_name, area.music_url!)}
-                    >
-                      {playingArea === area.area_name ? (
-                        <Pause className="h-4 w-4" />
-                      ) : (
-                        <Play className="h-4 w-4" />
-                      )}
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 text-destructive hover:text-destructive"
-                      onClick={() => handleRemove(area.area_name)}
-                      disabled={removeMusic.isPending}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </>
-                )}
-                
-                <input
-                  type="file"
-                  accept="audio/*"
-                  className="hidden"
-                  ref={(el) => { fileInputRefs.current[area.area_name] = el; }}
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) {
-                      handleFileSelect(area.area_name, file);
-                      e.target.value = "";
-                    }
-                  }}
-                />
+          <div className="flex items-center gap-2">
+            {globalMusic?.music_url && (
+              <>
                 <Button
                   variant="outline"
-                  size="sm"
-                  className="h-8"
-                  onClick={() => fileInputRefs.current[area.area_name]?.click()}
-                  disabled={uploadMusic.isPending}
+                  size="icon"
+                  className="h-10 w-10"
+                  onClick={() => handlePlay(globalMusic.music_url!)}
                 >
-                  <Upload className="h-3 w-3 mr-1" />
-                  {area.music_url ? "Trocar" : "Upload"}
+                  {isPlaying ? (
+                    <Pause className="h-4 w-4" />
+                  ) : (
+                    <Play className="h-4 w-4" />
+                  )}
                 </Button>
-              </div>
-            </div>
-          ))}
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-10 w-10 text-destructive hover:text-destructive hover:bg-destructive/10"
+                  onClick={handleRemove}
+                  disabled={removeMusic.isPending}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </>
+            )}
+            
+            <input
+              type="file"
+              accept="audio/*"
+              className="hidden"
+              ref={fileInputRef}
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) {
+                  handleFileSelect(file);
+                  e.target.value = "";
+                }
+              }}
+            />
+            <Button
+              variant="default"
+              className="h-10"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploadMusic.isPending}
+            >
+              <Upload className="h-4 w-4 mr-2" />
+              {globalMusic?.music_url ? "Trocar Música" : "Fazer Upload"}
+            </Button>
+          </div>
         </div>
 
         <p className="text-xs text-muted-foreground">
-          Formatos suportados: MP3, WAV, OGG, M4A. Máximo recomendado: 5MB por arquivo.
+          Formatos suportados: MP3, WAV, OGG, M4A. Máximo recomendado: 5MB.
+          A música será reproduzida em loop em todas as páginas do jogo.
         </p>
       </CardContent>
     </Card>
