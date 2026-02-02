@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { Character } from "./useCharacter";
-
+import { generateMaterialDrops, formatDropMessage, MaterialDrop, Difficulty } from "@/utils/materialDrops";
 export interface NPC {
   id: string;
   name: string;
@@ -24,8 +24,8 @@ export interface BattleResult {
   arenaPointsChange: number;
   levelUp: boolean;
   newLevel: number;
+  drops: MaterialDrop[];
 }
-
 export function useNPCs() {
   return useQuery({
     queryKey: ["npcs"],
@@ -165,6 +165,19 @@ export function useAttackNPC() {
         gold_gained: goldGained,
       });
 
+      // Generate material drops if won
+      let drops: MaterialDrop[] = [];
+      if (won) {
+        // Determine difficulty based on NPC level relative to player
+        const levelDiff = npc.level - character.level;
+        let difficulty: Difficulty = "medium";
+        if (levelDiff <= -3) difficulty = "easy";
+        else if (levelDiff >= 3) difficulty = "hard";
+        else if (levelDiff >= 5) difficulty = "boss";
+        
+        drops = await generateMaterialDrops(user.id, "arena_npc", difficulty);
+      }
+
       return {
         won,
         damageDealt,
@@ -174,16 +187,21 @@ export function useAttackNPC() {
         arenaPointsChange: 0,
         levelUp: newLevel > character.level,
         newLevel,
+        drops,
       };
     },
     onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ["character"] });
+      queryClient.invalidateQueries({ queryKey: ["player-materials"] });
       
       if (result.won) {
         if (result.levelUp) {
           toast.success(`⚔️ Vitória! Subiu para nível ${result.newLevel}!`);
         } else {
           toast.success(`⚔️ Vitória! +${result.xpGained} XP, +${result.goldGained} ouro`);
+        }
+        if (result.drops.length > 0) {
+          toast.success(formatDropMessage(result.drops), { duration: 5000 });
         }
       } else {
         toast.error(`💀 Derrota! Você foi derrotado. +${result.xpGained} XP`);
@@ -301,6 +319,19 @@ export function useAttackPlayer() {
         arena_points_change: arenaPointsChange,
       });
 
+      // Generate material drops if won
+      let drops: MaterialDrop[] = [];
+      if (won) {
+        // Determine difficulty based on opponent level relative to player
+        const levelDiff = opponent.level - character.level;
+        let difficulty: Difficulty = "medium";
+        if (levelDiff <= -3) difficulty = "easy";
+        else if (levelDiff >= 3) difficulty = "hard";
+        else if (levelDiff >= 5) difficulty = "boss";
+        
+        drops = await generateMaterialDrops(user.id, "arena_pvp", difficulty);
+      }
+
       return {
         won,
         damageDealt,
@@ -310,15 +341,20 @@ export function useAttackPlayer() {
         arenaPointsChange,
         levelUp: newLevel > character.level,
         newLevel,
+        drops,
       };
     },
     onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ["character"] });
       queryClient.invalidateQueries({ queryKey: ["arena-opponents"] });
       queryClient.invalidateQueries({ queryKey: ["ranking"] });
+      queryClient.invalidateQueries({ queryKey: ["player-materials"] });
 
       if (result.won) {
         toast.success(`⚔️ Vitória PvP! +${result.arenaPointsChange} pontos de arena`);
+        if (result.drops.length > 0) {
+          toast.success(formatDropMessage(result.drops), { duration: 5000 });
+        }
       } else {
         toast.error(`💀 Derrota PvP! ${result.arenaPointsChange} pontos de arena`);
       }

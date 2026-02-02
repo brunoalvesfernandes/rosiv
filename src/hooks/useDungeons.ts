@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-
+import { generateMaterialDrops, formatDropMessage, Difficulty } from "@/utils/materialDrops";
 export interface Dungeon {
   id: string;
   name: string;
@@ -427,6 +427,13 @@ export function useAttackBoss() {
         // Distribute rewards based on damage dealt
         const totalDamage = participants?.reduce((sum, p) => sum + p.damage_dealt, 0) || 1;
 
+        // Determine dungeon difficulty based on min_level
+        let difficulty: Difficulty = "medium";
+        if (dungeon.min_level >= 15) difficulty = "boss";
+        else if (dungeon.min_level >= 10) difficulty = "hard";
+        else if (dungeon.min_level >= 5) difficulty = "medium";
+        else difficulty = "easy";
+
         for (const p of participants || []) {
           const damageShare = p.damage_dealt / totalDamage;
           const goldShare = Math.floor(dungeon.gold_reward * damageShare);
@@ -448,21 +455,31 @@ export function useAttackBoss() {
               })
               .eq("user_id", p.user_id);
           }
+
+          // Generate material drops for each participant
+          await generateMaterialDrops(p.user_id, "dungeon", difficulty);
         }
 
-        return { damage, defeated: true, gold: dungeon.gold_reward, xp: dungeon.xp_reward };
+        // Generate drops for the current user and show message
+        const drops = await generateMaterialDrops(user.id, "dungeon", difficulty);
+
+        return { damage, defeated: true, gold: dungeon.gold_reward, xp: dungeon.xp_reward, drops };
       }
 
-      return { damage, defeated: false };
+      return { damage, defeated: false, drops: [] };
     },
     onSuccess: (result) => {
       if (result.defeated) {
         toast.success(`Boss derrotado! Recompensas distribuídas!`);
+        if (result.drops && result.drops.length > 0) {
+          toast.success(formatDropMessage(result.drops), { duration: 5000 });
+        }
       } else {
         toast.success(`Você causou ${result.damage} de dano ao boss!`);
       }
       queryClient.invalidateQueries({ queryKey: ["character"] });
       queryClient.invalidateQueries({ queryKey: ["dungeon-runs"] });
+      queryClient.invalidateQueries({ queryKey: ["player-materials"] });
     },
     onError: (error: Error) => {
       toast.error(error.message);
