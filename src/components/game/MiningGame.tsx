@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -15,12 +15,16 @@ import {
 import {
   Pickaxe,
   Gem,
-  Hammer,
   ShoppingCart,
   Wrench,
   AlertTriangle,
   Sparkles,
   Loader2,
+  ArrowUp,
+  ArrowDown,
+  ArrowLeft,
+  ArrowRight,
+  Layers,
 } from "lucide-react";
 import {
   usePickaxes,
@@ -34,7 +38,6 @@ import {
   PlayerPickaxe,
   Pickaxe as PickaxeType,
 } from "@/hooks/useMining";
-import { useAddMaterial } from "@/hooks/useCrafting";
 import { useCharacter } from "@/hooks/useCharacter";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -47,29 +50,34 @@ const rarityColors: Record<string, string> = {
   legendary: "text-amber-500 border-amber-500/50",
 };
 
-const tierColors: Record<number, string> = {
-  1: "from-stone-600 to-stone-800",
-  2: "from-zinc-500 to-zinc-700",
-  3: "from-amber-600 to-amber-800",
-  4: "from-cyan-500 to-cyan-700",
-  5: "from-purple-600 to-purple-800",
+// Block visual styles per tier
+const blockStyles: Record<number, { bg: string; border: string }> = {
+  1: { bg: "bg-stone-700", border: "border-stone-600" },
+  2: { bg: "bg-zinc-600", border: "border-zinc-500" },
+  3: { bg: "bg-amber-800", border: "border-amber-600" },
+  4: { bg: "bg-cyan-800", border: "border-cyan-600" },
+  5: { bg: "bg-purple-800", border: "border-purple-600" },
 };
 
-interface MiningBlock {
+interface Block {
   id: string;
-  node: MiningNode;
-  currentHp: number;
   x: number;
   y: number;
+  node: MiningNode | null; // null = empty/mined
+  currentHp: number;
+  isMined: boolean;
 }
 
 interface DropPopup {
   id: string;
-  material: string;
-  quantity: number;
+  icon: string;
   x: number;
   y: number;
 }
+
+const GRID_WIDTH = 10;
+const GRID_HEIGHT = 8;
+const CELL_SIZE = 48;
 
 export function MiningGame() {
   const { data: pickaxes, isLoading: pickaxesLoading } = usePickaxes();
@@ -80,47 +88,127 @@ export function MiningGame() {
   const equipPickaxe = useEquipPickaxe();
   const updateDurability = useUpdateDurability();
   const repairPickaxe = useRepairPickaxe();
-  const addMaterial = useAddMaterial();
 
-  const [blocks, setBlocks] = useState<MiningBlock[]>([]);
+  const [blocks, setBlocks] = useState<Block[]>([]);
+  const [playerPos, setPlayerPos] = useState({ x: 4, y: 0 });
   const [dropPopups, setDropPopups] = useState<DropPopup[]>([]);
   const [showShop, setShowShop] = useState(false);
   const [showInventory, setShowInventory] = useState(false);
-  const [selectedTier, setSelectedTier] = useState(1);
+  const [currentFloor, setCurrentFloor] = useState(1);
+  const [isMining, setIsMining] = useState(false);
+  const gameRef = useRef<HTMLDivElement>(null);
 
   const equippedPickaxe = playerPickaxes?.find((p) => p.is_equipped);
 
-  // Generate mining blocks based on selected tier
-  const generateBlocks = useCallback(() => {
+  // Generate floor blocks
+  const generateFloor = useCallback((floor: number) => {
     if (!miningNodes) return;
 
-    const tierNodes = miningNodes.filter((n) => n.tier === selectedTier);
+    const tier = Math.min(Math.ceil(floor / 2), 5);
+    const tierNodes = miningNodes.filter((n) => n.tier <= tier);
     if (tierNodes.length === 0) return;
 
-    const newBlocks: MiningBlock[] = [];
-    const gridSize = 4;
+    const newBlocks: Block[] = [];
 
-    for (let y = 0; y < gridSize; y++) {
-      for (let x = 0; x < gridSize; x++) {
-        const randomNode = tierNodes[Math.floor(Math.random() * tierNodes.length)];
-        newBlocks.push({
-          id: `${x}-${y}-${Date.now()}`,
-          node: randomNode,
-          currentHp: randomNode.hp,
-          x,
-          y,
-        });
+    for (let y = 0; y < GRID_HEIGHT; y++) {
+      for (let x = 0; x < GRID_WIDTH; x++) {
+        // Top row is always empty (spawn area)
+        if (y === 0) {
+          newBlocks.push({
+            id: `${x}-${y}`,
+            x,
+            y,
+            node: null,
+            currentHp: 0,
+            isMined: true,
+          });
+        } else {
+          // Random chance for empty spaces
+          const isEmpty = Math.random() < 0.1;
+          if (isEmpty) {
+            newBlocks.push({
+              id: `${x}-${y}`,
+              x,
+              y,
+              node: null,
+              currentHp: 0,
+              isMined: true,
+            });
+          } else {
+            // Weight toward lower tier nodes
+            const weightedNodes = tierNodes.filter(() => Math.random() < 0.7 || tierNodes.length === 1);
+            const nodePool = weightedNodes.length > 0 ? weightedNodes : tierNodes;
+            const randomNode = nodePool[Math.floor(Math.random() * nodePool.length)];
+            newBlocks.push({
+              id: `${x}-${y}`,
+              x,
+              y,
+              node: randomNode,
+              currentHp: randomNode.hp,
+              isMined: false,
+            });
+          }
+        }
       }
     }
 
     setBlocks(newBlocks);
-  }, [miningNodes, selectedTier]);
+    setPlayerPos({ x: 4, y: 0 });
+  }, [miningNodes]);
 
   useEffect(() => {
-    generateBlocks();
-  }, [generateBlocks]);
+    generateFloor(currentFloor);
+  }, [generateFloor, currentFloor]);
 
-  const handleMineBlock = async (block: MiningBlock) => {
+  // Keyboard controls
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (isMining) return;
+
+      let newX = playerPos.x;
+      let newY = playerPos.y;
+
+      switch (e.key.toLowerCase()) {
+        case "w":
+        case "arrowup":
+          newY = Math.max(0, playerPos.y - 1);
+          break;
+        case "s":
+        case "arrowdown":
+          newY = Math.min(GRID_HEIGHT - 1, playerPos.y + 1);
+          break;
+        case "a":
+        case "arrowleft":
+          newX = Math.max(0, playerPos.x - 1);
+          break;
+        case "d":
+        case "arrowright":
+          newX = Math.min(GRID_WIDTH - 1, playerPos.x + 1);
+          break;
+        default:
+          return;
+      }
+
+      // Check if target is mined/empty
+      const targetBlock = blocks.find((b) => b.x === newX && b.y === newY);
+      if (targetBlock?.isMined) {
+        setPlayerPos({ x: newX, y: newY });
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [playerPos, blocks, isMining]);
+
+  // Check if block is adjacent to player
+  const isAdjacent = (x: number, y: number) => {
+    const dx = Math.abs(x - playerPos.x);
+    const dy = Math.abs(y - playerPos.y);
+    return (dx === 1 && dy === 0) || (dx === 0 && dy === 1);
+  };
+
+  // Mine a block
+  const handleMineBlock = async (block: Block) => {
     if (!equippedPickaxe || !equippedPickaxe.pickaxe) {
       toast.error("Equipe uma picareta primeiro!");
       return;
@@ -131,22 +219,31 @@ export function MiningGame() {
       return;
     }
 
-    if (equippedPickaxe.pickaxe.mining_power < block.node.required_mining_power) {
-      toast.error(`Poder de mineração insuficiente! Necessário: ${block.node.required_mining_power}`);
+    if (!block.node || block.isMined) return;
+
+    if (!isAdjacent(block.x, block.y)) {
+      toast.error("Muito longe! Mova-se para perto do bloco.");
       return;
     }
+
+    if (equippedPickaxe.pickaxe.mining_power < block.node.required_mining_power) {
+      toast.error(`Poder insuficiente! Precisa: ${block.node.required_mining_power}`);
+      return;
+    }
+
+    setIsMining(true);
 
     const damage = equippedPickaxe.pickaxe.mining_power;
     const newHp = block.currentHp - damage;
 
-    // Update block HP
+    // Update block
     setBlocks((prev) =>
       prev.map((b) =>
         b.id === block.id ? { ...b, currentHp: Math.max(0, newHp) } : b
       )
     );
 
-    // Reduce pickaxe durability
+    // Reduce durability
     await updateDurability.mutateAsync({
       playerPickaxeId: equippedPickaxe.id,
       newDurability: equippedPickaxe.current_durability - 1,
@@ -154,46 +251,40 @@ export function MiningGame() {
 
     // Block destroyed
     if (newHp <= 0) {
-      // Add drop popup
+      // Show drop popup
       const dropId = `drop-${Date.now()}`;
       setDropPopups((prev) => [
         ...prev,
-        {
-          id: dropId,
-          material: block.node.icon,
-          quantity: 1,
-          x: block.x,
-          y: block.y,
-        },
+        { id: dropId, icon: block.node!.icon, x: block.x, y: block.y },
       ]);
 
-      // Remove popup after animation
       setTimeout(() => {
         setDropPopups((prev) => prev.filter((d) => d.id !== dropId));
-      }, 1000);
+      }, 800);
 
-      // Respawn new block after delay
+      // Mark as mined
+      setBlocks((prev) =>
+        prev.map((b) =>
+          b.id === block.id ? { ...b, isMined: true, node: null } : b
+        )
+      );
+
+      // Move player to the mined block
       setTimeout(() => {
-        if (!miningNodes) return;
-        const tierNodes = miningNodes.filter((n) => n.tier === selectedTier);
-        if (tierNodes.length === 0) return;
-
-        const randomNode = tierNodes[Math.floor(Math.random() * tierNodes.length)];
-        setBlocks((prev) =>
-          prev.map((b) =>
-            b.id === block.id
-              ? {
-                  id: `${block.x}-${block.y}-${Date.now()}`,
-                  node: randomNode,
-                  currentHp: randomNode.hp,
-                  x: block.x,
-                  y: block.y,
-                }
-              : b
-          )
-        );
-      }, 500);
+        setPlayerPos({ x: block.x, y: block.y });
+      }, 100);
     }
+
+    setIsMining(false);
+  };
+
+  // Check if can go to next floor
+  const canAdvanceFloor = blocks.filter((b) => b.y === GRID_HEIGHT - 1 && b.isMined).length > 0 &&
+    playerPos.y === GRID_HEIGHT - 1;
+
+  const handleNextFloor = () => {
+    setCurrentFloor((f) => f + 1);
+    toast.success(`Descendo para o andar ${currentFloor + 1}!`);
   };
 
   const handleBuyPickaxe = async (pickaxe: PickaxeType) => {
@@ -222,63 +313,56 @@ export function MiningGame() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header with equipped pickaxe */}
-      <Card className="bg-card/50 backdrop-blur border-primary/20">
-        <CardContent className="p-4">
-          <div className="flex items-center justify-between">
+    <div className="space-y-4">
+      {/* Header HUD */}
+      <Card className="bg-card/80 backdrop-blur border-primary/30">
+        <CardContent className="p-3">
+          <div className="flex items-center justify-between flex-wrap gap-2">
             <div className="flex items-center gap-4">
               {equippedPickaxe ? (
-                <>
-                  <div className="text-4xl">{equippedPickaxe.pickaxe?.icon}</div>
+                <div className="flex items-center gap-3">
+                  <span className="text-2xl">{equippedPickaxe.pickaxe?.icon}</span>
                   <div>
-                    <h3 className={cn("font-bold", rarityColors[equippedPickaxe.pickaxe?.rarity || "common"])}>
+                    <p className={cn("text-sm font-bold", rarityColors[equippedPickaxe.pickaxe?.rarity || "common"])}>
                       {equippedPickaxe.pickaxe?.name}
-                    </h3>
-                    <div className="flex items-center gap-2 mt-1">
-                      <span className="text-xs text-muted-foreground">Durabilidade:</span>
+                    </p>
+                    <div className="flex items-center gap-2">
                       <Progress
                         value={(equippedPickaxe.current_durability / (equippedPickaxe.pickaxe?.max_durability || 100)) * 100}
-                        className="w-24 h-2"
+                        className="w-20 h-2"
                       />
-                      <span className="text-xs">
+                      <span className="text-xs text-muted-foreground">
                         {equippedPickaxe.current_durability}/{equippedPickaxe.pickaxe?.max_durability}
                       </span>
                     </div>
-                    <div className="flex items-center gap-2 mt-1">
-                      <Gem className="w-3 h-3 text-primary" />
-                      <span className="text-xs text-muted-foreground">
-                        Poder: {equippedPickaxe.pickaxe?.mining_power}
-                      </span>
-                    </div>
                   </div>
-                </>
+                </div>
               ) : (
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <AlertTriangle className="w-5 h-5" />
-                  <span>Nenhuma picareta equipada</span>
+                <div className="flex items-center gap-2 text-destructive">
+                  <AlertTriangle className="w-4 h-4" />
+                  <span className="text-sm">Sem picareta!</span>
                 </div>
               )}
+
+              <Badge variant="outline" className="border-primary/50">
+                <Layers className="w-3 h-3 mr-1" />
+                Andar {currentFloor}
+              </Badge>
             </div>
 
             <div className="flex gap-2">
               {equippedPickaxe && equippedPickaxe.current_durability < (equippedPickaxe.pickaxe?.max_durability || 100) && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleRepair(equippedPickaxe)}
-                  disabled={repairPickaxe.isPending}
-                >
-                  <Wrench className="w-4 h-4 mr-1" />
-                  Reparar (25g)
+                <Button size="sm" variant="outline" onClick={() => handleRepair(equippedPickaxe)}>
+                  <Wrench className="w-3 h-3 mr-1" />
+                  25g
                 </Button>
               )}
-              <Button variant="outline" size="sm" onClick={() => setShowInventory(true)}>
-                <Pickaxe className="w-4 h-4 mr-1" />
+              <Button size="sm" variant="outline" onClick={() => setShowInventory(true)}>
+                <Pickaxe className="w-3 h-3 mr-1" />
                 Picaretas
               </Button>
-              <Button variant="outline" size="sm" onClick={() => setShowShop(true)}>
-                <ShoppingCart className="w-4 h-4 mr-1" />
+              <Button size="sm" variant="outline" onClick={() => setShowShop(true)}>
+                <ShoppingCart className="w-3 h-3 mr-1" />
                 Loja
               </Button>
             </div>
@@ -286,80 +370,199 @@ export function MiningGame() {
         </CardContent>
       </Card>
 
-      {/* Tier Selection */}
-      <div className="flex gap-2 flex-wrap">
-        {[1, 2, 3, 4, 5].map((tier) => (
-          <Button
-            key={tier}
-            variant={selectedTier === tier ? "default" : "outline"}
-            size="sm"
-            onClick={() => setSelectedTier(tier)}
-            disabled={!equippedPickaxe || (equippedPickaxe.pickaxe?.mining_power || 0) < tier}
-          >
-            Tier {tier}
-          </Button>
-        ))}
-      </div>
-
       {/* Mining Grid */}
-      <Card className="bg-card/50 backdrop-blur border-primary/20 overflow-hidden">
-        <CardContent className="p-4">
-          <div className="grid grid-cols-4 gap-2 relative">
-            {blocks.map((block) => (
-              <motion.button
-                key={block.id}
-                className={cn(
-                  "aspect-square rounded-lg flex flex-col items-center justify-center relative overflow-hidden",
-                  "bg-gradient-to-br border-2 border-primary/30",
-                  "hover:scale-105 hover:border-primary transition-all",
-                  "active:scale-95",
-                  tierColors[block.node.tier]
-                )}
-                onClick={() => handleMineBlock(block)}
-                whileTap={{ scale: 0.9 }}
-                disabled={!equippedPickaxe || equippedPickaxe.current_durability <= 0}
-              >
-                <span className="text-3xl md:text-4xl">{block.node.icon}</span>
-                <Progress
-                  value={(block.currentHp / block.node.hp) * 100}
-                  className="absolute bottom-1 left-1 right-1 h-1.5"
-                />
+      <div
+        ref={gameRef}
+        className="relative bg-gradient-to-b from-stone-900 to-stone-950 rounded-lg border-2 border-primary/30 overflow-hidden mx-auto"
+        style={{ width: GRID_WIDTH * CELL_SIZE, height: GRID_HEIGHT * CELL_SIZE }}
+      >
+        {/* Background grid pattern */}
+        <div
+          className="absolute inset-0 opacity-10"
+          style={{
+            backgroundImage: "linear-gradient(hsl(var(--primary)/0.3) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--primary)/0.3) 1px, transparent 1px)",
+            backgroundSize: `${CELL_SIZE}px ${CELL_SIZE}px`,
+          }}
+        />
+
+        {/* Blocks */}
+        {blocks.map((block) => (
+          <motion.button
+            key={block.id}
+            className={cn(
+              "absolute flex items-center justify-center transition-all border-2",
+              block.isMined
+                ? "bg-transparent border-transparent"
+                : cn(
+                    blockStyles[block.node?.tier || 1].bg,
+                    blockStyles[block.node?.tier || 1].border,
+                    isAdjacent(block.x, block.y) && "ring-2 ring-primary ring-offset-1 ring-offset-background cursor-pointer hover:brightness-125"
+                  )
+            )}
+            style={{
+              left: block.x * CELL_SIZE,
+              top: block.y * CELL_SIZE,
+              width: CELL_SIZE,
+              height: CELL_SIZE,
+            }}
+            onClick={() => handleMineBlock(block)}
+            disabled={block.isMined || !isAdjacent(block.x, block.y) || isMining}
+            whileTap={!block.isMined && isAdjacent(block.x, block.y) ? { scale: 0.9 } : {}}
+          >
+            {!block.isMined && block.node && (
+              <>
+                <span className="text-xl">{block.node.icon}</span>
                 {block.currentHp < block.node.hp && (
-                  <motion.div
-                    className="absolute inset-0 bg-destructive/20"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: [0, 0.5, 0] }}
-                    transition={{ duration: 0.2 }}
+                  <div
+                    className="absolute bottom-0 left-0 right-0 h-1 bg-destructive/80"
+                    style={{ width: `${(block.currentHp / block.node.hp) * 100}%` }}
                   />
                 )}
-              </motion.button>
-            ))}
+              </>
+            )}
+          </motion.button>
+        ))}
 
-            {/* Drop Popups */}
-            <AnimatePresence>
-              {dropPopups.map((drop) => (
-                <motion.div
-                  key={drop.id}
-                  className="absolute pointer-events-none flex items-center gap-1 bg-primary/90 text-primary-foreground px-2 py-1 rounded-lg text-sm font-bold z-10"
-                  style={{
-                    left: `${drop.x * 25 + 12.5}%`,
-                    top: `${drop.y * 25 + 12.5}%`,
-                  }}
-                  initial={{ opacity: 0, y: 0, scale: 0.5 }}
-                  animate={{ opacity: 1, y: -30, scale: 1 }}
-                  exit={{ opacity: 0, y: -60 }}
-                  transition={{ duration: 0.5 }}
-                >
-                  <Sparkles className="w-3 h-3" />
-                  +{drop.quantity} {drop.material}
-                </motion.div>
-              ))}
-            </AnimatePresence>
+        {/* Player Character */}
+        <motion.div
+          className="absolute z-10 flex items-center justify-center pointer-events-none"
+          style={{ width: CELL_SIZE, height: CELL_SIZE }}
+          animate={{
+            left: playerPos.x * CELL_SIZE,
+            top: playerPos.y * CELL_SIZE,
+          }}
+          transition={{ type: "spring", stiffness: 300, damping: 25 }}
+        >
+          {/* Character body */}
+          <div className="relative">
+            {/* Head */}
+            <div
+              className="w-6 h-6 rounded-full border-2 border-primary/50 absolute -top-3 left-1/2 -translate-x-1/2"
+              style={{ backgroundColor: character?.skin_tone || "#e0ac69" }}
+            >
+              {/* Eyes */}
+              <div className="absolute top-1.5 left-1 w-1 h-1 bg-foreground rounded-full" />
+              <div className="absolute top-1.5 right-1 w-1 h-1 bg-foreground rounded-full" />
+            </div>
+            {/* Body */}
+            <div
+              className="w-5 h-6 rounded-sm mt-4"
+              style={{ backgroundColor: character?.shirt_color || "#3b82f6" }}
+            />
+            {/* Legs */}
+            <div className="flex gap-0.5">
+              <div
+                className="w-2 h-3 rounded-b-sm"
+                style={{ backgroundColor: character?.pants_color || "#1e3a5f" }}
+              />
+              <div
+                className="w-2 h-3 rounded-b-sm"
+                style={{ backgroundColor: character?.pants_color || "#1e3a5f" }}
+              />
+            </div>
+            {/* Pickaxe in hand */}
+            {equippedPickaxe && (
+              <motion.span
+                className="absolute -right-3 top-2 text-lg"
+                animate={isMining ? { rotate: [-20, 20, -20] } : {}}
+                transition={{ duration: 0.2, repeat: isMining ? Infinity : 0 }}
+              >
+                {equippedPickaxe.pickaxe?.icon}
+              </motion.span>
+            )}
           </div>
-        </CardContent>
-      </Card>
+        </motion.div>
 
-      {/* Pickaxe Shop Dialog */}
+        {/* Drop popups */}
+        <AnimatePresence>
+          {dropPopups.map((drop) => (
+            <motion.div
+              key={drop.id}
+              className="absolute z-20 flex items-center gap-1 bg-primary text-primary-foreground px-2 py-1 rounded text-sm font-bold pointer-events-none"
+              style={{
+                left: drop.x * CELL_SIZE + CELL_SIZE / 2,
+                top: drop.y * CELL_SIZE,
+              }}
+              initial={{ opacity: 0, y: 0, scale: 0.5, x: "-50%" }}
+              animate={{ opacity: 1, y: -20, scale: 1 }}
+              exit={{ opacity: 0, y: -40 }}
+              transition={{ duration: 0.4 }}
+            >
+              <Sparkles className="w-3 h-3" />
+              +1 {drop.icon}
+            </motion.div>
+          ))}
+        </AnimatePresence>
+
+        {/* Next floor indicator */}
+        {canAdvanceFloor && (
+          <motion.div
+            className="absolute bottom-2 left-1/2 -translate-x-1/2 z-20"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1, y: [0, -5, 0] }}
+            transition={{ y: { duration: 1, repeat: Infinity } }}
+          >
+            <Button size="sm" onClick={handleNextFloor} className="shadow-lg shadow-primary/50">
+              <ArrowDown className="w-4 h-4 mr-1" />
+              Descer Andar
+            </Button>
+          </motion.div>
+        )}
+      </div>
+
+      {/* Controls hint */}
+      <div className="flex justify-center gap-4 text-xs text-muted-foreground">
+        <div className="flex items-center gap-1">
+          <kbd className="px-1.5 py-0.5 bg-muted rounded text-[10px]">W</kbd>
+          <kbd className="px-1.5 py-0.5 bg-muted rounded text-[10px]">A</kbd>
+          <kbd className="px-1.5 py-0.5 bg-muted rounded text-[10px]">S</kbd>
+          <kbd className="px-1.5 py-0.5 bg-muted rounded text-[10px]">D</kbd>
+          <span>Mover</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <span>🖱️ Clique</span>
+          <span>Minerar bloco adjacente</span>
+        </div>
+      </div>
+
+      {/* Touch controls for mobile */}
+      <div className="flex justify-center gap-1 md:hidden">
+        <div className="grid grid-cols-3 gap-1">
+          <div />
+          <Button size="icon" variant="outline" onClick={() => {
+            const newY = Math.max(0, playerPos.y - 1);
+            const target = blocks.find((b) => b.x === playerPos.x && b.y === newY);
+            if (target?.isMined) setPlayerPos({ x: playerPos.x, y: newY });
+          }}>
+            <ArrowUp className="w-4 h-4" />
+          </Button>
+          <div />
+          <Button size="icon" variant="outline" onClick={() => {
+            const newX = Math.max(0, playerPos.x - 1);
+            const target = blocks.find((b) => b.x === newX && b.y === playerPos.y);
+            if (target?.isMined) setPlayerPos({ x: newX, y: playerPos.y });
+          }}>
+            <ArrowLeft className="w-4 h-4" />
+          </Button>
+          <Button size="icon" variant="outline" onClick={() => {
+            const newY = Math.min(GRID_HEIGHT - 1, playerPos.y + 1);
+            const target = blocks.find((b) => b.x === playerPos.x && b.y === newY);
+            if (target?.isMined) setPlayerPos({ x: playerPos.x, y: newY });
+          }}>
+            <ArrowDown className="w-4 h-4" />
+          </Button>
+          <Button size="icon" variant="outline" onClick={() => {
+            const newX = Math.min(GRID_WIDTH - 1, playerPos.x + 1);
+            const target = blocks.find((b) => b.x === newX && b.y === playerPos.y);
+            if (target?.isMined) setPlayerPos({ x: newX, y: playerPos.y });
+          }}>
+            <ArrowRight className="w-4 h-4" />
+          </Button>
+          <div />
+        </div>
+      </div>
+
+      {/* Shop Dialog */}
       <Dialog open={showShop} onOpenChange={setShowShop}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
@@ -404,7 +607,7 @@ export function MiningGame() {
         </DialogContent>
       </Dialog>
 
-      {/* Pickaxe Inventory Dialog */}
+      {/* Inventory Dialog */}
       <Dialog open={showInventory} onOpenChange={setShowInventory}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
@@ -431,9 +634,7 @@ export function MiningGame() {
                         {pp.pickaxe?.name}
                       </h4>
                       {pp.is_equipped && (
-                        <Badge variant="default" className="text-xs">
-                          Equipada
-                        </Badge>
+                        <Badge variant="default" className="text-xs">Equipada</Badge>
                       )}
                     </div>
                     <div className="flex items-center gap-2 mt-1">
@@ -468,7 +669,7 @@ export function MiningGame() {
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowShop(true)}>
+            <Button variant="outline" onClick={() => { setShowInventory(false); setShowShop(true); }}>
               <ShoppingCart className="w-4 h-4 mr-1" />
               Ir para Loja
             </Button>
