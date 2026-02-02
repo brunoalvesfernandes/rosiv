@@ -14,7 +14,6 @@ import {
 } from "@/components/ui/dialog";
 import {
   Pickaxe,
-  Gem,
   ShoppingCart,
   Wrench,
   AlertTriangle,
@@ -39,6 +38,7 @@ import {
   Pickaxe as PickaxeType,
 } from "@/hooks/useMining";
 import { useCharacter } from "@/hooks/useCharacter";
+import { AvatarFace } from "@/components/game/AvatarFace";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -96,7 +96,9 @@ export function MiningGame() {
   const [showInventory, setShowInventory] = useState(false);
   const [currentFloor, setCurrentFloor] = useState(1);
   const [isMining, setIsMining] = useState(false);
+  const [facingRight, setFacingRight] = useState(true);
   const gameRef = useRef<HTMLDivElement>(null);
+  const gravityRef = useRef<NodeJS.Timeout | null>(null);
 
   const equippedPickaxe = playerPickaxes?.find((p) => p.is_equipped);
 
@@ -160,45 +162,120 @@ export function MiningGame() {
     generateFloor(currentFloor);
   }, [generateFloor, currentFloor]);
 
-  // Keyboard controls
+  // Helper: check if a position has solid ground below or is on solid ground
+  const hasGroundBelow = useCallback((x: number, y: number) => {
+    if (y >= GRID_HEIGHT - 1) return true; // Bottom of grid is ground
+    const blockBelow = blocks.find((b) => b.x === x && b.y === y + 1);
+    return blockBelow && !blockBelow.isMined;
+  }, [blocks]);
+
+  // Helper: check if position is empty/mined
+  const isEmptyAt = useCallback((x: number, y: number) => {
+    const block = blocks.find((b) => b.x === x && b.y === y);
+    return block?.isMined ?? false;
+  }, [blocks]);
+
+  // Gravity system - player falls if no ground below
+  useEffect(() => {
+    if (gravityRef.current) {
+      clearInterval(gravityRef.current);
+    }
+
+    gravityRef.current = setInterval(() => {
+      setPlayerPos((prev) => {
+        // Check if there's solid ground below
+        if (!hasGroundBelow(prev.x, prev.y)) {
+          const newY = prev.y + 1;
+          if (newY < GRID_HEIGHT && isEmptyAt(prev.x, newY)) {
+            return { ...prev, y: newY };
+          }
+        }
+        return prev;
+      });
+    }, 150); // Fall speed
+
+    return () => {
+      if (gravityRef.current) {
+        clearInterval(gravityRef.current);
+      }
+    };
+  }, [hasGroundBelow, isEmptyAt]);
+
+  // Helper: count consecutive empty blocks above player for jump
+  const canJumpTo = useCallback((targetY: number) => {
+    const currentY = playerPos.y;
+    const jumpHeight = currentY - targetY;
+    
+    // Can only jump up to 2 blocks
+    if (jumpHeight > 2 || jumpHeight < 1) return false;
+    
+    // Check all blocks between current and target are empty
+    for (let y = currentY - 1; y >= targetY; y--) {
+      if (!isEmptyAt(playerPos.x, y)) return false;
+    }
+    
+    // Must have ground to jump from
+    return hasGroundBelow(playerPos.x, currentY);
+  }, [playerPos, isEmptyAt, hasGroundBelow]);
+
+  // Keyboard controls with jump physics
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (isMining) return;
 
       let newX = playerPos.x;
       let newY = playerPos.y;
+      let moved = false;
 
       switch (e.key.toLowerCase()) {
         case "w":
         case "arrowup":
-          newY = Math.max(0, playerPos.y - 1);
+        case " ": // Space for jump
+          // Try to jump 1 or 2 blocks up
+          if (canJumpTo(playerPos.y - 1)) {
+            newY = playerPos.y - 1;
+            moved = true;
+          } else if (canJumpTo(playerPos.y - 2)) {
+            newY = playerPos.y - 2;
+            moved = true;
+          }
           break;
         case "s":
         case "arrowdown":
-          newY = Math.min(GRID_HEIGHT - 1, playerPos.y + 1);
+          // Only move down if there's empty space
+          if (playerPos.y < GRID_HEIGHT - 1 && isEmptyAt(playerPos.x, playerPos.y + 1)) {
+            newY = playerPos.y + 1;
+            moved = true;
+          }
           break;
         case "a":
         case "arrowleft":
-          newX = Math.max(0, playerPos.x - 1);
+          setFacingRight(false);
+          if (playerPos.x > 0 && isEmptyAt(playerPos.x - 1, playerPos.y)) {
+            newX = playerPos.x - 1;
+            moved = true;
+          }
           break;
         case "d":
         case "arrowright":
-          newX = Math.min(GRID_WIDTH - 1, playerPos.x + 1);
+          setFacingRight(true);
+          if (playerPos.x < GRID_WIDTH - 1 && isEmptyAt(playerPos.x + 1, playerPos.y)) {
+            newX = playerPos.x + 1;
+            moved = true;
+          }
           break;
         default:
           return;
       }
 
-      // Check if target is mined/empty
-      const targetBlock = blocks.find((b) => b.x === newX && b.y === newY);
-      if (targetBlock?.isMined) {
+      if (moved) {
         setPlayerPos({ x: newX, y: newY });
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [playerPos, blocks, isMining]);
+  }, [playerPos, blocks, isMining, canJumpTo, isEmptyAt]);
 
   // Check if block is adjacent to player
   const isAdjacent = (x: number, y: number) => {
@@ -425,47 +502,49 @@ export function MiningGame() {
 
         {/* Player Character */}
         <motion.div
-          className="absolute z-10 flex items-center justify-center pointer-events-none"
+          className="absolute z-10 flex flex-col items-center justify-end pointer-events-none"
           style={{ width: CELL_SIZE, height: CELL_SIZE }}
           animate={{
             left: playerPos.x * CELL_SIZE,
             top: playerPos.y * CELL_SIZE,
+            scaleX: facingRight ? 1 : -1,
           }}
-          transition={{ type: "spring", stiffness: 300, damping: 25 }}
+          transition={{ type: "spring", stiffness: 400, damping: 30 }}
         >
-          {/* Character body */}
+          {/* Avatar Face */}
           <div className="relative">
-            {/* Head */}
-            <div
-              className="w-6 h-6 rounded-full border-2 border-primary/50 absolute -top-3 left-1/2 -translate-x-1/2"
-              style={{ backgroundColor: character?.skin_tone || "#e0ac69" }}
-            >
-              {/* Eyes */}
-              <div className="absolute top-1.5 left-1 w-1 h-1 bg-foreground rounded-full" />
-              <div className="absolute top-1.5 right-1 w-1 h-1 bg-foreground rounded-full" />
-            </div>
-            {/* Body */}
-            <div
-              className="w-5 h-6 rounded-sm mt-4"
+            <AvatarFace
+              hairStyle={character?.hair_style || "short"}
+              hairColor={character?.hair_color || "#4a3728"}
+              eyeColor={character?.eye_color || "#3b82f6"}
+              skinTone={character?.skin_tone || "#e0ac69"}
+              faceStyle={character?.face_style || "round"}
+              accessory={character?.accessory}
+              size="sm"
+            />
+            {/* Body below face */}
+            <div 
+              className="w-6 h-4 rounded-b-sm mx-auto -mt-1"
               style={{ backgroundColor: character?.shirt_color || "#3b82f6" }}
             />
             {/* Legs */}
-            <div className="flex gap-0.5">
+            <div className="flex justify-center gap-0.5">
               <div
-                className="w-2 h-3 rounded-b-sm"
+                className="w-2 h-2 rounded-b-sm"
                 style={{ backgroundColor: character?.pants_color || "#1e3a5f" }}
               />
               <div
-                className="w-2 h-3 rounded-b-sm"
+                className="w-2 h-2 rounded-b-sm"
                 style={{ backgroundColor: character?.pants_color || "#1e3a5f" }}
               />
             </div>
             {/* Pickaxe in hand */}
             {equippedPickaxe && (
               <motion.span
-                className="absolute -right-3 top-2 text-lg"
-                animate={isMining ? { rotate: [-20, 20, -20] } : {}}
-                transition={{ duration: 0.2, repeat: isMining ? Infinity : 0 }}
+                className="absolute -right-2 top-6 text-sm"
+                style={{ scaleX: facingRight ? 1 : -1 }}
+                animate={isMining ? { rotate: [-30, 30, -30] } : {}}
+                transition={{ duration: 0.15, repeat: isMining ? Infinity : 0 }}
               >
                 {equippedPickaxe.pickaxe?.icon}
               </motion.span>
@@ -511,17 +590,21 @@ export function MiningGame() {
       </div>
 
       {/* Controls hint */}
-      <div className="flex justify-center gap-4 text-xs text-muted-foreground">
+      <div className="flex justify-center gap-4 text-xs text-muted-foreground flex-wrap">
         <div className="flex items-center gap-1">
           <kbd className="px-1.5 py-0.5 bg-muted rounded text-[10px]">W</kbd>
+          <span>/</span>
+          <kbd className="px-1.5 py-0.5 bg-muted rounded text-[10px]">Espaço</kbd>
+          <span>Pular (2 blocos)</span>
+        </div>
+        <div className="flex items-center gap-1">
           <kbd className="px-1.5 py-0.5 bg-muted rounded text-[10px]">A</kbd>
-          <kbd className="px-1.5 py-0.5 bg-muted rounded text-[10px]">S</kbd>
           <kbd className="px-1.5 py-0.5 bg-muted rounded text-[10px]">D</kbd>
           <span>Mover</span>
         </div>
         <div className="flex items-center gap-1">
-          <span>🖱️ Clique</span>
-          <span>Minerar bloco adjacente</span>
+          <span>🖱️</span>
+          <span>Minerar adjacente</span>
         </div>
       </div>
 
@@ -530,31 +613,39 @@ export function MiningGame() {
         <div className="grid grid-cols-3 gap-1">
           <div />
           <Button size="icon" variant="outline" onClick={() => {
-            const newY = Math.max(0, playerPos.y - 1);
-            const target = blocks.find((b) => b.x === playerPos.x && b.y === newY);
-            if (target?.isMined) setPlayerPos({ x: playerPos.x, y: newY });
+            // Jump up to 2 blocks
+            if (canJumpTo(playerPos.y - 1)) {
+              setPlayerPos({ x: playerPos.x, y: playerPos.y - 1 });
+            } else if (canJumpTo(playerPos.y - 2)) {
+              setPlayerPos({ x: playerPos.x, y: playerPos.y - 2 });
+            }
           }}>
             <ArrowUp className="w-4 h-4" />
           </Button>
           <div />
           <Button size="icon" variant="outline" onClick={() => {
-            const newX = Math.max(0, playerPos.x - 1);
-            const target = blocks.find((b) => b.x === newX && b.y === playerPos.y);
-            if (target?.isMined) setPlayerPos({ x: newX, y: playerPos.y });
+            setFacingRight(false);
+            const newX = playerPos.x - 1;
+            if (newX >= 0 && isEmptyAt(newX, playerPos.y)) {
+              setPlayerPos({ x: newX, y: playerPos.y });
+            }
           }}>
             <ArrowLeft className="w-4 h-4" />
           </Button>
           <Button size="icon" variant="outline" onClick={() => {
-            const newY = Math.min(GRID_HEIGHT - 1, playerPos.y + 1);
-            const target = blocks.find((b) => b.x === playerPos.x && b.y === newY);
-            if (target?.isMined) setPlayerPos({ x: playerPos.x, y: newY });
+            const newY = playerPos.y + 1;
+            if (newY < GRID_HEIGHT && isEmptyAt(playerPos.x, newY)) {
+              setPlayerPos({ x: playerPos.x, y: newY });
+            }
           }}>
             <ArrowDown className="w-4 h-4" />
           </Button>
           <Button size="icon" variant="outline" onClick={() => {
-            const newX = Math.min(GRID_WIDTH - 1, playerPos.x + 1);
-            const target = blocks.find((b) => b.x === newX && b.y === playerPos.y);
-            if (target?.isMined) setPlayerPos({ x: newX, y: playerPos.y });
+            setFacingRight(true);
+            const newX = playerPos.x + 1;
+            if (newX < GRID_WIDTH && isEmptyAt(newX, playerPos.y)) {
+              setPlayerPos({ x: newX, y: playerPos.y });
+            }
           }}>
             <ArrowRight className="w-4 h-4" />
           </Button>
