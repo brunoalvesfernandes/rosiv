@@ -1,5 +1,5 @@
 import { GameLayout } from "@/components/layout/GameLayout";
-import { CharacterAvatar } from "@/components/game/CharacterAvatar";
+import { AvatarFace } from "@/components/game/AvatarFace";
 import { ProgressBar } from "@/components/ui/progress-bar";
 import { Button } from "@/components/ui/button";
 import { 
@@ -76,7 +76,15 @@ export default function Arena() {
         {/* Player Status */}
         <div className="bg-card border border-border rounded-xl p-4">
           <div className="flex items-center gap-4">
-            <CharacterAvatar name={character.name} level={character.level} size="md" />
+            <AvatarFace 
+              hairStyle={character.hair_style}
+              hairColor={character.hair_color}
+              eyeColor={character.eye_color}
+              skinTone={character.skin_tone}
+              faceStyle={character.face_style}
+              accessory={character.accessory}
+              size="md"
+            />
             <div className="flex-1">
               <h3 className="font-display font-bold">{character.name}</h3>
               <ProgressBar 
@@ -212,7 +220,15 @@ export default function Arena() {
                       className="bg-card border border-border rounded-xl p-4 hover:border-primary/50 transition-colors"
                     >
                       <div className="flex items-center gap-4">
-                        <CharacterAvatar name={opponent.name} level={opponent.level} size="sm" />
+                        <AvatarFace 
+                          hairStyle={opponent.hair_style}
+                          hairColor={opponent.hair_color}
+                          eyeColor={opponent.eye_color}
+                          skinTone={opponent.skin_tone}
+                          faceStyle={opponent.face_style}
+                          accessory={opponent.accessory}
+                          size="sm"
+                        />
                         <div className="flex-1">
                           <h3 className="font-display font-bold">{opponent.name}</h3>
                           <div className="flex gap-4 text-sm text-muted-foreground">
