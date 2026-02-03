@@ -195,6 +195,9 @@ export type Database = {
           total_battles: number
           updated_at: string
           user_id: string
+          vip_hair_id: string | null
+          vip_pants_id: string | null
+          vip_shirt_id: string | null
           vitality: number
           wins: number
           xp_to_next_level: number
@@ -241,6 +244,9 @@ export type Database = {
           total_battles?: number
           updated_at?: string
           user_id: string
+          vip_hair_id?: string | null
+          vip_pants_id?: string | null
+          vip_shirt_id?: string | null
           vitality?: number
           wins?: number
           xp_to_next_level?: number
@@ -287,11 +293,36 @@ export type Database = {
           total_battles?: number
           updated_at?: string
           user_id?: string
+          vip_hair_id?: string | null
+          vip_pants_id?: string | null
+          vip_shirt_id?: string | null
           vitality?: number
           wins?: number
           xp_to_next_level?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "characters_vip_hair_id_fkey"
+            columns: ["vip_hair_id"]
+            isOneToOne: false
+            referencedRelation: "vip_clothing"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "characters_vip_pants_id_fkey"
+            columns: ["vip_pants_id"]
+            isOneToOne: false
+            referencedRelation: "vip_clothing"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "characters_vip_shirt_id_fkey"
+            columns: ["vip_shirt_id"]
+            isOneToOne: false
+            referencedRelation: "vip_clothing"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       chat_messages: {
         Row: {
@@ -1338,6 +1369,38 @@ export type Database = {
         }
         Relationships: []
       }
+      player_vip_clothing: {
+        Row: {
+          acquired_at: string
+          clothing_id: string
+          id: string
+          is_equipped: boolean | null
+          user_id: string
+        }
+        Insert: {
+          acquired_at?: string
+          clothing_id: string
+          id?: string
+          is_equipped?: boolean | null
+          user_id: string
+        }
+        Update: {
+          acquired_at?: string
+          clothing_id?: string
+          id?: string
+          is_equipped?: boolean | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "player_vip_clothing_clothing_id_fkey"
+            columns: ["clothing_id"]
+            isOneToOne: false
+            referencedRelation: "vip_clothing"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       private_messages: {
         Row: {
           created_at: string
@@ -1523,6 +1586,48 @@ export type Database = {
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
+        }
+        Relationships: []
+      }
+      vip_clothing: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          image_url: string | null
+          is_available: boolean | null
+          min_level: number | null
+          name: string
+          price_gold: number | null
+          price_premium: number | null
+          rarity: string
+          type: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_available?: boolean | null
+          min_level?: number | null
+          name: string
+          price_gold?: number | null
+          price_premium?: number | null
+          rarity?: string
+          type: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_available?: boolean | null
+          min_level?: number | null
+          name?: string
+          price_gold?: number | null
+          price_premium?: number | null
+          rarity?: string
+          type?: string
         }
         Relationships: []
       }

@@ -22,7 +22,8 @@ import {
   PawPrint,
   Settings,
   Volume2,
-  VolumeX
+  VolumeX,
+  Crown
 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -55,6 +56,7 @@ const navItems: NavItem[] = [
   { label: "Guerras", href: "/guild-wars", icon: Swords },
   { label: "Crafting", href: "/crafting", icon: Hammer },
   { label: "Loja", href: "/shop", icon: Store },
+  { label: "Loja VIP", href: "/vip-shop", icon: Crown },
   { label: "Inventário", href: "/inventory", icon: Package },
   { label: "Conquistas", href: "/achievements", icon: Award },
   { label: "Ranking", href: "/ranking", icon: Trophy },
