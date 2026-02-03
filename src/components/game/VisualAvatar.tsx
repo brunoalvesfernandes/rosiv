@@ -1,5 +1,11 @@
 import { cn } from "@/lib/utils";
 
+export interface VipClothingDisplay {
+  shirt?: { image_url: string | null; name: string } | null;
+  pants?: { image_url: string | null; name: string } | null;
+  hair?: { image_url: string | null; name: string } | null;
+}
+
 export interface AvatarCustomization {
   hairStyle: string;
   hairColor: string;
@@ -18,6 +24,7 @@ interface VisualAvatarProps {
   className?: string;
   showLevel?: boolean;
   level?: number;
+  vipClothing?: VipClothingDisplay | null;
 }
 
 const sizeConfig = {
@@ -237,12 +244,67 @@ const accessories: Record<string, JSX.Element> = {
   ),
 };
 
+// VIP Hair styles with special effects
+const vipHairStyles: Record<string, (baseHairColor: string) => JSX.Element> = {
+  supersaiyajin: (baseColor) => (
+    <g>
+      {/* Super Saiyan hair - dramatic golden spikes */}
+      <defs>
+        <linearGradient id="ssjGradient" x1="0%" y1="100%" x2="0%" y2="0%">
+          <stop offset="0%" stopColor="#fbbf24" />
+          <stop offset="50%" stopColor="#fcd34d" />
+          <stop offset="100%" stopColor="#fef08a" />
+        </linearGradient>
+        <filter id="ssjGlow" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur stdDeviation="3" result="blur" />
+          <feMerge>
+            <feMergeNode in="blur" />
+            <feMergeNode in="SourceGraphic" />
+          </feMerge>
+        </filter>
+      </defs>
+      {/* Main spikes going upward */}
+      <path d="M15 40 L5 -20 L25 15 L20 -35 L38 8 L35 -45 L50 0 L65 -45 L62 8 L80 -35 L75 15 L95 -20 L85 40" 
+        fill="url(#ssjGradient)" filter="url(#ssjGlow)" />
+      <ellipse cx="50" cy="22" rx="32" ry="18" fill="url(#ssjGradient)" />
+      {/* Energy effect */}
+      <ellipse cx="50" cy="15" rx="38" ry="25" fill="none" stroke="#fef08a" strokeWidth="1" opacity="0.4" />
+      {/* Highlight */}
+      <path d="M35 5 Q42 -5, 50 -2" stroke="#fff" strokeWidth="3" opacity="0.5" fill="none" />
+    </g>
+  ),
+  akatsuki: (baseColor) => (
+    <g>
+      {/* Itachi-style long black hair */}
+      <ellipse cx="50" cy="14" rx="34" ry="18" fill="#1a1a1a" />
+      <path d="M16 30 Q20 10, 50 4 Q80 10, 84 30 L86 75 Q82 90, 76 80 L76 38 L24 38 L24 80 Q18 90, 14 75 Z" fill="#1a1a1a" />
+      {/* Side bangs */}
+      <path d="M18 35 Q10 50, 14 75 Q16 85, 22 75 L24 35" fill="#1a1a1a" />
+      <path d="M82 35 Q90 50, 86 75 Q84 85, 78 75 L76 35" fill="#1a1a1a" />
+      {/* Face framing bangs */}
+      <path d="M30 28 L26 50 L34 45 Z" fill="#1a1a1a" />
+      <path d="M70 28 L74 50 L66 45 Z" fill="#1a1a1a" />
+      {/* Highlight */}
+      <path d="M36 10 Q42 6, 50 8" stroke="#444" strokeWidth="2" opacity="0.3" fill="none" />
+    </g>
+  ),
+};
+
+// Detect VIP hair style from name
+function getVipHairStyle(hairName: string): string | null {
+  const name = hairName.toLowerCase();
+  if (name.includes("saiyajin") || name.includes("saiyan") || name.includes("dragon")) return "supersaiyajin";
+  if (name.includes("akatsuki") || name.includes("itachi")) return "akatsuki";
+  return null;
+}
+
 export function VisualAvatar({ 
   customization, 
   size = "md", 
   className,
   showLevel = false,
-  level = 1
+  level = 1,
+  vipClothing
 }: VisualAvatarProps) {
   const { width, height } = sizeConfig[size];
   const { 
@@ -257,7 +319,13 @@ export function VisualAvatar({
     shoesColor
   } = customization;
 
-  const HairComponent = hairStyles[hairStyle] || hairStyles.short;
+  // Check if VIP hair is equipped
+  const hasVipHair = vipClothing?.hair?.name;
+  const vipHairStyleKey = hasVipHair ? getVipHairStyle(vipClothing.hair!.name) : null;
+  
+  const HairComponent = vipHairStyleKey && vipHairStyles[vipHairStyleKey] 
+    ? vipHairStyles[vipHairStyleKey] 
+    : hairStyles[hairStyle] || hairStyles.short;
   const facePath = faceShapes[faceStyle] || faceShapes.round;
 
   return (
@@ -291,11 +359,19 @@ export function VisualAvatar({
         {/* Face features */}
         {renderFaceFeatures(skinTone)}
         
-        {/* Hair */}
+        {/* Hair - VIP or regular */}
         {HairComponent(hairColor)}
         
         {/* Accessory */}
         {accessory && accessories[accessory]}
+        
+        {/* VIP indicator */}
+        {(vipClothing?.hair || vipClothing?.shirt || vipClothing?.pants) && (
+          <g>
+            <circle cx="90" cy="10" r="8" fill="#ffd700" />
+            <text x="90" y="14" textAnchor="middle" fontSize="10" fill="#1a1a1a" fontWeight="bold">V</text>
+          </g>
+        )}
       </svg>
       
       {showLevel && (

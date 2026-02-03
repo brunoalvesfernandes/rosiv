@@ -146,10 +146,13 @@ function ActiveRunCard({
   const myParticipation = run.participants?.find((p) => p.user_id === currentUserId);
   const isCreator = run.created_by === currentUserId;
   const participantCount = run.participants?.length || 0;
-  const allReady = run.participants?.every((p) => p.is_ready) && participantCount >= dungeon.min_players;
+  const allReady = (run.participants?.every((p) => p.is_ready) ?? false) && participantCount >= dungeon.min_players;
   const canStart = isCreator && allReady && run.status === "waiting";
   const isActive = run.status === "active";
   const bossHpPercent = (run.current_boss_hp / dungeon.boss_hp) * 100;
+
+  // Debug info
+  const readyCount = run.participants?.filter(p => p.is_ready).length || 0;
 
   return (
     <Card className="bg-card/50 backdrop-blur border-primary/20">
@@ -190,7 +193,7 @@ function ActiveRunCard({
               <Users className="w-4 h-4" /> Participantes
             </span>
             <span className="text-sm text-muted-foreground">
-              {participantCount}/{dungeon.max_players}
+              {readyCount}/{participantCount} prontos • {participantCount}/{dungeon.max_players} jogadores
             </span>
           </div>
           <div className="grid grid-cols-2 gap-2">
@@ -236,10 +239,22 @@ function ActiveRunCard({
           )}
 
           {canStart && (
-            <Button size="sm" onClick={onStart} disabled={isStarting} className="flex-1">
+            <Button size="sm" onClick={onStart} disabled={isStarting} className="flex-1 bg-green-600 hover:bg-green-700">
               {isStarting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4 mr-1" />}
-              Iniciar!
+              Iniciar Batalha!
             </Button>
+          )}
+
+          {isCreator && !canStart && run.status === "waiting" && participantCount >= dungeon.min_players && (
+            <div className="text-xs text-muted-foreground text-center w-full">
+              Aguardando todos ficarem prontos ({readyCount}/{participantCount})
+            </div>
+          )}
+
+          {isCreator && !canStart && run.status === "waiting" && participantCount < dungeon.min_players && (
+            <div className="text-xs text-muted-foreground text-center w-full">
+              Mínimo de {dungeon.min_players} jogadores para iniciar
+            </div>
           )}
 
           {isParticipant && isActive && (
