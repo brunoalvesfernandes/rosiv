@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { VisualAvatar, AvatarCustomization } from "./VisualAvatar";
+import { VisualAvatar, AvatarCustomization, VipClothingDisplay } from "./VisualAvatar";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -18,6 +18,7 @@ interface AvatarCustomizerProps {
   onSave: (customization: AvatarCustomization) => void;
   onCancel?: () => void;
   isSaving?: boolean;
+  vipClothing?: VipClothingDisplay | null;
 }
 
 const hairStyles = [
@@ -111,7 +112,8 @@ export function AvatarCustomizer({
   initialCustomization, 
   onSave, 
   onCancel,
-  isSaving = false 
+  isSaving = false,
+  vipClothing
 }: AvatarCustomizerProps) {
   const [customization, setCustomization] = useState<AvatarCustomization>(initialCustomization);
   const [activeTab, setActiveTab] = useState<TabType>("hair");
@@ -246,12 +248,22 @@ export function AvatarCustomizer({
       {/* Preview */}
       <div className="flex justify-center">
         <div className="relative">
-          <VisualAvatar customization={customization} size="xl" />
+          <VisualAvatar customization={customization} size="xl" vipClothing={vipClothing} />
           <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-card px-3 py-1 rounded-full border border-border text-xs text-muted-foreground">
             Prévia
           </div>
         </div>
       </div>
+
+      {/* VIP Notice */}
+      {vipClothing?.hair && (
+        <div className="bg-primary/10 border border-primary/30 rounded-lg p-3 text-center">
+          <p className="text-sm text-primary">
+            ✨ Cabelo VIP equipado: <strong>{vipClothing.hair.name}</strong>
+          </p>
+          <p className="text-xs text-muted-foreground">Desequipe na Loja VIP para usar cabelos básicos</p>
+        </div>
+      )}
 
       {/* Tabs */}
       <div className="flex justify-center gap-1 flex-wrap">

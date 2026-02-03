@@ -2,6 +2,7 @@ import { GameLayout } from "@/components/layout/GameLayout";
 import { AvatarCustomizer } from "@/components/game/AvatarCustomizer";
 import { AvatarCustomization } from "@/components/game/VisualAvatar";
 import { useCharacter, useUpdateCharacter } from "@/hooks/useCharacter";
+import { useEquippedVipClothing } from "@/hooks/useVipClothing";
 import { Loader2, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
@@ -9,6 +10,7 @@ import { toast } from "sonner";
 
 export default function CharacterCustomization() {
   const { data: character, isLoading } = useCharacter();
+  const { data: equippedVip } = useEquippedVipClothing();
   const updateCharacter = useUpdateCharacter();
   const navigate = useNavigate();
 
@@ -33,6 +35,13 @@ export default function CharacterCustomization() {
     pantsColor: character.pants_color || "#1e3a5f",
     shoesColor: character.shoes_color || "#4a3728",
   };
+
+  // Convert equipped VIP clothing to display format
+  const vipClothingDisplay = equippedVip ? {
+    shirt: equippedVip.shirt ? { image_url: equippedVip.shirt.image_url, name: equippedVip.shirt.name } : null,
+    pants: equippedVip.pants ? { image_url: equippedVip.pants.image_url, name: equippedVip.pants.name } : null,
+    hair: equippedVip.hair ? { image_url: equippedVip.hair.image_url, name: equippedVip.hair.name } : null,
+  } : null;
 
   const handleSave = async (customization: AvatarCustomization) => {
     try {
@@ -75,6 +84,7 @@ export default function CharacterCustomization() {
             onSave={handleSave}
             onCancel={() => navigate("/character")}
             isSaving={updateCharacter.isPending}
+            vipClothing={vipClothingDisplay}
           />
         </div>
       </div>
