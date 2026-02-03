@@ -53,6 +53,10 @@ export interface Character {
   pants_color: string;
   shoes_color: string;
   avatar_id: string;
+  // VIP clothing
+  vip_shirt_id: string | null;
+  vip_pants_id: string | null;
+  vip_hair_id: string | null;
 }
 
 async function fetchAndRegenerate(userId: string): Promise<Character | null> {

@@ -26,6 +26,7 @@ import Crafting from "./pages/Crafting";
 import Achievements from "./pages/Achievements";
 import Pets from "./pages/Pets";
 import Admin from "./pages/Admin";
+import VipShop from "./pages/VipShop";
 import NotFound from "./pages/NotFound";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 
@@ -94,6 +95,9 @@ const App = () => (
             } />
             <Route path="/admin" element={
               <ProtectedRoute><Admin /></ProtectedRoute>
+            } />
+            <Route path="/vip-shop" element={
+              <ProtectedRoute><VipShop /></ProtectedRoute>
             } />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
