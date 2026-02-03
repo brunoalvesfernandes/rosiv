@@ -1,30 +1,6 @@
 import { cn } from "@/lib/utils";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { 
-  Swords, 
-  User, 
-  Target, 
-  Dumbbell, 
-  Trophy, 
-  LogOut,
-  Shield,
-  Coins,
-  Menu,
-  X,
-  Loader2,
-  Store,
-  Package,
-  Users,
-  Sparkles,
-  Castle,
-  Hammer,
-  Award,
-  PawPrint,
-  Settings,
-  Volume2,
-  VolumeX,
-  Crown
-} from "lucide-react";
+import { Swords, User, Target, Dumbbell, Trophy, LogOut, Shield, Coins, Menu, X, Loader2, Store, Package, Users, Sparkles, Castle, Hammer, Award, PawPrint, Settings, Volume2, VolumeX, Crown } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
@@ -35,49 +11,103 @@ import { supabase } from "@/integrations/supabase/client";
 import { setBgmEnabled, isBgmEnabled, stopMusic, resumeMusic } from "@/utils/musicPlayer";
 import { DailyLoginReward } from "@/components/game/DailyLoginReward";
 import { useGlobalMusic } from "@/hooks/useGlobalMusic";
-
 interface NavItem {
   label: string;
   href: string;
   icon: React.ElementType;
   adminOnly?: boolean;
 }
-
-const navItems: NavItem[] = [
-  { label: "Dashboard", href: "/dashboard", icon: Shield },
-  { label: "Personagem", href: "/character", icon: User },
-  { label: "Pets", href: "/pets", icon: PawPrint },
-  { label: "Classes", href: "/classes", icon: Sparkles },
-  { label: "Missões", href: "/missions", icon: Target },
-  { label: "Treino", href: "/training", icon: Dumbbell },
-  { label: "Arena", href: "/arena", icon: Swords },
-  { label: "Masmorras", href: "/dungeons", icon: Castle },
-  { label: "Guildas", href: "/guilds", icon: Users },
-  { label: "Guerras", href: "/guild-wars", icon: Swords },
-  { label: "Crafting", href: "/crafting", icon: Hammer },
-  { label: "Loja", href: "/shop", icon: Store },
-  { label: "Loja VIP", href: "/vip-shop", icon: Crown },
-  { label: "Inventário", href: "/inventory", icon: Package },
-  { label: "Conquistas", href: "/achievements", icon: Award },
-  { label: "Ranking", href: "/ranking", icon: Trophy },
-  { label: "Admin", href: "/admin", icon: Settings, adminOnly: true },
-];
-
+const navItems: NavItem[] = [{
+  label: "Dashboard",
+  href: "/dashboard",
+  icon: Shield
+}, {
+  label: "Personagem",
+  href: "/character",
+  icon: User
+}, {
+  label: "Pets",
+  href: "/pets",
+  icon: PawPrint
+}, {
+  label: "Classes",
+  href: "/classes",
+  icon: Sparkles
+}, {
+  label: "Missões",
+  href: "/missions",
+  icon: Target
+}, {
+  label: "Treino",
+  href: "/training",
+  icon: Dumbbell
+}, {
+  label: "Arena",
+  href: "/arena",
+  icon: Swords
+}, {
+  label: "Masmorras",
+  href: "/dungeons",
+  icon: Castle
+}, {
+  label: "Guildas",
+  href: "/guilds",
+  icon: Users
+}, {
+  label: "Guerras",
+  href: "/guild-wars",
+  icon: Swords
+}, {
+  label: "Crafting",
+  href: "/crafting",
+  icon: Hammer
+}, {
+  label: "Loja",
+  href: "/shop",
+  icon: Store
+}, {
+  label: "Loja VIP",
+  href: "/vip-shop",
+  icon: Crown
+}, {
+  label: "Inventário",
+  href: "/inventory",
+  icon: Package
+}, {
+  label: "Conquistas",
+  href: "/achievements",
+  icon: Award
+}, {
+  label: "Ranking",
+  href: "/ranking",
+  icon: Trophy
+}, {
+  label: "Admin",
+  href: "/admin",
+  icon: Settings,
+  adminOnly: true
+}];
 interface GameLayoutProps {
   children: React.ReactNode;
 }
-
-export function GameLayout({ children }: GameLayoutProps) {
+export function GameLayout({
+  children
+}: GameLayoutProps) {
   const location = useLocation();
   const navigate = useNavigate();
-  const { signOut, user } = useAuth();
-  const { data: character, isLoading } = useCharacter();
+  const {
+    signOut,
+    user
+  } = useAuth();
+  const {
+    data: character,
+    isLoading
+  } = useCharacter();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [musicEnabled, setMusicEnabled] = useState(() => isBgmEnabled());
 
   // Play global music
   useGlobalMusic();
-
   const toggleMusic = () => {
     const newState = !musicEnabled;
     setMusicEnabled(newState);
@@ -92,39 +122,38 @@ export function GameLayout({ children }: GameLayoutProps) {
   };
 
   // Check if user is admin
-  const { data: isAdmin } = useQuery({
+  const {
+    data: isAdmin
+  } = useQuery({
     queryKey: ["is_admin", user?.id],
     queryFn: async () => {
       if (!user) return false;
-      const { data } = await supabase.rpc("is_admin", { _user_id: user.id });
+      const {
+        data
+      } = await supabase.rpc("is_admin", {
+        _user_id: user.id
+      });
       return data as boolean;
     },
-    enabled: !!user,
+    enabled: !!user
   });
-
   const handleLogout = async () => {
     await signOut();
     toast.success("Até logo, guerreiro!");
     navigate("/");
   };
-
   if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
+    return <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
-    );
+      </div>;
   }
-
   const playerName = character?.name || "Guerreiro";
   const playerLevel = character?.level || 1;
   const playerGold = character?.gold || 0;
 
   // Filter nav items based on admin status
   const filteredNavItems = navItems.filter(item => !item.adminOnly || isAdmin);
-
-  return (
-    <div className="min-h-screen bg-background">
+  return <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="sticky top-0 z-50 w-full border-b border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60">
         <div className="container flex h-16 items-center justify-between">
@@ -133,9 +162,7 @@ export function GameLayout({ children }: GameLayoutProps) {
             <div className="w-10 h-10 rounded-lg bg-gradient-primary flex items-center justify-center">
               <Swords className="w-6 h-6 text-primary-foreground" />
             </div>
-            <span className="font-display text-xl font-bold hidden sm:block">
-              Realm of Shadows
-            </span>
+            <span className="font-display text-xl font-bold hidden sm:block">Solo Hunter</span>
           </Link>
 
           {/* Player Info (Desktop) */}
@@ -153,39 +180,22 @@ export function GameLayout({ children }: GameLayoutProps) {
                 <p className="text-xs text-muted-foreground">Nível {playerLevel}</p>
               </div>
             </div>
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="text-muted-foreground hover:text-primary"
-              onClick={toggleMusic}
-              title={musicEnabled ? "Desativar música" : "Ativar música"}
-            >
+            <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-primary" onClick={toggleMusic} title={musicEnabled ? "Desativar música" : "Ativar música"}>
               {musicEnabled ? <Volume2 className="w-5 h-5" /> : <VolumeX className="w-5 h-5" />}
             </Button>
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="text-muted-foreground hover:text-primary"
-              onClick={handleLogout}
-            >
+            <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-primary" onClick={handleLogout}>
               <LogOut className="w-5 h-5" />
             </Button>
           </div>
 
           {/* Mobile Menu Button */}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="md:hidden"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          >
+          <Button variant="ghost" size="icon" className="md:hidden" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
             {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </Button>
         </div>
 
         {/* Mobile Menu */}
-        {mobileMenuOpen && (
-          <div className="md:hidden border-t border-border bg-card p-4 animate-fade-in">
+        {mobileMenuOpen && <div className="md:hidden border-t border-border bg-card p-4 animate-fade-in">
             <div className="flex items-center gap-3 mb-4 pb-4 border-b border-border">
               <div className="w-10 h-10 rounded-full bg-gradient-primary flex items-center justify-center font-bold text-primary-foreground">
                 {playerName.charAt(0)}
@@ -200,60 +210,30 @@ export function GameLayout({ children }: GameLayoutProps) {
               </div>
             </div>
             <nav className="space-y-1">
-              {filteredNavItems.map((item) => (
-                <Link
-                  key={item.href}
-                  to={item.href}
-                  onClick={() => setMobileMenuOpen(false)}
-                  className={cn(
-                    "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
-                    location.pathname === item.href
-                      ? "bg-primary text-primary-foreground"
-                      : "text-muted-foreground hover:text-foreground hover:bg-secondary"
-                  )}
-                >
+              {filteredNavItems.map(item => <Link key={item.href} to={item.href} onClick={() => setMobileMenuOpen(false)} className={cn("flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors", location.pathname === item.href ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground hover:bg-secondary")}>
                   <item.icon className="w-5 h-5" />
                   {item.label}
-                </Link>
-              ))}
-              <button
-                onClick={toggleMusic}
-                className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary w-full"
-              >
+                </Link>)}
+              <button onClick={toggleMusic} className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary w-full">
                 {musicEnabled ? <Volume2 className="w-5 h-5" /> : <VolumeX className="w-5 h-5" />}
                 {musicEnabled ? "Música Ligada" : "Música Desligada"}
               </button>
-              <button
-                onClick={handleLogout}
-                className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:text-destructive hover:bg-secondary w-full"
-              >
+              <button onClick={handleLogout} className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:text-destructive hover:bg-secondary w-full">
                 <LogOut className="w-5 h-5" />
                 Sair
               </button>
             </nav>
-          </div>
-        )}
+          </div>}
       </header>
 
       <div className="flex">
         {/* Sidebar (Desktop) */}
         <aside className="hidden md:flex w-64 flex-col border-r border-border bg-card min-h-[calc(100vh-4rem)] p-4">
           <nav className="space-y-1">
-            {filteredNavItems.map((item) => (
-              <Link
-                key={item.href}
-                to={item.href}
-                className={cn(
-                  "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
-                  location.pathname === item.href
-                    ? "bg-primary text-primary-foreground shadow-[0_0_15px_hsl(var(--primary)/0.3)]"
-                    : "text-muted-foreground hover:text-foreground hover:bg-secondary"
-                )}
-              >
+            {filteredNavItems.map(item => <Link key={item.href} to={item.href} className={cn("flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200", location.pathname === item.href ? "bg-primary text-primary-foreground shadow-[0_0_15px_hsl(var(--primary)/0.3)]" : "text-muted-foreground hover:text-foreground hover:bg-secondary")}>
                 <item.icon className="w-5 h-5" />
                 {item.label}
-              </Link>
-            ))}
+              </Link>)}
           </nav>
         </aside>
 
@@ -265,6 +245,5 @@ export function GameLayout({ children }: GameLayoutProps) {
 
       {/* Daily Login Reward */}
       <DailyLoginReward />
-    </div>
-  );
+    </div>;
 }
