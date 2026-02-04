@@ -355,7 +355,7 @@ export function useStartRun() {
       const now = new Date();
       const endsAt = new Date(now.getTime() + durationMinutes * 60 * 1000);
 
-      const { error } = await supabase
+      const { data: updatedRuns, error } = await supabase
         .from("dungeon_runs")
         .update({
           status: "active",
@@ -363,9 +363,24 @@ export function useStartRun() {
           ends_at: endsAt.toISOString(),
         })
         .eq("id", runId)
-        .eq("created_by", user.id); // Only creator can start
+        .eq("status", "waiting")
+        .select("id");
 
       if (error) throw error;
+      if (!updatedRuns || updatedRuns.length === 0) {
+        const { data: existingRun, error: fetchError } = await supabase
+          .from("dungeon_runs")
+          .select("status")
+          .eq("id", runId)
+          .single();
+
+        if (fetchError) throw fetchError;
+        if (existingRun?.status === "active") {
+          return { started: true };
+        }
+
+        throw new Error("Não foi possível iniciar a masmorra.");
+      }
 
       return { started: true };
     },
@@ -405,30 +420,56 @@ export function useAttackBoss() {
       const newBossHp = Math.max(0, run.current_boss_hp - damage);
 
       // Update participant damage
-      const { data: participant } = await supabase
+      const { data: participant, error: participantError } = await supabase
         .from("dungeon_participants")
         .select("damage_dealt")
         .eq("run_id", run.id)
         .eq("user_id", user.id)
         .single();
 
-      await supabase
+      if (participantError) throw participantError;
+
+      const { error: updateParticipantError } = await supabase
         .from("dungeon_participants")
         .update({ damage_dealt: (participant?.damage_dealt || 0) + damage })
         .eq("run_id", run.id)
         .eq("user_id", user.id);
 
+      if (updateParticipantError) throw updateParticipantError;
+
       // Update boss HP
-      await supabase
+      const { data: bossUpdate, error: bossUpdateError } = await supabase
         .from("dungeon_runs")
         .update({ current_boss_hp: newBossHp })
-        .eq("id", run.id);
+        .eq("id", run.id)
+        .select("current_boss_hp");
+
+      if (bossUpdateError) throw bossUpdateError;
+      if (!bossUpdate || bossUpdate.length === 0) {
+        throw new Error("Não foi possível atualizar o HP do boss.");
+      }
 
       // Consume energy
-      await supabase
+      const { error: energyError } = await supabase
         .from("characters")
         .update({ current_energy: character.current_energy - 5 })
         .eq("user_id", user.id);
+
+      if (energyError) throw energyError;
+
+      // Boss counterattack
+      const bossBaseDamage = dungeon.boss_strength;
+      const defenseMitigation = character.defense / 3;
+      const bossVariance = Math.floor(Math.random() * 6) - 3;
+      const damageTaken = Math.max(1, Math.floor(bossBaseDamage - defenseMitigation + bossVariance));
+      const newPlayerHp = Math.max(0, character.current_hp - damageTaken);
+
+      const { error: hpError } = await supabase
+        .from("characters")
+        .update({ current_hp: newPlayerHp })
+        .eq("user_id", user.id);
+
+      if (hpError) throw hpError;
 
       // Check if boss is defeated
       if (newBossHp <= 0) {
@@ -483,10 +524,10 @@ export function useAttackBoss() {
         // Generate drops for the current user and show message
         const drops = await generateMaterialDrops(user.id, "dungeon", difficulty);
 
-        return { damage, defeated: true, gold: dungeon.gold_reward, xp: dungeon.xp_reward, drops };
+        return { damage, damageTaken, defeated: true, gold: dungeon.gold_reward, xp: dungeon.xp_reward, drops };
       }
 
-      return { damage, defeated: false, drops: [] };
+      return { damage, damageTaken, defeated: false, drops: [] };
     },
     onSuccess: (result) => {
       if (result.defeated) {
@@ -496,6 +537,9 @@ export function useAttackBoss() {
         }
       } else {
         toast.success(`Você causou ${result.damage} de dano ao boss!`);
+      }
+      if (result.damageTaken) {
+        toast.error(`Você recebeu ${result.damageTaken} de dano!`);
       }
       queryClient.invalidateQueries({ queryKey: ["character"] });
       queryClient.invalidateQueries({ queryKey: ["dungeon-runs"] });
