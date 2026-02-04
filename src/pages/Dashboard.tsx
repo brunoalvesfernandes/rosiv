@@ -138,7 +138,7 @@ export default function Dashboard() {
                 Você não tem missões ativas
               </p>
               <Link to="/missions">
-                <Button>Ver Missões Disponíveis</Button>
+                <Button>Ver Missões Disponíveissssssssss</Button>
               </Link>
             </div>
           ) : (
