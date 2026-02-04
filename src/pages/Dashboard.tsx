@@ -1,7 +1,7 @@
 import { GameLayout } from "@/components/layout/GameLayout";
 import { StatCard } from "@/components/ui/stat-card";
 import { ProgressBar } from "@/components/ui/progress-bar";
-import { CharacterAvatar } from "@/components/game/CharacterAvatar";
+import { GameAvatar } from "@/components/game/GameAvatar";
 import { 
   Swords, 
   Shield, 
@@ -40,10 +40,9 @@ export default function Dashboard() {
         {/* Header */}
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
-            <CharacterAvatar 
-              name={character.name} 
-              level={character.level} 
+            <GameAvatar 
               size="lg"
+              showLevel
             />
             <div>
               <h1 className="font-display text-2xl md:text-3xl font-bold">

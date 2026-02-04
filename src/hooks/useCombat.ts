@@ -153,6 +153,22 @@ export function useAttackNPC() {
         })
         .eq("user_id", user.id);
 
+      // Decrease active pet hunger after battle
+      const { data: activePet } = await supabase
+        .from("player_pets")
+        .select("id, hunger")
+        .eq("user_id", user.id)
+        .eq("is_active", true)
+        .single();
+
+      if (activePet) {
+        const newHunger = Math.max(0, activePet.hunger - 5);
+        await supabase
+          .from("player_pets")
+          .update({ hunger: newHunger })
+          .eq("id", activePet.id);
+      }
+
       // Log battle
       await supabase.from("battle_logs").insert({
         attacker_id: user.id,
@@ -296,6 +312,22 @@ export function useAttackPlayer() {
           arena_points: newArenaPoints,
         })
         .eq("user_id", user.id);
+
+      // Decrease active pet hunger after PvP battle
+      const { data: activePet } = await supabase
+        .from("player_pets")
+        .select("id, hunger")
+        .eq("user_id", user.id)
+        .eq("is_active", true)
+        .single();
+
+      if (activePet) {
+        const newHunger = Math.max(0, activePet.hunger - 5);
+        await supabase
+          .from("player_pets")
+          .update({ hunger: newHunger })
+          .eq("id", activePet.id);
+      }
 
       // Update defender (take some damage and lose/gain arena points)
       await supabase

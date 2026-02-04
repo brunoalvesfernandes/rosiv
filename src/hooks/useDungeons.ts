@@ -335,6 +335,23 @@ export function useStartRun() {
     mutationFn: async ({ runId, durationMinutes }: { runId: string; durationMinutes: number }) => {
       if (!user) throw new Error("Não autenticado");
 
+      // Verify all participants are ready
+      const { data: participants, error: partError } = await supabase
+        .from("dungeon_participants")
+        .select("is_ready")
+        .eq("run_id", runId);
+
+      if (partError) throw partError;
+      
+      if (!participants || participants.length < 1) {
+        throw new Error("Nenhum participante encontrado");
+      }
+
+      const allReady = participants.every(p => p.is_ready);
+      if (!allReady) {
+        throw new Error("Nem todos os jogadores estão prontos!");
+      }
+
       const now = new Date();
       const endsAt = new Date(now.getTime() + durationMinutes * 60 * 1000);
 
@@ -345,12 +362,15 @@ export function useStartRun() {
           started_at: now.toISOString(),
           ends_at: endsAt.toISOString(),
         })
-        .eq("id", runId);
+        .eq("id", runId)
+        .eq("created_by", user.id); // Only creator can start
 
       if (error) throw error;
+
+      return { started: true };
     },
     onSuccess: () => {
-      toast.success("A masmorra começou! Ataquem o boss!");
+      toast.success("🏰 A masmorra começou! Ataquem o boss!");
       queryClient.invalidateQueries({ queryKey: ["dungeon-runs"] });
     },
     onError: (error: Error) => {

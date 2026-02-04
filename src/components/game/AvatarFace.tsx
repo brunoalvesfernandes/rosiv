@@ -1,5 +1,10 @@
 import { cn } from "@/lib/utils";
 
+export interface VipHairInfo {
+  name: string;
+  image_url?: string | null;
+}
+
 export interface AvatarFaceProps {
   hairStyle: string;
   hairColor: string;
@@ -10,6 +15,7 @@ export interface AvatarFaceProps {
   size?: "xs" | "sm" | "md" | "lg";
   className?: string;
   rank?: number; // 1, 2, 3 for special frames
+  vipHair?: VipHairInfo | null;
 }
 
 const sizeConfig = {
@@ -86,6 +92,49 @@ const hairStyles: Record<string, (color: string) => JSX.Element> = {
   ),
   bald: () => <g></g>,
 };
+
+// VIP Hair Styles with special effects
+const vipHairStyles: Record<string, (baseHairColor: string) => JSX.Element> = {
+  supersaiyajin: () => (
+    <g>
+      <defs>
+        <linearGradient id="ssjGradientFace" x1="0%" y1="100%" x2="0%" y2="0%">
+          <stop offset="0%" stopColor="#fbbf24" />
+          <stop offset="50%" stopColor="#fcd34d" />
+          <stop offset="100%" stopColor="#fef08a" />
+        </linearGradient>
+        <filter id="ssjGlowFace" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur stdDeviation="2" result="blur" />
+          <feMerge>
+            <feMergeNode in="blur" />
+            <feMergeNode in="SourceGraphic" />
+          </feMerge>
+        </filter>
+      </defs>
+      <path d="M12 48 L0 -12 L24 28 L32 -24 L42 24 L50 -32 L58 24 L68 -24 L76 28 L100 -12 L88 48" 
+        fill="url(#ssjGradientFace)" filter="url(#ssjGlowFace)" />
+      <ellipse cx="50" cy="26" rx="36" ry="20" fill="url(#ssjGradientFace)" />
+      <path d="M34 12 Q42 4, 52 8" stroke="#fff" strokeWidth="3" opacity="0.4" fill="none" />
+    </g>
+  ),
+  akatsuki: () => (
+    <g>
+      <ellipse cx="50" cy="18" rx="40" ry="22" fill="#1a1a1a" />
+      <path d="M10 42 Q16 14, 50 6 Q84 14, 90 42 L92 85 Q86 95, 80 85 L80 50 L20 50 L20 85 Q14 95, 8 85 Z" fill="#1a1a1a" />
+      <path d="M28 36 L24 58 L34 52 Z" fill="#1a1a1a" />
+      <path d="M72 36 L76 58 L66 52 Z" fill="#1a1a1a" />
+      <path d="M36 14 Q42 8, 50 10" stroke="#444" strokeWidth="2" opacity="0.3" fill="none" />
+    </g>
+  ),
+};
+
+// Detect VIP hair style from name
+function getVipHairStyle(hairName: string): string | null {
+  const name = hairName.toLowerCase();
+  if (name.includes("saiyajin") || name.includes("saiyan") || name.includes("dragon")) return "supersaiyajin";
+  if (name.includes("akatsuki") || name.includes("itachi")) return "akatsuki";
+  return null;
+}
 
 // Face shape paths - anime style
 const faceShapes: Record<string, string> = {
@@ -187,10 +236,17 @@ export function AvatarFace({
   accessory,
   size = "md",
   className,
-  rank
+  rank,
+  vipHair
 }: AvatarFaceProps) {
   const dimension = sizeConfig[size];
-  const HairComponent = hairStyles[hairStyle] || hairStyles.short;
+  
+  // Check for VIP hair
+  const vipHairStyleKey = vipHair?.name ? getVipHairStyle(vipHair.name) : null;
+  const HairComponent = vipHairStyleKey && vipHairStyles[vipHairStyleKey]
+    ? vipHairStyles[vipHairStyleKey]
+    : hairStyles[hairStyle] || hairStyles.short;
+  
   const facePath = faceShapes[faceStyle] || faceShapes.round;
   const frameConfig = getRankFrame(rank, dimension);
 
@@ -227,11 +283,19 @@ export function AvatarFace({
         {/* Face features */}
         {renderFaceFeatures()}
         
-        {/* Hair */}
+        {/* Hair - VIP or regular */}
         {HairComponent(hairColor)}
         
         {/* Accessory */}
         {accessory && accessories[accessory]}
+        
+        {/* VIP indicator */}
+        {vipHair && (
+          <g>
+            <circle cx="88" cy="12" r="8" fill="#ffd700" />
+            <text x="88" y="16" textAnchor="middle" fontSize="10" fill="#1a1a1a" fontWeight="bold">V</text>
+          </g>
+        )}
       </svg>
       
       {/* Rank badge */}
