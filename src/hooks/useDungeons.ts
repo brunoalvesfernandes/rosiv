@@ -385,6 +385,9 @@ export function useStartRun() {
           return { started: true };
         }
 
+
+      if (error) throw error;
+      if (!updatedRuns || updatedRuns.length === 0) {
         throw new Error("Não foi possível iniciar a masmorra.");
       }
 
