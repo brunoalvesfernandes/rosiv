@@ -46,7 +46,7 @@ export default function Dashboard() {
             />
             <div>
               <h1 className="font-display text-2xl md:text-3xl font-bold">
-                Bem-vindo, {character.name}!
+                Não é Bem-vindo, {character.name}!
               </h1>
               <p className="text-muted-foreground">
                 Continue sua jornada e conquiste o reino
@@ -138,7 +138,7 @@ export default function Dashboard() {
                 Você não tem missões ativas
               </p>
               <Link to="/missions">
-                <Button>Ver Missões Disponíveis</Button>
+                <Button>Ver Missões Disponíveissssssssss</Button>
               </Link>
             </div>
           ) : (
