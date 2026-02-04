@@ -355,7 +355,9 @@ export function useStartRun() {
       const now = new Date();
       const endsAt = new Date(now.getTime() + durationMinutes * 60 * 1000);
 
-      const { error } = await supabase
+      console.log("[useStartRun] Starting run", { runId, userId: user.id, durationMinutes });
+
+      const { data: updatedRuns, error } = await supabase
         .from("dungeon_runs")
         .update({
           status: "active",
@@ -363,9 +365,28 @@ export function useStartRun() {
           ends_at: endsAt.toISOString(),
         })
         .eq("id", runId)
-        .eq("created_by", user.id); // Only creator can start
+        .eq("status", "waiting")
+        .select("id");
+
+      console.log("[useStartRun] Update result", { updatedRuns, error });
 
       if (error) throw error;
+      if (!updatedRuns || updatedRuns.length === 0) {
+        const { data: existingRun, error: fetchError } = await supabase
+          .from("dungeon_runs")
+          .select("status")
+          .eq("id", runId)
+          .single();
+
+        console.log("[useStartRun] Fetched existing run", { existingRun, fetchError });
+
+        if (fetchError) throw fetchError;
+        if (existingRun?.status === "active") {
+          return { started: true };
+        }
+
+        throw new Error("Não foi possível iniciar a masmorra.");
+      }
 
       return { started: true };
     },
@@ -374,6 +395,7 @@ export function useStartRun() {
       queryClient.invalidateQueries({ queryKey: ["dungeon-runs"] });
     },
     onError: (error: Error) => {
+      console.error("[useStartRun] Failed to start run", error);
       toast.error(error.message);
     },
   });
