@@ -1,16 +1,14 @@
 import { GameLayout } from "@/components/layout/GameLayout";
-import { AvatarCustomizer } from "@/components/game/AvatarCustomizer";
-import { AvatarCustomization } from "@/components/game/VisualAvatar";
+import { PixelAvatarCustomizer } from "@/components/game/PixelAvatarCustomizer";
 import { useCharacter, useUpdateCharacter } from "@/hooks/useCharacter";
-import { useEquippedVipClothing } from "@/hooks/useVipClothing";
 import { Loader2, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { avatarOptions } from "@/data/avatars";
 
 export default function CharacterCustomization() {
   const { data: character, isLoading } = useCharacter();
-  const { data: equippedVip } = useEquippedVipClothing();
   const updateCharacter = useUpdateCharacter();
   const navigate = useNavigate();
 
@@ -24,42 +22,15 @@ export default function CharacterCustomization() {
     );
   }
 
-  const initialCustomization: AvatarCustomization = {
-    hairStyle: character.hair_style || "short",
-    hairColor: character.hair_color || "#4a3728",
-    eyeColor: character.eye_color || "#3b82f6",
-    skinTone: character.skin_tone || "#e0ac69",
-    faceStyle: character.face_style || "round",
-    accessory: character.accessory || null,
-    shirtColor: character.shirt_color || "#3b82f6",
-    pantsColor: character.pants_color || "#1e3a5f",
-    shoesColor: character.shoes_color || "#4a3728",
-  };
-
-  // Convert equipped VIP clothing to display format
-  const vipClothingDisplay = equippedVip ? {
-    shirt: equippedVip.shirt ? { image_url: equippedVip.shirt.image_url, name: equippedVip.shirt.name } : null,
-    pants: equippedVip.pants ? { image_url: equippedVip.pants.image_url, name: equippedVip.pants.name } : null,
-    hair: equippedVip.hair ? { image_url: equippedVip.hair.image_url, name: equippedVip.hair.name } : null,
-  } : null;
-
-  const handleSave = async (customization: AvatarCustomization) => {
+  const handleSave = async (avatarId: string) => {
     try {
       await updateCharacter.mutateAsync({
-        hair_style: customization.hairStyle,
-        hair_color: customization.hairColor,
-        eye_color: customization.eyeColor,
-        skin_tone: customization.skinTone,
-        face_style: customization.faceStyle,
-        accessory: customization.accessory,
-        shirt_color: customization.shirtColor,
-        pants_color: customization.pantsColor,
-        shoes_color: customization.shoesColor,
+        avatar_id: avatarId,
       });
-      toast.success("Aparência salva com sucesso!");
+      toast.success("Avatar salvo com sucesso!");
       navigate("/character");
     } catch (error) {
-      toast.error("Erro ao salvar aparência");
+      toast.error("Erro ao salvar avatar");
     }
   };
 
@@ -79,12 +50,12 @@ export default function CharacterCustomization() {
 
         {/* Customizer */}
         <div className="bg-card border border-border rounded-xl p-6">
-          <AvatarCustomizer
-            initialCustomization={initialCustomization}
+          <PixelAvatarCustomizer
+            initialAvatarId={character.avatar_id || avatarOptions[0].id}
+            characterClass={character.class}
             onSave={handleSave}
             onCancel={() => navigate("/character")}
             isSaving={updateCharacter.isPending}
-            vipClothing={vipClothingDisplay}
           />
         </div>
       </div>

@@ -355,7 +355,7 @@ export function useStartRun() {
       const now = new Date();
       const endsAt = new Date(now.getTime() + durationMinutes * 60 * 1000);
 
-      const { error } = await supabase
+      const { data: updatedRuns, error } = await supabase
         .from("dungeon_runs")
         .update({
           status: "active",
@@ -363,9 +363,13 @@ export function useStartRun() {
           ends_at: endsAt.toISOString(),
         })
         .eq("id", runId)
-        .eq("created_by", user.id); // Only creator can start
+        .eq("status", "waiting")
+        .select("id");
 
       if (error) throw error;
+      if (!updatedRuns || updatedRuns.length === 0) {
+        throw new Error("Não foi possível iniciar a masmorra.");
+      }
 
       return { started: true };
     },
