@@ -399,6 +399,47 @@ export function useAttackBoss() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
+  const updateBossHp = async ({
+    runId,
+    initialHp,
+    damage,
+  }: {
+    runId: string;
+    initialHp: number;
+    damage: number;
+  }) => {
+    let attemptHp = initialHp;
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      const nextBossHp = Math.max(0, attemptHp - damage);
+      const { data: bossUpdate, error: bossUpdateError } = await supabase
+        .from("dungeon_runs")
+        .update({ current_boss_hp: nextBossHp })
+        .eq("id", runId)
+        .eq("current_boss_hp", attemptHp)
+        .select("current_boss_hp");
+
+      if (bossUpdateError) throw bossUpdateError;
+
+      const updatedHp = bossUpdate?.[0]?.current_boss_hp;
+      if (updatedHp !== undefined) {
+        return updatedHp;
+      }
+
+      const { data: refreshedRun, error: refreshedError } = await supabase
+        .from("dungeon_runs")
+        .select("current_boss_hp")
+        .eq("id", runId)
+        .single();
+
+      if (refreshedError) throw refreshedError;
+      if (!refreshedRun) throw new Error("Não foi possível atualizar o HP do boss.");
+
+      attemptHp = refreshedRun.current_boss_hp;
+    }
+
+    throw new Error("Não foi possível atualizar o HP do boss.");
+  };
+
   return useMutation({
     mutationFn: async ({ run, dungeon }: { run: DungeonRun; dungeon: Dungeon }) => {
       if (!user) throw new Error("Não autenticado");
@@ -412,15 +453,9 @@ export function useAttackBoss() {
 
       if (charError || !character) throw new Error("Personagem não encontrado");
       if (character.current_energy < 5) throw new Error("Energia insuficiente (5 necessário)");
+      if (character.current_hp <= 0) throw new Error("Você está sem vida para atacar.");
 
-      // Calculate damage
-      const baseDamage = character.strength * 2;
-      const variance = Math.floor(Math.random() * 10) - 5;
-      const damage = Math.max(1, Math.floor(baseDamage - dungeon.boss_defense / 2 + variance));
-
-      const newBossHp = Math.max(0, run.current_boss_hp - damage);
-
-      // Update participant damage
+      // Ensure participant exists
       const { data: participant, error: participantError } = await supabase
         .from("dungeon_participants")
         .select("damage_dealt")
@@ -428,27 +463,36 @@ export function useAttackBoss() {
         .eq("user_id", user.id)
         .single();
 
-      if (participantError) throw participantError;
+      if (participantError || !participant) throw new Error("Você não está participando desta masmorra.");
+
+      // Load current run state to avoid stale HP
+      const { data: currentRun, error: currentRunError } = await supabase
+        .from("dungeon_runs")
+        .select("current_boss_hp, status")
+        .eq("id", run.id)
+        .single();
+
+      if (currentRunError || !currentRun) throw currentRunError || new Error("Masmorra não encontrada.");
+      if (currentRun.status !== "active") throw new Error("A masmorra não está em combate.");
+      if (currentRun.current_boss_hp <= 0) throw new Error("O boss já foi derrotado.");
+
+      // Calculate damage
+      const baseDamage = character.strength * 2;
+      const variance = Math.floor(Math.random() * 10) - 5;
+      const damage = Math.max(1, Math.floor(baseDamage - dungeon.boss_defense / 2 + variance));
+      const resolvedBossHp = await updateBossHp({
+        runId: run.id,
+        initialHp: currentRun.current_boss_hp,
+        damage,
+      });
 
       const { error: updateParticipantError } = await supabase
         .from("dungeon_participants")
-        .update({ damage_dealt: (participant?.damage_dealt || 0) + damage })
+        .update({ damage_dealt: participant.damage_dealt + damage })
         .eq("run_id", run.id)
         .eq("user_id", user.id);
 
       if (updateParticipantError) throw updateParticipantError;
-
-      // Update boss HP
-      const { data: bossUpdate, error: bossUpdateError } = await supabase
-        .from("dungeon_runs")
-        .update({ current_boss_hp: newBossHp })
-        .eq("id", run.id)
-        .select("current_boss_hp");
-
-      if (bossUpdateError) throw bossUpdateError;
-      if (!bossUpdate || bossUpdate.length === 0) {
-        throw new Error("Não foi possível atualizar o HP do boss.");
-      }
 
       // Consume energy
       const { error: energyError } = await supabase
@@ -473,7 +517,7 @@ export function useAttackBoss() {
       if (hpError) throw hpError;
 
       // Check if boss is defeated
-      if (newBossHp <= 0) {
+      if (resolvedBossHp <= 0) {
         // Mark run as completed
         await supabase
           .from("dungeon_runs")

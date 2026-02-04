@@ -126,6 +126,8 @@ function ActiveRunCard({
   isLeaving,
   isStarting,
   isAttacking,
+  characterHp,
+  characterEnergy,
 }: {
   run: DungeonRun;
   currentUserId?: string;
@@ -138,6 +140,8 @@ function ActiveRunCard({
   isLeaving: boolean;
   isStarting: boolean;
   isAttacking: boolean;
+  characterHp?: number;
+  characterEnergy?: number;
 }) {
   const dungeon = run.dungeon;
   if (!dungeon) return null;
@@ -258,7 +262,12 @@ function ActiveRunCard({
           )}
 
           {isParticipant && isActive && (
-            <Button size="sm" onClick={onAttack} disabled={isAttacking} className="flex-1">
+            <Button
+              size="sm"
+              onClick={onAttack}
+              disabled={isAttacking || (characterHp ?? 1) <= 0 || (characterEnergy ?? 0) < 5}
+              className="flex-1"
+            >
               {isAttacking ? <Loader2 className="w-4 h-4 animate-spin" /> : <Swords className="w-4 h-4 mr-1" />}
               Atacar (5 energia)
             </Button>
@@ -376,6 +385,8 @@ export default function Dungeons() {
                     isLeaving={leaveRun.isPending}
                     isStarting={startRun.isPending}
                     isAttacking={attackBoss.isPending}
+                    characterHp={character?.current_hp}
+                    characterEnergy={character?.current_energy}
                   />
                 ))}
               </div>
