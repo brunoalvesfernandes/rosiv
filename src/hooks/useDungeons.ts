@@ -416,7 +416,7 @@ export function useAttackBoss() {
       // Calculate damage
       const baseDamage = character.strength * 2;
       const variance = Math.floor(Math.random() * 10) - 5;
-      const damage = Math.max(1, baseDamage - dungeon.boss_defense / 2 + variance);
+      const damage = Math.max(1, Math.floor(baseDamage - dungeon.boss_defense / 2 + variance));
 
       const newBossHp = Math.max(0, run.current_boss_hp - damage);
 
