@@ -480,11 +480,41 @@ export function useAttackBoss() {
       const baseDamage = character.strength * 2;
       const variance = Math.floor(Math.random() * 10) - 5;
       const damage = Math.max(1, Math.floor(baseDamage - dungeon.boss_defense / 2 + variance));
-      const resolvedBossHp = await updateBossHp({
-        runId: run.id,
-        initialHp: currentRun.current_boss_hp,
-        damage,
-      });
+
+      let resolvedBossHp: number | undefined;
+      let attemptHp = currentRun.current_boss_hp;
+      for (let attempt = 0; attempt < 2; attempt += 1) {
+        const nextBossHp = Math.max(0, attemptHp - damage);
+        const { data: bossUpdate, error: bossUpdateError } = await supabase
+          .from("dungeon_runs")
+          .update({ current_boss_hp: nextBossHp })
+          .eq("id", run.id)
+          .eq("current_boss_hp", attemptHp)
+          .select("current_boss_hp");
+
+        if (bossUpdateError) throw bossUpdateError;
+
+        const updatedHp = bossUpdate?.[0]?.current_boss_hp;
+        if (updatedHp !== undefined) {
+          resolvedBossHp = updatedHp;
+          break;
+        }
+
+        const { data: refreshedRun, error: refreshedError } = await supabase
+          .from("dungeon_runs")
+          .select("current_boss_hp")
+          .eq("id", run.id)
+          .single();
+
+        if (refreshedError) throw refreshedError;
+        if (!refreshedRun) throw new Error("Não foi possível atualizar o HP do boss.");
+
+        attemptHp = refreshedRun.current_boss_hp;
+      }
+
+      if (resolvedBossHp === undefined) {
+        throw new Error("Não foi possível atualizar o HP do boss.");
+      }
 
       const { error: updateParticipantError } = await supabase
         .from("dungeon_participants")
@@ -493,6 +523,35 @@ export function useAttackBoss() {
         .eq("user_id", user.id);
 
       if (updateParticipantError) throw updateParticipantError;
+
+      // Update boss HP
+      const { data: bossUpdate, error: bossUpdateError } = await supabase
+        .from("dungeon_runs")
+        .update({ current_boss_hp: newBossHp })
+        .eq("id", run.id)
+        .select("current_boss_hp");
+
+      if (bossUpdateError) throw bossUpdateError;
+      let resolvedBossHp = bossUpdate?.[0]?.current_boss_hp;
+      if (resolvedBossHp === undefined) {
+        const { data: currentRun, error: currentRunError } = await supabase
+          .from("dungeon_runs")
+          .select("current_boss_hp")
+          .eq("id", run.id)
+          .single();
+
+        if (currentRunError) throw currentRunError;
+
+        if (currentRun?.current_boss_hp === undefined) {
+          throw new Error("Não foi possível atualizar o HP do boss.");
+        }
+
+        if (currentRun.current_boss_hp >= run.current_boss_hp) {
+          throw new Error("Não foi possível atualizar o HP do boss.");
+        }
+
+        resolvedBossHp = currentRun.current_boss_hp;
+      }
 
       // Consume energy
       const { error: energyError } = await supabase
