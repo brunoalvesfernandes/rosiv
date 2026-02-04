@@ -46,7 +46,7 @@ export default function Dashboard() {
             />
             <div>
               <h1 className="font-display text-2xl md:text-3xl font-bold">
-                Bem-vindo, {character.name}!
+                Não é Bem-vindo, {character.name}!
               </h1>
               <p className="text-muted-foreground">
                 Continue sua jornada e conquiste o reino
