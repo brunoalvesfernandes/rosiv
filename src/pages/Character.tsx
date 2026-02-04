@@ -1,5 +1,6 @@
 import { GameLayout } from "@/components/layout/GameLayout";
-import { GameAvatar } from "@/components/game/GameAvatar";
+import { PixelAvatar } from "@/components/game/PixelAvatar";
+import { avatarOptions } from "@/data/avatars";
 import { ProgressBar } from "@/components/ui/progress-bar";
 import { Button } from "@/components/ui/button";
 import { 
@@ -45,9 +46,9 @@ export default function Character() {
         <div className="bg-card border border-border rounded-xl p-6">
           <div className="flex flex-col md:flex-row items-center gap-6">
             <div className="relative">
-              <GameAvatar 
-                size="lg"
-                showLevel
+              <PixelAvatar
+                avatarId={character.avatar_id || avatarOptions[0].id}
+                size="xl"
               />
               <Button
                 size="icon"
