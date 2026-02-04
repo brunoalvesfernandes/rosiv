@@ -237,6 +237,7 @@ export function useAddStatPoint() {
 
 export interface RankedCharacter extends Character {
   guild_name?: string | null;
+  vip_hair_name?: string | null;
 }
 
 export function useRanking() {
@@ -271,15 +272,34 @@ export function useRanking() {
         .select("id, name")
         .in("id", guildIds);
 
+      // Get VIP hair IDs that are not null
+      const vipHairIds = characters
+        .filter(c => c.vip_hair_id)
+        .map(c => c.vip_hair_id as string);
+
+      // Batch fetch VIP hair names
+      const { data: vipHairs } = vipHairIds.length > 0
+        ? await supabase
+            .from("vip_clothing")
+            .select("id, name")
+            .in("id", vipHairIds)
+        : { data: [] };
+
       // Create lookup maps
       const membershipMap = new Map((memberships || []).map(m => [m.user_id, m.guild_id]));
       const guildMap = new Map((guilds || []).map(g => [g.id, g.name]));
+      const vipHairMap = new Map((vipHairs || []).map(h => [h.id, h.name]));
 
-      // Map characters with guild names
+      // Map characters with guild names and VIP hair
       return characters.map(char => {
         const guildId = membershipMap.get(char.user_id);
         const guildName = guildId ? guildMap.get(guildId) : null;
-        return { ...char, guild_name: guildName || null } as RankedCharacter;
+        const vipHairName = char.vip_hair_id ? vipHairMap.get(char.vip_hair_id) : null;
+        return { 
+          ...char, 
+          guild_name: guildName || null,
+          vip_hair_name: vipHairName || null
+        } as RankedCharacter;
       });
     },
   });

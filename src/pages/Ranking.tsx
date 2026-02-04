@@ -2,6 +2,7 @@ import { GameLayout } from "@/components/layout/GameLayout";
 import { AvatarFace } from "@/components/game/AvatarFace";
 import { Trophy, Medal, Crown, TrendingUp, Loader2, Shield } from "lucide-react";
 import { useRanking, useCharacter, RankedCharacter } from "@/hooks/useCharacter";
+import { useEquippedVipClothing } from "@/hooks/useVipClothing";
 import { Badge } from "@/components/ui/badge";
 
 const getRankIcon = (rank: number) => {
@@ -33,6 +34,7 @@ const getRankBg = (rank: number) => {
 export default function Ranking() {
   const { data: ranking, isLoading: rankingLoading } = useRanking();
   const { data: myCharacter } = useCharacter();
+  const { data: myVipClothing } = useEquippedVipClothing();
 
   // Find my position in ranking
   const myRank = ranking?.findIndex(c => c.user_id === myCharacter?.user_id);
@@ -74,6 +76,7 @@ export default function Ranking() {
                 faceStyle={myCharacter.face_style}
                 accessory={myCharacter.accessory}
                 size="sm"
+                vipHair={myVipClothing?.hair ? { name: myVipClothing.hair.name } : null}
               />
               <div className="flex-1">
                 <p className="font-display font-bold">{myCharacter.name}</p>
@@ -131,6 +134,7 @@ export default function Ranking() {
                         accessory={player.accessory}
                         size="sm"
                         rank={rank <= 3 ? rank : undefined}
+                        vipHair={player.vip_hair_name ? { name: player.vip_hair_name } : null}
                       />
                       <div className="flex-1">
                         <p className="font-display font-bold">
