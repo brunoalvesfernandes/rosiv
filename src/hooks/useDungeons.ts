@@ -399,6 +399,47 @@ export function useAttackBoss() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
+  const updateBossHp = async ({
+    runId,
+    initialHp,
+    damage,
+  }: {
+    runId: string;
+    initialHp: number;
+    damage: number;
+  }) => {
+    let attemptHp = initialHp;
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      const nextBossHp = Math.max(0, attemptHp - damage);
+      const { data: bossUpdate, error: bossUpdateError } = await supabase
+        .from("dungeon_runs")
+        .update({ current_boss_hp: nextBossHp })
+        .eq("id", runId)
+        .eq("current_boss_hp", attemptHp)
+        .select("current_boss_hp");
+
+      if (bossUpdateError) throw bossUpdateError;
+
+      const updatedHp = bossUpdate?.[0]?.current_boss_hp;
+      if (updatedHp !== undefined) {
+        return updatedHp;
+      }
+
+      const { data: refreshedRun, error: refreshedError } = await supabase
+        .from("dungeon_runs")
+        .select("current_boss_hp")
+        .eq("id", runId)
+        .single();
+
+      if (refreshedError) throw refreshedError;
+      if (!refreshedRun) throw new Error("Não foi possível atualizar o HP do boss.");
+
+      attemptHp = refreshedRun.current_boss_hp;
+    }
+
+    throw new Error("Não foi possível atualizar o HP do boss.");
+  };
+
   return useMutation({
     mutationFn: async ({ run, dungeon }: { run: DungeonRun; dungeon: Dungeon }) => {
       if (!user) throw new Error("Não autenticado");
