@@ -446,8 +446,25 @@ export function useAttackBoss() {
         .select("current_boss_hp");
 
       if (bossUpdateError) throw bossUpdateError;
-      if (!bossUpdate || bossUpdate.length === 0) {
-        throw new Error("Não foi possível atualizar o HP do boss.");
+      let resolvedBossHp = bossUpdate?.[0]?.current_boss_hp;
+      if (resolvedBossHp === undefined) {
+        const { data: currentRun, error: currentRunError } = await supabase
+          .from("dungeon_runs")
+          .select("current_boss_hp")
+          .eq("id", run.id)
+          .single();
+
+        if (currentRunError) throw currentRunError;
+
+        if (currentRun?.current_boss_hp === undefined) {
+          throw new Error("Não foi possível atualizar o HP do boss.");
+        }
+
+        if (currentRun.current_boss_hp >= run.current_boss_hp) {
+          throw new Error("Não foi possível atualizar o HP do boss.");
+        }
+
+        resolvedBossHp = currentRun.current_boss_hp;
       }
 
       // Consume energy
@@ -473,7 +490,7 @@ export function useAttackBoss() {
       if (hpError) throw hpError;
 
       // Check if boss is defeated
-      if (newBossHp <= 0) {
+      if (resolvedBossHp <= 0) {
         // Mark run as completed
         await supabase
           .from("dungeon_runs")
