@@ -368,17 +368,6 @@ export function useStartRun() {
 
       if (error) throw error;
       if (!updatedRuns || updatedRuns.length === 0) {
-        const { data: existingRun, error: fetchError } = await supabase
-          .from("dungeon_runs")
-          .select("status")
-          .eq("id", runId)
-          .single();
-
-        if (fetchError) throw fetchError;
-        if (existingRun?.status === "active") {
-          return { started: true };
-        }
-
         throw new Error("Não foi possível iniciar a masmorra.");
       }
 
