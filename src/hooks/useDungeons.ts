@@ -365,7 +365,11 @@ export function useStartRun() {
         .eq("id", runId)
         .eq("status", "waiting")
         .select("id")
+<<<<<<< codex/fix-boss-attack-not-progressing-197wyt
         .maybeSingle();
+=======
+        .single();
+>>>>>>> main
 
       if (error) throw error;
       if (!updatedRun) {
