@@ -9,6 +9,7 @@ interface LobbyAvatarProps {
   player: LobbyPlayer;
   isMe: boolean;
   onClick?: () => void;
+  compact?: boolean;
 }
 
 // Get VIP hair style from name
