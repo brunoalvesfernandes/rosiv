@@ -1,4 +1,4 @@
- import { useState } from "react";
+ import { useState, useEffect } from "react";
  import { LayeredPixelAvatar } from "./LayeredPixelAvatar";
  import { Button } from "@/components/ui/button";
  import { Check, ChevronLeft, ChevronRight, Shuffle } from "lucide-react";
@@ -44,7 +44,15 @@
    const [customization, setCustomization] = useState<AvatarCustomization>(
      deserializeCustomization(initialCustomization || null)
    );
-   const [activeLayer, setActiveLayer] = useState<LayerType>("hair");
+   const [activeLayer, setActiveLayer] = useState<LayerType>("body");
+   const [hasChanges, setHasChanges] = useState(false);
+ 
+   // Track if changes were made
+   useEffect(() => {
+     const initial = deserializeCustomization(initialCustomization || null);
+     const isChanged = JSON.stringify(customization) !== JSON.stringify(initial);
+     setHasChanges(isChanged);
+   }, [customization, initialCustomization]);
  
    const updateLayer = (type: LayerType, optionId: string) => {
      const option = getLayerOption(type, optionId);
@@ -95,7 +103,12 @@
      <div className="space-y-6">
        {/* Preview */}
        <div className="flex flex-col items-center gap-4">
-         <LayeredPixelAvatar customization={customization} size="xl" />
+           <div className="relative">
+             <LayeredPixelAvatar customization={customization} size="xl" />
+             {hasChanges && (
+               <div className="absolute -top-2 -right-2 w-4 h-4 bg-amber-500 rounded-full animate-pulse" title="Alterações não salvas" />
+             )}
+           </div>
          <Button variant="outline" size="sm" onClick={randomize} className="gap-2">
            <Shuffle className="w-4 h-4" />
            Aleatório
@@ -183,7 +196,13 @@
        </Tabs>
  
        {/* Actions */}
-       <div className="flex gap-3 pt-4 border-t border-border">
+         <div className="flex flex-col gap-3 pt-4 border-t border-border">
+           {hasChanges && (
+             <p className="text-xs text-amber-500 text-center animate-pulse">
+               ⚠️ Você tem alterações não salvas
+             </p>
+           )}
+           <div className="flex gap-3">
          {onCancel && (
            <Button variant="outline" onClick={onCancel} className="flex-1">
              Cancelar
@@ -192,11 +211,12 @@
          <Button
            onClick={() => onSave(serializeCustomization(customization))}
            disabled={isSaving}
-           className="flex-1 gap-2"
+             className="flex-1 gap-2 bg-primary hover:bg-primary/90"
          >
            <Check className="w-4 h-4" />
            {isSaving ? "Salvando..." : "Salvar Avatar"}
          </Button>
+           </div>
        </div>
      </div>
    );
