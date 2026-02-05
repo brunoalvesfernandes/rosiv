@@ -25,7 +25,9 @@ import {
   Package,
   Music
 } from "lucide-react";
+import { Crown } from "lucide-react";
 import { MusicManager } from "@/components/admin/MusicManager";
+import { VipClothingManager } from "@/components/admin/VipClothingManager";
 import { useAdmin } from "@/hooks/useAdmin";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -236,6 +238,10 @@ export default function Admin() {
             <TabsTrigger value="music">
               <Music className="w-4 h-4 mr-2" />
               Músicas
+            </TabsTrigger>
+            <TabsTrigger value="vip">
+              <Crown className="w-4 h-4 mr-2" />
+              Loja VIP
             </TabsTrigger>
             <TabsTrigger value="logs">
               <History className="w-4 h-4 mr-2" />
@@ -608,6 +614,11 @@ export default function Admin() {
           {/* Music Tab */}
           <TabsContent value="music" className="space-y-4">
             <MusicManager />
+          </TabsContent>
+
+          {/* VIP Clothing Tab */}
+          <TabsContent value="vip" className="space-y-4">
+            <VipClothingManager />
           </TabsContent>
         </Tabs>
       </div>
