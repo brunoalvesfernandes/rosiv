@@ -528,12 +528,42 @@
               <circle cx="40" cy="58" r="2" fill="#E91E63" />
             </>
           ),
+          // Martial arts gi pants
+          "vip-martial": (
+            <>
+              <rect x="18" y="52" width="28" height="4" fill="#FF7F00" />
+              <rect x="18" y="52" width="12" height="12" fill="#FF7F00" />
+              <rect x="34" y="52" width="12" height="12" fill="#FF7F00" />
+              {/* Belt */}
+              <rect x="18" y="52" width="28" height="3" fill="#1E90FF" />
+              {/* Wraps */}
+              <rect x="20" y="60" width="8" height="2" fill="#FFF" />
+              <rect x="36" y="60" width="8" height="2" fill="#FFF" />
+            </>
+          ),
+          // Hakama traditional pants
+          "vip-hakama": (
+            <>
+              <rect x="14" y="52" width="36" height="4" fill="#1A1A1A" />
+              <polygon points="14,56 20,52 20,64 10,64" fill="#1A1A1A" />
+              <polygon points="50,56 44,52 44,64 54,64" fill="#1A1A1A" />
+              <rect x="20" y="52" width="24" height="12" fill="#1A1A1A" />
+              {/* Pleats */}
+              <line x1="26" y1="54" x2="26" y2="64" stroke="#333" strokeWidth="1" />
+              <line x1="32" y1="54" x2="32" y2="64" stroke="#333" strokeWidth="1" />
+              <line x1="38" y1="54" x2="38" y2="64" stroke="#333" strokeWidth="1" />
+            </>
+          ),
         };
         
         let selectedShape = vipBottomShapes["vip-ninja"]; // default
         
-        if (optionId.toLowerCase().includes("44f94a52") || optionId.toLowerCase().includes("royal") || optionId.toLowerCase().includes("real")) {
+        if (optionId.toLowerCase().includes("royal") || optionId.toLowerCase().includes("real")) {
           selectedShape = vipBottomShapes["vip-royal"];
+        } else if (optionId.toLowerCase().includes("martial") || optionId.toLowerCase().includes("gi")) {
+          selectedShape = vipBottomShapes["vip-martial"];
+        } else if (optionId.toLowerCase().includes("hakama")) {
+          selectedShape = vipBottomShapes["vip-hakama"];
         }
         
         return (
@@ -649,8 +679,8 @@
              <rect x="26" y="6" width="12" height="2" fill="#8B0000" />
            </>
          ),
-         // Headband Konoha
-         "vip-konoha": (
+          // Headband Ninja
+          "vip-headband": (
            <>
              <rect x="16" y="6" width="32" height="5" fill="#3B5998" />
              <rect x="26" y="4" width="12" height="8" fill="#C0C0C0" />
@@ -659,6 +689,36 @@
              <polygon points="52,10 60,16 52,22" fill="#3B5998" />
            </>
          ),
+          // Scouter DBZ
+          "vip-scouter": (
+            <>
+              {/* Earpiece */}
+              <rect x="44" y="14" width="4" height="8" fill="#4CAF50" />
+              <rect x="46" y="12" width="4" height="4" fill="#333" />
+              {/* Lens */}
+              <ellipse cx="40" cy="17" rx="6" ry="4" fill="#4CAF50" opacity="0.7" />
+              <ellipse cx="40" cy="17" rx="4" ry="2.5" fill="#81C784" opacity="0.8" />
+              {/* Frame */}
+              <line x1="44" y1="16" x2="46" y2="16" stroke="#333" strokeWidth="2" />
+            </>
+          ),
+          // Sharingan Eyes
+          "vip-sharingan": (
+            <>
+              {/* Left eye */}
+              <circle cx="26" cy="18" r="5" fill="#DC143C" />
+              <circle cx="26" cy="18" r="2" fill="#1A1A1A" />
+              <circle cx="24" cy="15" r="1" fill="#1A1A1A" />
+              <circle cx="28" cy="15" r="1" fill="#1A1A1A" />
+              <circle cx="26" cy="21" r="1" fill="#1A1A1A" />
+              {/* Right eye */}
+              <circle cx="38" cy="18" r="5" fill="#DC143C" />
+              <circle cx="38" cy="18" r="2" fill="#1A1A1A" />
+              <circle cx="36" cy="15" r="1" fill="#1A1A1A" />
+              <circle cx="40" cy="15" r="1" fill="#1A1A1A" />
+              <circle cx="38" cy="21" r="1" fill="#1A1A1A" />
+            </>
+          ),
        };
        
        let selectedShape = vipAccShapes["vip-akatsuki"]; // default
@@ -666,8 +726,12 @@
        // Match by ID pattern
        if (optionId.toLowerCase().includes("strawhat") || optionId.toLowerCase().includes("chapeu")) {
          selectedShape = vipAccShapes["vip-strawhat"];
-       } else if (optionId.toLowerCase().includes("konoha") || optionId.toLowerCase().includes("headband")) {
-         selectedShape = vipAccShapes["vip-konoha"];
+        } else if (optionId.toLowerCase().includes("headband") || optionId.toLowerCase().includes("bandana")) {
+          selectedShape = vipAccShapes["vip-headband"];
+        } else if (optionId.toLowerCase().includes("scouter")) {
+          selectedShape = vipAccShapes["vip-scouter"];
+        } else if (optionId.toLowerCase().includes("sharingan")) {
+          selectedShape = vipAccShapes["vip-sharingan"];
        }
        
        return (
