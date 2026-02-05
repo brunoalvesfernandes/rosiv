@@ -158,6 +158,7 @@ export type Database = {
           agility: number
           arena_points: number
           available_points: number
+          avatar_customization: string | null
           avatar_id: string
           ban_reason: string | null
           banned_at: string | null
@@ -207,6 +208,7 @@ export type Database = {
           agility?: number
           arena_points?: number
           available_points?: number
+          avatar_customization?: string | null
           avatar_id?: string
           ban_reason?: string | null
           banned_at?: string | null
@@ -256,6 +258,7 @@ export type Database = {
           agility?: number
           arena_points?: number
           available_points?: number
+          avatar_customization?: string | null
           avatar_id?: string
           ban_reason?: string | null
           banned_at?: string | null
