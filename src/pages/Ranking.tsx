@@ -1,5 +1,5 @@
  import { GameLayout } from "@/components/layout/GameLayout";
- import { AvatarFace } from "@/components/game/AvatarFace";
+ import { MiniLayeredAvatar } from "@/components/game/MiniLayeredAvatar";
  import { Trophy, Medal, Crown, TrendingUp, Loader2, Shield, Coins, Zap, Star, Users } from "lucide-react";
  import { useCharacter, RankedCharacter } from "@/hooks/useCharacter";
  import { useEquippedVipClothing } from "@/hooks/useVipClothing";
@@ -189,13 +189,8 @@
          <div className="w-8 sm:w-10 flex justify-center">
            {getRankIcon(rank)}
          </div>
-         <AvatarFace 
-           hairStyle={player.hair_style}
-           hairColor={player.hair_color}
-           eyeColor={player.eye_color}
-           skinTone={player.skin_tone}
-           faceStyle={player.face_style}
-           accessory={player.accessory}
+         <MiniLayeredAvatar 
+           customization={player.avatar_customization}
            size="sm"
            rank={rank <= 3 ? rank : undefined}
          />
