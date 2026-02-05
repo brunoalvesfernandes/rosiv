@@ -524,20 +524,18 @@ export function useAttackBoss() {
           .select("user_id, damage_dealt")
           .eq("run_id", run.id);
 
-        const totalDamage = participants?.reduce((sum, p) => sum + (p.damage_dealt || 0), 0) || 1;
-
         let difficulty: Difficulty = "medium";
         if (dungeon.min_level >= 15) difficulty = "boss";
         else if (dungeon.min_level >= 10) difficulty = "hard";
         else if (dungeon.min_level >= 5) difficulty = "medium";
         else difficulty = "easy";
 
-        // Recompensas e drops: 1x por participante (sem duplicar usuário atual)
-        for (const p of participants || []) {
-          const damageShare = (p.damage_dealt || 0) / totalDamage;
-          const goldShare = Math.floor(dungeon.gold_reward * damageShare);
-          const xpShare = Math.floor(dungeon.xp_reward * damageShare);
+        // Recompensas distribuídas IGUALMENTE para todos os participantes
+        const participantCount = participants?.length || 1;
+        const goldPerPlayer = Math.floor(dungeon.gold_reward / participantCount);
+        const xpPerPlayer = Math.floor(dungeon.xp_reward / participantCount);
 
+        for (const p of participants || []) {
           const { data: char } = await supabase
             .from("characters")
             .select("gold, current_xp")
@@ -548,8 +546,8 @@ export function useAttackBoss() {
             await supabase
               .from("characters")
               .update({
-                gold: (char.gold || 0) + goldShare,
-                current_xp: (char.current_xp || 0) + xpShare,
+                gold: (char.gold || 0) + goldPerPlayer,
+                current_xp: (char.current_xp || 0) + xpPerPlayer,
               })
               .eq("user_id", p.user_id);
           }
