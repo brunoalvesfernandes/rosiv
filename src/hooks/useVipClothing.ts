@@ -147,13 +147,14 @@ export function useEquipVipClothing() {
   const { user } = useAuth();
 
   return useMutation({
-    mutationFn: async ({ clothingId, type }: { clothingId: string | null; type: "shirt" | "pants" | "hair" }) => {
+    mutationFn: async ({ clothingId, type }: { clothingId: string | null; type: "shirt" | "pants" | "hair" | "accessory" }) => {
       if (!user) throw new Error("Não autenticado");
 
-      const columnMap = {
+      const columnMap: Record<string, string> = {
         shirt: "vip_shirt_id",
         pants: "vip_pants_id",
         hair: "vip_hair_id",
+        accessory: "vip_accessory_id",
       };
 
       const updateData: Record<string, string | null> = {
@@ -209,7 +210,7 @@ export function useEquippedVipClothing() {
 
       const { data: character, error } = await supabase
         .from("characters")
-        .select("vip_shirt_id, vip_pants_id, vip_hair_id")
+        .select("vip_shirt_id, vip_pants_id, vip_hair_id, vip_accessory_id")
         .eq("user_id", user.id)
         .single();
 
@@ -219,10 +220,12 @@ export function useEquippedVipClothing() {
         shirt: VipClothing | null;
         pants: VipClothing | null;
         hair: VipClothing | null;
+        accessory: VipClothing | null;
       } = {
         shirt: null,
         pants: null,
         hair: null,
+        accessory: null,
       };
 
       if (character.vip_shirt_id) {
@@ -250,6 +253,15 @@ export function useEquippedVipClothing() {
           .eq("id", character.vip_hair_id)
           .single();
         result.hair = data as VipClothing;
+      }
+
+      if (character.vip_accessory_id) {
+        const { data } = await supabase
+          .from("vip_clothing")
+          .select("*")
+          .eq("id", character.vip_accessory_id)
+          .single();
+        result.accessory = data as VipClothing;
       }
 
       return result;

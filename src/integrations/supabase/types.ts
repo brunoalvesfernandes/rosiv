@@ -196,6 +196,7 @@ export type Database = {
           total_battles: number
           updated_at: string
           user_id: string
+          vip_accessory_id: string | null
           vip_hair_id: string | null
           vip_pants_id: string | null
           vip_shirt_id: string | null
@@ -246,6 +247,7 @@ export type Database = {
           total_battles?: number
           updated_at?: string
           user_id: string
+          vip_accessory_id?: string | null
           vip_hair_id?: string | null
           vip_pants_id?: string | null
           vip_shirt_id?: string | null
@@ -296,6 +298,7 @@ export type Database = {
           total_battles?: number
           updated_at?: string
           user_id?: string
+          vip_accessory_id?: string | null
           vip_hair_id?: string | null
           vip_pants_id?: string | null
           vip_shirt_id?: string | null
@@ -304,6 +307,13 @@ export type Database = {
           xp_to_next_level?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "characters_vip_accessory_id_fkey"
+            columns: ["vip_accessory_id"]
+            isOneToOne: false
+            referencedRelation: "vip_clothing"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "characters_vip_hair_id_fkey"
             columns: ["vip_hair_id"]

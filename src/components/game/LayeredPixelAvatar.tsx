@@ -289,6 +289,68 @@
    
    // Top/Shirt layer
    if (type === "top") {
+      // VIP Shirt styles
+      if (optionId.startsWith("vip-")) {
+        const vipTopShapes: Record<string, JSX.Element> = {
+          // Naruto orange jacket
+          "vip-naruto": (
+            <>
+              <rect x="14" y="34" width="36" height="20" fill="#FF6B00" />
+              <rect x="8" y="36" width="8" height="16" fill="#FF6B00" />
+              <rect x="48" y="36" width="8" height="16" fill="#FF6B00" />
+              {/* Collar black */}
+              <rect x="24" y="34" width="16" height="4" fill="#1A1A1A" />
+              {/* Spiral symbol */}
+              <circle cx="32" cy="44" r="6" fill="#FFFFFF" />
+              <circle cx="32" cy="44" r="4" fill="#FF6B00" />
+              <path d="M32,40 Q36,44 32,48" stroke="#8B0000" strokeWidth="2" fill="none" />
+            </>
+          ),
+          // One Piece vest
+          "vip-onepiece": (
+            <>
+              <rect x="16" y="34" width="32" height="20" fill="#DC143C" />
+              <rect x="8" y="36" width="10" height="16" fill="#DC143C" />
+              <rect x="46" y="36" width="10" height="16" fill="#DC143C" />
+              {/* Open vest look */}
+              <rect x="28" y="36" width="8" height="16" fill="#FFDCB5" />
+              {/* Buttons */}
+              <circle cx="26" cy="40" r="1.5" fill="#FFD700" />
+              <circle cx="26" cy="46" r="1.5" fill="#FFD700" />
+              <circle cx="38" cy="40" r="1.5" fill="#FFD700" />
+              <circle cx="38" cy="46" r="1.5" fill="#FFD700" />
+            </>
+          ),
+          // Dragon Ball gi
+          "vip-dragonball": (
+            <>
+              <rect x="14" y="34" width="36" height="20" fill="#FF7F00" />
+              <rect x="8" y="36" width="8" height="16" fill="#FF7F00" />
+              <rect x="48" y="36" width="8" height="16" fill="#FF7F00" />
+              {/* Blue undershirt */}
+              <rect x="24" y="34" width="16" height="6" fill="#1E90FF" />
+              {/* Kanji symbol */}
+              <rect x="28" y="42" width="8" height="8" fill="#1E90FF" />
+              <text x="32" y="49" fontSize="6" fill="#FFF" textAnchor="middle">亀</text>
+            </>
+          ),
+        };
+        
+        let selectedShape = vipTopShapes["vip-naruto"]; // default
+        
+        if (optionId.toLowerCase().includes("045632dc") || optionId.toLowerCase().includes("onepiece")) {
+          selectedShape = vipTopShapes["vip-onepiece"];
+        } else if (optionId.toLowerCase().includes("a75981ed") || optionId.toLowerCase().includes("dragonball") || optionId.toLowerCase().includes("dragon")) {
+          selectedShape = vipTopShapes["vip-dragonball"];
+        }
+        
+        return (
+          <svg viewBox="0 0 64 64" className="absolute inset-0 w-full h-full" style={{ imageRendering: "pixelated" }}>
+            {selectedShape}
+          </svg>
+        );
+      }
+      
      const topShapes: Record<string, JSX.Element> = {
        "top-tshirt": (
          <>
@@ -387,6 +449,51 @@
    
    // Bottom/Pants layer
    if (type === "bottom") {
+      // VIP Pants styles
+      if (optionId.startsWith("vip-")) {
+        const vipBottomShapes: Record<string, JSX.Element> = {
+          // Ninja pants
+          "vip-ninja": (
+            <>
+              <rect x="18" y="52" width="28" height="4" fill="#1A1A1A" />
+              <rect x="18" y="52" width="12" height="12" fill="#1A1A1A" />
+              <rect x="34" y="52" width="12" height="12" fill="#1A1A1A" />
+              {/* Bandages */}
+              <rect x="20" y="58" width="8" height="2" fill="#E0E0E0" />
+              <rect x="36" y="58" width="8" height="2" fill="#E0E0E0" />
+              <rect x="22" y="62" width="4" height="2" fill="#E0E0E0" />
+              <rect x="38" y="62" width="4" height="2" fill="#E0E0E0" />
+            </>
+          ),
+          // Royal golden pants
+          "vip-royal": (
+            <>
+              <rect x="18" y="52" width="28" height="4" fill="#FFD700" />
+              <rect x="18" y="52" width="12" height="12" fill="#FFD700" />
+              <rect x="34" y="52" width="12" height="12" fill="#FFD700" />
+              {/* Golden trim */}
+              <rect x="18" y="52" width="12" height="2" fill="#FFA500" />
+              <rect x="34" y="52" width="12" height="2" fill="#FFA500" />
+              {/* Gem accents */}
+              <circle cx="24" cy="58" r="2" fill="#E91E63" />
+              <circle cx="40" cy="58" r="2" fill="#E91E63" />
+            </>
+          ),
+        };
+        
+        let selectedShape = vipBottomShapes["vip-ninja"]; // default
+        
+        if (optionId.toLowerCase().includes("44f94a52") || optionId.toLowerCase().includes("royal") || optionId.toLowerCase().includes("real")) {
+          selectedShape = vipBottomShapes["vip-royal"];
+        }
+        
+        return (
+          <svg viewBox="0 0 64 64" className="absolute inset-0 w-full h-full" style={{ imageRendering: "pixelated" }}>
+            {selectedShape}
+          </svg>
+        );
+      }
+      
      const bottomShapes: Record<string, JSX.Element> = {
        "bottom-pants": (
          <>
