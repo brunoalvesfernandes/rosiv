@@ -2,6 +2,7 @@ import { GameLayout } from "@/components/layout/GameLayout";
 import { StatCard } from "@/components/ui/stat-card";
 import { ProgressBar } from "@/components/ui/progress-bar";
 import { GameAvatar } from "@/components/game/GameAvatar";
+import { WaterLobby } from "@/components/lobby/WaterLobby";
 import { 
   Swords, 
   Shield, 
@@ -10,7 +11,8 @@ import {
   Star,
   TrendingUp,
   Loader2,
-  CheckCircle
+  CheckCircle,
+  Waves
 } from "lucide-react";
 import { useCharacter } from "@/hooks/useCharacter";
 import { usePlayerMissions, useCompleteMission } from "@/hooks/useMissions";
