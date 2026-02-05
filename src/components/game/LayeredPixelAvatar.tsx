@@ -568,6 +568,66 @@
    if (type === "accessory") {
      if (optionId === "acc-none") return null;
      
+     // VIP Accessory styles
+     if (optionId.startsWith("vip-")) {
+       const vipAccShapes: Record<string, JSX.Element> = {
+         // Akatsuki Cloak
+         "vip-akatsuki": (
+           <>
+             {/* Main cloak body - covers torso */}
+             <rect x="8" y="32" width="48" height="34" fill="#1A1A1A" />
+             {/* High collar */}
+             <rect x="18" y="28" width="28" height="8" fill="#1A1A1A" />
+             <polygon points="18,28 24,22 24,36 18,36" fill="#1A1A1A" />
+             <polygon points="46,28 40,22 40,36 46,36" fill="#1A1A1A" />
+             {/* Red clouds pattern */}
+             <ellipse cx="20" cy="42" rx="6" ry="4" fill="#8B0000" />
+             <ellipse cx="20" cy="42" rx="4" ry="2.5" fill="#DC143C" />
+             <ellipse cx="44" cy="44" rx="6" ry="4" fill="#8B0000" />
+             <ellipse cx="44" cy="44" rx="4" ry="2.5" fill="#DC143C" />
+             <ellipse cx="32" cy="56" rx="7" ry="5" fill="#8B0000" />
+             <ellipse cx="32" cy="56" rx="5" ry="3" fill="#DC143C" />
+             {/* Cloak bottom edge */}
+             <polygon points="8,66 16,56 16,66" fill="#1A1A1A" />
+             <polygon points="56,66 48,56 48,66" fill="#1A1A1A" />
+           </>
+         ),
+         // Straw Hat (One Piece)
+         "vip-strawhat": (
+           <>
+             <ellipse cx="32" cy="8" rx="20" ry="4" fill="#DAA520" />
+             <ellipse cx="32" cy="4" rx="14" ry="6" fill="#F4A460" />
+             <rect x="26" y="6" width="12" height="2" fill="#8B0000" />
+           </>
+         ),
+         // Headband Konoha
+         "vip-konoha": (
+           <>
+             <rect x="16" y="6" width="32" height="5" fill="#3B5998" />
+             <rect x="26" y="4" width="12" height="8" fill="#C0C0C0" />
+             <path d="M28,8 L32,5 L36,8 M30,8 L32,6 L34,8" stroke="#1A1A1A" strokeWidth="1" fill="none" />
+             <polygon points="48,8 56,12 48,18" fill="#3B5998" />
+             <polygon points="52,10 60,16 52,22" fill="#3B5998" />
+           </>
+         ),
+       };
+       
+       let selectedShape = vipAccShapes["vip-akatsuki"]; // default
+       
+       // Match by ID pattern
+       if (optionId.toLowerCase().includes("strawhat") || optionId.toLowerCase().includes("chapeu")) {
+         selectedShape = vipAccShapes["vip-strawhat"];
+       } else if (optionId.toLowerCase().includes("konoha") || optionId.toLowerCase().includes("headband")) {
+         selectedShape = vipAccShapes["vip-konoha"];
+       }
+       
+       return (
+         <svg viewBox="0 0 64 64" className="absolute inset-0 w-full h-full" style={{ imageRendering: "pixelated" }}>
+           {selectedShape}
+         </svg>
+       );
+     }
+     
      const accShapes: Record<string, JSX.Element> = {
        "acc-glasses": (
          <>

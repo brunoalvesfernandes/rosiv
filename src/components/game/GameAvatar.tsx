@@ -62,6 +62,12 @@ export function GameAvatar({
          optionId: `vip-${vipClothing.pants.id}`,
        };
      }
+     if (vipClothing?.accessory) {
+       base.accessory = {
+         ...base.accessory,
+         optionId: `vip-${vipClothing.accessory.id}`,
+       };
+     }
      
      return base;
    };
@@ -84,7 +90,7 @@ export function GameAvatar({
   }
 
   // Check if has any VIP items
-  const hasVip = !!(vipClothing?.shirt || vipClothing?.pants || vipClothing?.hair);
+  const hasVip = !!(vipClothing?.shirt || vipClothing?.pants || vipClothing?.hair || vipClothing?.accessory);
 
    const enhancedCustomization = getEnhancedCustomization();
 
