@@ -14,6 +14,7 @@
    className?: string;
    showLevel?: boolean;
    level?: number;
+  variant?: "default" | "minimal";
  }
  
  const sizeConfig = {
@@ -483,7 +484,8 @@
    size = "md",
    className,
    showLevel = false,
-   level = 1
+  level = 1,
+  variant = "default"
  }: LayeredPixelAvatarProps) {
    // Parse customization if it's a string
    const config: AvatarCustomization = typeof customization === "string" 
@@ -506,7 +508,12 @@
      <div className={cn("relative", className)}>
        <div 
          style={{ width: pixelSize, height: pixelSize }}
-         className="relative rounded-xl overflow-hidden border-2 border-primary shadow-[0_0_20px_hsl(var(--primary)/0.4)] bg-gradient-to-br from-secondary to-card"
+        className={cn(
+          "relative overflow-hidden bg-gradient-to-br from-secondary to-card",
+          variant === "minimal" 
+            ? "rounded-lg" 
+            : "rounded-xl border-2 border-primary shadow-[0_0_20px_hsl(var(--primary)/0.4)]"
+        )}
        >
          {layerOrder.map((type) => {
            const layerConfig = config[type];
