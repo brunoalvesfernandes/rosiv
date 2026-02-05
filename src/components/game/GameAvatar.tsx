@@ -3,6 +3,7 @@ import { LayeredPixelAvatar } from "./LayeredPixelAvatar";
 import { cn } from "@/lib/utils";
 import { Crown } from "lucide-react";
 import { useEquippedVipClothing } from "@/hooks/useVipClothing";
+ import { deserializeCustomization, AvatarCustomization, defaultCustomization } from "@/data/avatarLayers";
 
 interface GameAvatarProps {
   size?: "sm" | "md" | "lg" | "xl";
@@ -34,6 +35,35 @@ export function GameAvatar({
   
   const character = passedCharacter || fetchedCharacter;
 
+   // Build customization, integrating VIP clothing items
+   const getEnhancedCustomization = (): AvatarCustomization => {
+     const base = character?.avatar_customization 
+       ? deserializeCustomization(character.avatar_customization)
+       : defaultCustomization;
+     
+     // Override with VIP clothing if equipped
+     if (vipClothing?.hair) {
+       base.hair = {
+         ...base.hair,
+         optionId: `vip-${vipClothing.hair.id}`,
+       };
+     }
+     if (vipClothing?.shirt) {
+       base.top = {
+         ...base.top,
+         optionId: `vip-${vipClothing.shirt.id}`,
+       };
+     }
+     if (vipClothing?.pants) {
+       base.bottom = {
+         ...base.bottom,
+         optionId: `vip-${vipClothing.pants.id}`,
+       };
+     }
+     
+     return base;
+   };
+
   // Loading or no character - show placeholder  
   if (charLoading && !passedCharacter) {
     const initial = character?.name?.charAt(0).toUpperCase() || "?";
@@ -54,10 +84,12 @@ export function GameAvatar({
   // Check if has any VIP items
   const hasVip = !!(vipClothing?.shirt || vipClothing?.pants || vipClothing?.hair);
 
+   const enhancedCustomization = getEnhancedCustomization();
+
   return (
     <div className={cn("relative", className)}>
       <LayeredPixelAvatar
-        customization={character?.avatar_customization}
+         customization={JSON.stringify(enhancedCustomization)}
         size={size}
         showLevel={showLevel}
         level={character?.level || 1}
