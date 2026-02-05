@@ -2,6 +2,7 @@ import { GameLayout } from "@/components/layout/GameLayout";
 import { StatCard } from "@/components/ui/stat-card";
 import { ProgressBar } from "@/components/ui/progress-bar";
 import { GameAvatar } from "@/components/game/GameAvatar";
+import { WaterLobby } from "@/components/lobby/WaterLobby";
 import { 
   Swords, 
   Shield, 
@@ -10,7 +11,8 @@ import {
   Star,
   TrendingUp,
   Loader2,
-  CheckCircle
+  CheckCircle,
+  Waves
 } from "lucide-react";
 import { useCharacter } from "@/hooks/useCharacter";
 import { usePlayerMissions, useCompleteMission } from "@/hooks/useMissions";
@@ -109,6 +111,15 @@ export default function Dashboard() {
             value={character.agility}
             variant="default"
           />
+        </div>
+
+        {/* Water Lobby */}
+        <div>
+          <h2 className="font-display text-xl font-bold flex items-center gap-2 mb-4">
+            <Waves className="w-5 h-5 text-primary" />
+            Lobby Aquático
+          </h2>
+          <WaterLobby />
         </div>
 
         {/* Active Missions */}
