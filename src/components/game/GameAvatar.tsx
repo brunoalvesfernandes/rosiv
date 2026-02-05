@@ -89,7 +89,7 @@ export function GameAvatar({
   return (
     <div className={cn("relative", className)}>
       <LayeredPixelAvatar
-         customization={JSON.stringify(enhancedCustomization)}
+         customization={enhancedCustomization}
         size={size}
         showLevel={showLevel}
         level={character?.level || 1}

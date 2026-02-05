@@ -201,7 +201,7 @@ export default function Crafting() {
       <div className="space-y-6">
         {/* Header */}
          <div className="flex items-center gap-4">
-           <GameAvatar size="md" />
+           <GameAvatar character={character} size="md" />
           <div>
             <h1 className="text-3xl font-display font-bold">Crafting</h1>
             <p className="text-muted-foreground">Combine materiais para criar itens poderosos</p>
