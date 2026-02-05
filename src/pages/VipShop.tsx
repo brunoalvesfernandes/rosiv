@@ -111,9 +111,8 @@ function ClothingCard({
             onClick={onEquip} 
             variant={equipped ? "outline" : "default"}
             className="w-full"
-            disabled={equipped}
           >
-            {equipped ? "Equipado" : "Equipar"}
+            {equipped ? "Desequipar" : "Equipar"}
           </Button>
         ) : (
           <Button 
@@ -231,7 +230,7 @@ export default function VipShop() {
                       owned={ownedIds.has(item.id)}
                       equipped={equippedIds.has(item.id)}
                       onBuy={() => handleBuy(item.id)}
-                      onEquip={() => handleEquip(item.id, item.type)}
+                      onEquip={() => handleEquip(equippedIds.has(item.id) ? null : item.id, item.type)}
                       isBuying={buyClothing.isPending}
                       canAfford={(character?.gold || 0) >= item.price_gold}
                       playerLevel={character?.level || 1}
@@ -261,7 +260,10 @@ export default function VipShop() {
                       "p-3 cursor-pointer transition-all hover:border-primary",
                       isEquipped && "ring-2 ring-primary"
                     )}
-                    onClick={() => item.clothing && handleEquip(item.clothing_id, item.clothing.type)}
+                    onClick={() => item.clothing && handleEquip(
+                      isEquipped ? null : item.clothing_id, 
+                      item.clothing.type
+                    )}
                   >
                     <div className="flex items-center gap-2">
                       <Badge className={cn("shrink-0", rarityColors[item.clothing?.rarity || 'vip'])}>
