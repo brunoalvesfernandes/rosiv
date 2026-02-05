@@ -57,6 +57,7 @@ export interface Character {
   vip_shirt_id: string | null;
   vip_pants_id: string | null;
   vip_hair_id: string | null;
+  vip_accessory_id: string | null;
   // Layered avatar customization
   avatar_customization: string | null;
 }

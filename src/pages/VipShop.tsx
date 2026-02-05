@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
+import { VipItemPreview } from "@/components/game/VipItemPreview";
 
 const rarityColors: Record<string, string> = {
   vip: "bg-primary/20 text-primary border-primary",
@@ -85,18 +86,15 @@ function ClothingCard({
       <CardContent className="space-y-3">
         <p className="text-sm text-muted-foreground">{item.description}</p>
         
-        {item.image_url && (
-          <div className="aspect-square max-h-24 bg-secondary/50 rounded-lg flex items-center justify-center overflow-hidden">
-            <img 
-              src={item.image_url} 
-              alt={item.name}
-              className="w-full h-full object-contain"
-              onError={(e) => {
-                e.currentTarget.style.display = 'none';
-              }}
-            />
-          </div>
-        )}
+        <div className="flex justify-center py-2">
+          <VipItemPreview 
+            type={item.type as "shirt" | "pants" | "hair" | "accessory"}
+            itemId={item.id}
+            itemName={item.name}
+            rarity={item.rarity}
+            size="lg"
+          />
+        </div>
         
         <div className="flex items-center justify-between text-sm">
           <span className="text-muted-foreground">Nível mín:</span>
@@ -164,6 +162,7 @@ export default function VipShop() {
     character?.vip_shirt_id,
     character?.vip_pants_id,
     character?.vip_hair_id,
+    character?.vip_accessory_id,
   ].filter(Boolean));
 
   const groupedCatalog = {
@@ -180,7 +179,7 @@ export default function VipShop() {
   const handleEquip = (clothingId: string, type: string) => {
     equipClothing.mutate({ 
       clothingId, 
-      type: type as "shirt" | "pants" | "hair" 
+      type: type as "shirt" | "pants" | "hair" | "accessory" 
     });
   };
 
