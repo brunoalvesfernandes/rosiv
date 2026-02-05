@@ -179,6 +179,51 @@
               <rect x="50" y="38" width="4" height="3" fill="#8B0000" />
             </>
           ),
+           // Goku Super Saiyajin - Enhanced golden spikes
+           "vip-goku-ssj": (
+             <>
+               {/* Main dramatic spikes */}
+               <polygon points="6,22 16,-18 24,16" fill="#FFD700" />
+               <polygon points="18,14 26,-24 34,8" fill="#FFE44D" />
+               <polygon points="30,8 38,-28 46,8" fill="#FFD700" />
+               <polygon points="40,14 48,-18 58,22" fill="#FFE44D" />
+               {/* Central super spike */}
+               <polygon points="24,2 32,-36 40,2" fill="#FFF176" />
+               {/* Secondary spikes */}
+               <polygon points="14,12 22,-20 28,10" fill="#FFEB3B" />
+               <polygon points="36,10 42,-20 50,12" fill="#FFEB3B" />
+               {/* Side bangs */}
+               <polygon points="12,26 18,8 22,28" fill="#FFD700" />
+               <polygon points="52,26 46,8 42,28" fill="#FFD700" />
+               {/* Base hair volume */}
+               <rect x="16" y="10" width="32" height="10" fill="#FFD700" />
+               {/* Glow highlights */}
+               <polygon points="28,0 32,-38 36,0" fill="#FFFDE7" opacity="0.8" />
+             </>
+           ),
+           // Sasuke Shippuden - Sleek dark with bangs
+           "vip-sasuke": (
+             <>
+               {/* Back hair - styled up */}
+               <rect x="16" y="2" width="32" height="10" fill="#1A1A1A" />
+               <polygon points="16,2 20,-6 24,4" fill="#1A1A1A" />
+               <polygon points="24,2 28,-8 32,2" fill="#2D2D2D" />
+               <polygon points="32,2 36,-8 40,2" fill="#1A1A1A" />
+               <polygon points="40,4 44,-6 48,2" fill="#2D2D2D" />
+               {/* Side hair - covers ears */}
+               <rect x="12" y="8" width="6" height="20" fill="#1A1A1A" />
+               <rect x="46" y="8" width="6" height="20" fill="#1A1A1A" />
+               <polygon points="12,28 18,20 18,32 12,32" fill="#1A1A1A" />
+               <polygon points="52,28 46,20 46,32 52,32" fill="#1A1A1A" />
+               {/* Front bangs - parted */}
+               <polygon points="20,8 26,22 24,8" fill="#2D2D2D" />
+               <polygon points="26,6 30,24 28,6" fill="#1A1A1A" />
+               <polygon points="34,6 38,24 36,6" fill="#2D2D2D" />
+               <polygon points="38,8 44,22 40,8" fill="#1A1A1A" />
+               {/* Headband area visible */}
+               <rect x="18" y="6" width="28" height="2" fill="#3B5998" opacity="0.3" />
+             </>
+           ),
         };
         
         // Identify VIP hair by ID suffix or name pattern
@@ -187,6 +232,10 @@
         // Check for akatsuki pattern in ID
         if (optionId.toLowerCase().includes("c0ebe936") || optionId.toLowerCase().includes("akatsuki")) {
           selectedShape = vipHairShapes["vip-akatsuki"];
+         } else if (optionId.toLowerCase().includes("goku") || optionId.toLowerCase().includes("saiyajin")) {
+           selectedShape = vipHairShapes["vip-goku-ssj"];
+         } else if (optionId.toLowerCase().includes("sasuke") || optionId.toLowerCase().includes("shippuden")) {
+           selectedShape = vipHairShapes["vip-sasuke"];
         }
         
         return (
