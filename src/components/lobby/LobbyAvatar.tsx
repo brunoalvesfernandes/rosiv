@@ -22,7 +22,7 @@ function getVipHairStyle(hairName: string | null): string | null {
   return null;
 }
 
-export function LobbyAvatar({ player, isMe, onClick }: LobbyAvatarProps) {
+export function LobbyAvatar({ player, isMe, onClick, compact = false }: LobbyAvatarProps) {
   const customization = player.odw_avatar_customization 
     ? deserializeCustomization(player.odw_avatar_customization)
     : defaultCustomization;
@@ -40,7 +40,7 @@ export function LobbyAvatar({ player, isMe, onClick }: LobbyAvatarProps) {
 
   return (
     <motion.div
-      className="absolute cursor-pointer select-none"
+      className="absolute cursor-pointer select-none z-10"
       style={{
         left: player.odw_x,
         top: player.odw_y,
@@ -76,26 +76,38 @@ export function LobbyAvatar({ player, isMe, onClick }: LobbyAvatarProps) {
         <div className="relative">
           <LayeredPixelAvatar
             customization={customization}
-            size="md"
+            size={compact ? "sm" : "md"}
             variant="minimal"
           />
           
           {/* VIP Crown */}
           {hasVip && (
-            <div className="absolute -top-1 -right-1 w-4 h-4 bg-gradient-to-br from-gold to-gold/80 rounded-full flex items-center justify-center shadow-lg">
-              <Crown className="w-2.5 h-2.5 text-primary-foreground" />
+            <div className={cn(
+              "absolute -top-1 -right-1 bg-gradient-to-br from-gold to-gold/80 rounded-full flex items-center justify-center shadow-lg",
+              compact ? "w-3 h-3" : "w-4 h-4"
+            )}>
+              <Crown className={compact ? "w-2 h-2 text-primary-foreground" : "w-2.5 h-2.5 text-primary-foreground"} />
             </div>
           )}
         </div>
 
         {/* Name Tag */}
-        <div className="mt-1 px-2 py-0.5 bg-background/80 backdrop-blur-sm rounded-full border border-border/50">
-          <span className={`text-xs font-medium ${isMe ? "text-primary" : "text-foreground"}`}>
+        <div className={cn(
+          "mt-1 bg-background/80 backdrop-blur-sm rounded-full border border-border/50",
+          compact ? "px-1.5 py-0.5" : "px-2 py-0.5"
+        )}>
+          <span className={cn(
+            "font-medium",
+            isMe ? "text-primary" : "text-foreground",
+            compact ? "text-[9px]" : "text-xs"
+          )}>
             {player.odw_name}
           </span>
-          <span className="text-[10px] text-muted-foreground ml-1">
-            Lv.{player.odw_level}
-          </span>
+          {!compact && (
+            <span className="text-[10px] text-muted-foreground ml-1">
+              Lv.{player.odw_level}
+            </span>
+          )}
         </div>
       </div>
     </motion.div>
