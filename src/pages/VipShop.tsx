@@ -94,6 +94,7 @@ function ClothingCard({
             itemName={item.name}
             rarity={item.rarity}
             size="lg"
+             imageUrl={item.image_url}
           />
         </div>
         
