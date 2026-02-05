@@ -1611,6 +1611,7 @@ export type Database = {
           is_available: boolean | null
           min_level: number | null
           name: string
+          price_brl_cents: number | null
           price_gold: number | null
           price_premium: number | null
           rarity: string
@@ -1624,6 +1625,7 @@ export type Database = {
           is_available?: boolean | null
           min_level?: number | null
           name: string
+          price_brl_cents?: number | null
           price_gold?: number | null
           price_premium?: number | null
           rarity?: string
@@ -1637,12 +1639,66 @@ export type Database = {
           is_available?: boolean | null
           min_level?: number | null
           name?: string
+          price_brl_cents?: number | null
           price_gold?: number | null
           price_premium?: number | null
           rarity?: string
           type?: string
         }
         Relationships: []
+      }
+      vip_purchases: {
+        Row: {
+          amount_cents: number
+          clothing_id: string
+          created_at: string
+          expires_at: string | null
+          id: string
+          paid_at: string | null
+          payment_id: string | null
+          pix_copy_paste: string | null
+          qr_code: string | null
+          qr_code_base64: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          amount_cents: number
+          clothing_id: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          paid_at?: string | null
+          payment_id?: string | null
+          pix_copy_paste?: string | null
+          qr_code?: string | null
+          qr_code_base64?: string | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          amount_cents?: number
+          clothing_id?: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          paid_at?: string | null
+          payment_id?: string | null
+          pix_copy_paste?: string | null
+          qr_code?: string | null
+          qr_code_base64?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vip_purchases_clothing_id_fkey"
+            columns: ["clothing_id"]
+            isOneToOne: false
+            referencedRelation: "vip_clothing"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       war_battles: {
         Row: {
