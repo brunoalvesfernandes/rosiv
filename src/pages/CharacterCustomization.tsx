@@ -1,11 +1,10 @@
 import { GameLayout } from "@/components/layout/GameLayout";
-import { PixelAvatarCustomizer } from "@/components/game/PixelAvatarCustomizer";
+import { LayeredAvatarCustomizer } from "@/components/game/LayeredAvatarCustomizer";
 import { useCharacter, useUpdateCharacter } from "@/hooks/useCharacter";
 import { Loader2, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { avatarOptions } from "@/data/avatars";
 
 export default function CharacterCustomization() {
   const { data: character, isLoading } = useCharacter();
@@ -22,10 +21,10 @@ export default function CharacterCustomization() {
     );
   }
 
-  const handleSave = async (avatarId: string) => {
+  const handleSave = async (customization: string) => {
     try {
       await updateCharacter.mutateAsync({
-        avatar_id: avatarId,
+        avatar_customization: customization,
       });
       toast.success("Avatar salvo com sucesso!");
       navigate("/character");
@@ -50,9 +49,8 @@ export default function CharacterCustomization() {
 
         {/* Customizer */}
         <div className="bg-card border border-border rounded-xl p-6">
-          <PixelAvatarCustomizer
-            initialAvatarId={character.avatar_id || avatarOptions[0].id}
-            characterClass={character.class}
+          <LayeredAvatarCustomizer
+            initialCustomization={character.avatar_customization}
             onSave={handleSave}
             onCancel={() => navigate("/character")}
             isSaving={updateCharacter.isPending}
