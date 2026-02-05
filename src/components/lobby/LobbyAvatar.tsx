@@ -4,6 +4,7 @@ import { deserializeCustomization, defaultCustomization } from "@/data/avatarLay
 import { SpeechBubble } from "./SpeechBubble";
 import { LobbyPlayer } from "@/hooks/useLobbyPresence";
 import { Crown } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface LobbyAvatarProps {
   player: LobbyPlayer;
