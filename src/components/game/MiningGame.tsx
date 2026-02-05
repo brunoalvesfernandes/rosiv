@@ -593,7 +593,7 @@ export function MiningGame() {
         >
           {/* Player Avatar (new layered system) */}
           <div className="relative">
-            <GameAvatar character={character} size="sm" />
+            <GameAvatar character={character} size="sm" variant="minimal" />
             {/* Pickaxe in hand */}
             {equippedPickaxe && (
               <motion.span

@@ -11,6 +11,7 @@ interface GameAvatarProps {
   showLevel?: boolean;
   // Optional: pass character directly instead of fetching
   character?: Character | null;
+  variant?: "default" | "minimal";
 }
 
 const fallbackSizes = {
@@ -28,7 +29,8 @@ export function GameAvatar({
   size = "md", 
   className,
   showLevel = false,
-  character: passedCharacter
+  character: passedCharacter,
+  variant = "default"
 }: GameAvatarProps) {
   const { data: fetchedCharacter, isLoading: charLoading } = useCharacter();
   const { data: vipClothing } = useEquippedVipClothing();
@@ -93,6 +95,7 @@ export function GameAvatar({
         size={size}
         showLevel={showLevel}
         level={character?.level || 1}
+        variant={variant}
       />
       {hasVip && (
         <div className="absolute -top-1 -right-1 w-5 h-5 bg-gradient-to-br from-gold to-gold/80 rounded-full flex items-center justify-center border border-gold/50 shadow-lg z-10">
