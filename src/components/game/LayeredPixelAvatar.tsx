@@ -136,6 +136,66 @@
    if (type === "hair") {
      if (optionId === "hair-bald") return null;
      
+      // VIP Hair styles (special anime-inspired designs)
+      if (optionId.startsWith("vip-")) {
+        const vipHairShapes: Record<string, JSX.Element> = {
+          // Super Saiyajin - Golden flaming spiky hair
+          "vip-ssj": (
+            <>
+              {/* Base spikes */}
+              <polygon points="10,20 18,-12 26,14" fill="#FFD700" />
+              <polygon points="22,14 28,-16 34,10" fill="#FFE44D" />
+              <polygon points="30,10 36,-18 42,10" fill="#FFD700" />
+              <polygon points="38,14 44,-12 52,20" fill="#FFE44D" />
+              {/* Extra height spikes */}
+              <polygon points="18,8 24,-22 30,6" fill="#FFEB3B" />
+              <polygon points="34,6 40,-20 46,8" fill="#FFEB3B" />
+              {/* Central spike */}
+              <polygon points="26,4 32,-28 38,4" fill="#FFF176" />
+              {/* Side hair */}
+              <rect x="14" y="10" width="6" height="18" fill="#FFD700" />
+              <rect x="44" y="10" width="6" height="18" fill="#FFD700" />
+              {/* Glow effect layer */}
+              <polygon points="28,2 32,-30 36,2" fill="#FFF9C4" opacity="0.7" />
+            </>
+          ),
+          // Akatsuki style - Long dark with bangs
+          "vip-akatsuki": (
+            <>
+              {/* Long flowing back hair */}
+              <rect x="12" y="2" width="40" height="12" fill="#1A1A1A" />
+              <rect x="8" y="10" width="8" height="44" fill="#1A1A1A" />
+              <rect x="48" y="10" width="8" height="44" fill="#1A1A1A" />
+              {/* Lower flowing parts */}
+              <polygon points="8,54 16,40 16,58 6,58" fill="#1A1A1A" />
+              <polygon points="56,54 48,40 48,58 58,58" fill="#1A1A1A" />
+              {/* Front bangs */}
+              <polygon points="18,10 24,26 22,10" fill="#2D2D2D" />
+              <polygon points="26,8 30,28 28,8" fill="#1A1A1A" />
+              <polygon points="34,8 38,28 36,8" fill="#2D2D2D" />
+              <polygon points="40,10 46,26 42,10" fill="#1A1A1A" />
+              {/* Hair ties marks */}
+              <rect x="10" y="38" width="4" height="3" fill="#8B0000" />
+              <rect x="50" y="38" width="4" height="3" fill="#8B0000" />
+            </>
+          ),
+        };
+        
+        // Identify VIP hair by ID suffix or name pattern
+        let selectedShape = vipHairShapes["vip-ssj"]; // default to SSJ
+        
+        // Check for akatsuki pattern in ID
+        if (optionId.toLowerCase().includes("c0ebe936") || optionId.toLowerCase().includes("akatsuki")) {
+          selectedShape = vipHairShapes["vip-akatsuki"];
+        }
+        
+        return (
+          <svg viewBox="0 0 64 64" className="absolute inset-0 w-full h-full" style={{ imageRendering: "pixelated" }}>
+            {selectedShape}
+          </svg>
+        );
+      }
+      
      const hairShapes: Record<string, JSX.Element> = {
        "hair-short": (
          <>
@@ -509,10 +569,10 @@
        <div 
          style={{ width: pixelSize, height: pixelSize }}
         className={cn(
-          "relative overflow-hidden bg-gradient-to-br from-secondary to-card",
+          "relative overflow-hidden",
           variant === "minimal" 
-            ? "rounded-lg" 
-            : "rounded-xl border-2 border-primary shadow-[0_0_20px_hsl(var(--primary)/0.4)]"
+            ? "rounded-lg bg-transparent" 
+            : "rounded-xl border-2 border-primary shadow-[0_0_20px_hsl(var(--primary)/0.4)] bg-gradient-to-br from-secondary to-card"
         )}
        >
          {layerOrder.map((type) => {
