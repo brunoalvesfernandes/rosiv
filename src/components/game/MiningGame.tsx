@@ -40,7 +40,7 @@ import {
   Pickaxe as PickaxeType,
 } from "@/hooks/useMining";
 import { useCharacter } from "@/hooks/useCharacter";
-import { AvatarFace } from "@/components/game/AvatarFace";
+ import { GameAvatar } from "@/components/game/GameAvatar";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -591,37 +591,13 @@ export function MiningGame() {
           }}
           transition={{ type: "spring", stiffness: 400, damping: 30 }}
         >
-          {/* Avatar Face */}
+          {/* Player Avatar (new layered system) */}
           <div className="relative">
-            <AvatarFace
-              hairStyle={character?.hair_style || "short"}
-              hairColor={character?.hair_color || "#4a3728"}
-              eyeColor={character?.eye_color || "#3b82f6"}
-              skinTone={character?.skin_tone || "#e0ac69"}
-              faceStyle={character?.face_style || "round"}
-              accessory={character?.accessory}
-              size="sm"
-            />
-            {/* Body below face */}
-            <div 
-              className="w-6 h-4 rounded-b-sm mx-auto -mt-1"
-              style={{ backgroundColor: character?.shirt_color || "#3b82f6" }}
-            />
-            {/* Legs */}
-            <div className="flex justify-center gap-0.5">
-              <div
-                className="w-2 h-2 rounded-b-sm"
-                style={{ backgroundColor: character?.pants_color || "#1e3a5f" }}
-              />
-              <div
-                className="w-2 h-2 rounded-b-sm"
-                style={{ backgroundColor: character?.pants_color || "#1e3a5f" }}
-              />
-            </div>
+            <GameAvatar character={character} size="sm" />
             {/* Pickaxe in hand */}
             {equippedPickaxe && (
               <motion.span
-                className="absolute -right-2 top-6 text-sm"
+                className="absolute -right-3 top-6 text-sm"
                 style={{ scaleX: facingRight ? 1 : -1 }}
                 animate={isMining ? { rotate: [-30, 30, -30] } : {}}
                 transition={{ duration: 0.15, repeat: isMining ? Infinity : 0 }}
