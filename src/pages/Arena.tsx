@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { GameLayout } from "@/components/layout/GameLayout";
-import { AvatarFace } from "@/components/game/AvatarFace";
+ import { GameAvatar } from "@/components/game/GameAvatar";
 import { ProgressBar } from "@/components/ui/progress-bar";
 import { Button } from "@/components/ui/button";
 import { 
@@ -204,15 +204,7 @@ export default function Arena() {
         <div className="bg-card border border-border rounded-sm p-4 system-border">
           <div className="flex items-center gap-4">
             <div className="relative">
-              <AvatarFace 
-                hairStyle={character.hair_style}
-                hairColor={character.hair_color}
-                eyeColor={character.eye_color}
-                skinTone={character.skin_tone}
-                faceStyle={character.face_style}
-                accessory={character.accessory}
-                size="md"
-              />
+               <GameAvatar character={character} size="md" />
               <div className="absolute -bottom-1 -right-1 bg-primary text-primary-foreground text-xs font-bold px-1.5 py-0.5 rounded-sm font-display">
                 {character.level}
               </div>
@@ -390,15 +382,7 @@ export default function Arena() {
                     >
                       <div className="flex items-center gap-4">
                         <div className="relative">
-                          <AvatarFace 
-                            hairStyle={opponent.hair_style}
-                            hairColor={opponent.hair_color}
-                            eyeColor={opponent.eye_color}
-                            skinTone={opponent.skin_tone}
-                            faceStyle={opponent.face_style}
-                            accessory={opponent.accessory}
-                            size="sm"
-                          />
+                           <GameAvatar character={opponent} size="sm" />
                           <div className="absolute -bottom-1 -right-1 bg-accent text-accent-foreground text-xs font-bold px-1 rounded-sm">
                             {opponent.level}
                           </div>

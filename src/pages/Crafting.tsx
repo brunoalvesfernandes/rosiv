@@ -22,6 +22,7 @@ import {
   Recipe,
 } from "@/hooks/useCrafting";
 import { useCharacter } from "@/hooks/useCharacter";
+ import { GameAvatar } from "@/components/game/GameAvatar";
 import { cn } from "@/lib/utils";
 import { MiningGame } from "@/components/game/MiningGame";
 
@@ -199,8 +200,8 @@ export default function Crafting() {
     <GameLayout>
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex items-center gap-3">
-          <Hammer className="w-8 h-8 text-primary" />
+         <div className="flex items-center gap-4">
+           <GameAvatar size="md" />
           <div>
             <h1 className="text-3xl font-display font-bold">Crafting</h1>
             <p className="text-muted-foreground">Combine materiais para criar itens poderosos</p>
