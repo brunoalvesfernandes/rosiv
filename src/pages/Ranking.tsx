@@ -2,12 +2,32 @@
  import { MiniLayeredAvatar } from "@/components/game/MiniLayeredAvatar";
  import { Trophy, Medal, Crown, TrendingUp, Loader2, Shield, Coins, Zap, Star, Users } from "lucide-react";
  import { useCharacter, RankedCharacter } from "@/hooks/useCharacter";
- import { useEquippedVipClothing } from "@/hooks/useVipClothing";
  import { Badge } from "@/components/ui/badge";
  import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
  import { useQuery } from "@tanstack/react-query";
  import { supabase } from "@/integrations/supabase/client";
  
+// Extended character with VIP info
+interface RankedCharacterWithVip extends RankedCharacter {
+  vip_hair_name?: string;
+}
+
+// Helper to get VIP style from name
+const getVipHairStyleFromName = (name?: string): string | null => {
+  if (!name) return null;
+  const nameLower = name.toLowerCase();
+  if (nameLower.includes("goku") || nameLower.includes("saiyajin") || nameLower.includes("ssj")) {
+    return "vip-goku-ssj";
+  }
+  if (nameLower.includes("sasuke") || nameLower.includes("shippuden")) {
+    return "vip-sasuke";
+  }
+  if (nameLower.includes("akatsuki")) {
+    return "vip-akatsuki";
+  }
+  return "vip-default";
+};
+
  const getRankIcon = (rank: number) => {
    switch (rank) {
      case 1:
@@ -52,7 +72,26 @@
          .limit(50);
  
        if (error) throw error;
-       return characters as RankedCharacter[];
+       
+       // Get VIP hair names for characters that have vip_hair_id
+       const vipHairIds = characters?.filter(c => c.vip_hair_id).map(c => c.vip_hair_id) || [];
+       let vipHairMap: Record<string, string> = {};
+       
+       if (vipHairIds.length > 0) {
+         const { data: vipClothing } = await supabase
+           .from("vip_clothing")
+           .select("id, name")
+           .in("id", vipHairIds);
+         
+         if (vipClothing) {
+           vipHairMap = Object.fromEntries(vipClothing.map(v => [v.id, v.name]));
+         }
+       }
+       
+       return (characters || []).map(c => ({
+         ...c,
+         vip_hair_name: c.vip_hair_id ? vipHairMap[c.vip_hair_id] : undefined
+       })) as RankedCharacterWithVip[];
      },
    });
  }
@@ -69,6 +108,21 @@
  
        if (error) throw error;
        
+       // Get VIP hair names
+       const vipHairIds = characters?.filter(c => c.vip_hair_id).map(c => c.vip_hair_id) || [];
+       let vipHairMap: Record<string, string> = {};
+       
+       if (vipHairIds.length > 0) {
+         const { data: vipClothing } = await supabase
+           .from("vip_clothing")
+           .select("id, name")
+           .in("id", vipHairIds);
+         
+         if (vipClothing) {
+           vipHairMap = Object.fromEntries(vipClothing.map(v => [v.id, v.name]));
+         }
+       }
+       
        // Sort by calculated power
        const sorted = (characters || []).sort((a, b) => {
          const powerA = calculatePower(a as RankedCharacter);
@@ -76,7 +130,10 @@
          return powerB - powerA;
        });
        
-       return sorted.slice(0, 50) as RankedCharacter[];
+       return sorted.slice(0, 50).map(c => ({
+         ...c,
+         vip_hair_name: c.vip_hair_id ? vipHairMap[c.vip_hair_id] : undefined
+       })) as RankedCharacterWithVip[];
      },
    });
  }
@@ -93,7 +150,26 @@
          .limit(50);
  
        if (error) throw error;
-       return characters as RankedCharacter[];
+       
+       // Get VIP hair names
+       const vipHairIds = characters?.filter(c => c.vip_hair_id).map(c => c.vip_hair_id) || [];
+       let vipHairMap: Record<string, string> = {};
+       
+       if (vipHairIds.length > 0) {
+         const { data: vipClothing } = await supabase
+           .from("vip_clothing")
+           .select("id, name")
+           .in("id", vipHairIds);
+         
+         if (vipClothing) {
+           vipHairMap = Object.fromEntries(vipClothing.map(v => [v.id, v.name]));
+         }
+       }
+       
+       return (characters || []).map(c => ({
+         ...c,
+         vip_hair_name: c.vip_hair_id ? vipHairMap[c.vip_hair_id] : undefined
+       })) as RankedCharacterWithVip[];
      },
    });
  }
@@ -170,7 +246,7 @@
  }
  
  interface PlayerRowProps {
-   player: RankedCharacter;
+   player: RankedCharacterWithVip;
    rank: number;
    isMe: boolean;
    valueLabel: string;
@@ -179,6 +255,8 @@
  }
  
  function PlayerRow({ player, rank, isMe, valueLabel, value, valueColor = "text-primary" }: PlayerRowProps) {
+   const vipHairStyle = getVipHairStyleFromName(player.vip_hair_name);
+ 
    return (
      <div 
        className={`rounded-xl border p-3 sm:p-4 transition-all hover:shadow-lg ${
@@ -193,6 +271,7 @@
            customization={player.avatar_customization}
            size="sm"
            rank={rank <= 3 ? rank : undefined}
+           vipHairStyle={vipHairStyle}
          />
          <div className="flex-1 min-w-0">
            <p className="font-display font-bold truncate">

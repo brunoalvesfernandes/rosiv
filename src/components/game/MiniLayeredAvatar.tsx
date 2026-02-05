@@ -12,6 +12,8 @@
    size?: "xs" | "sm" | "md" | "lg";
    className?: string;
    rank?: number; // 1, 2, 3 for special frames
+   vipHairStyle?: string | null;
+   vipShirtStyle?: string | null;
  }
  
  const sizeConfig = {
@@ -89,6 +91,62 @@
    if (type === "hair") {
      if (optionId === "hair-bald") return null;
      
+     // VIP Hair styles
+     if (optionId.startsWith("vip-") || optionId.includes("goku") || optionId.includes("ssj") || optionId.includes("sasuke")) {
+       // Super Saiyajin - Golden spiky
+       if (optionId.includes("goku") || optionId.includes("ssj") || optionId === "vip-goku-ssj") {
+         return (
+           <>
+             <polygon points="10,14 18,-8 26,10" fill="#FFD700" />
+             <polygon points="22,10 28,-12 34,8" fill="#FFE44D" />
+             <polygon points="30,8 36,-14 42,8" fill="#FFD700" />
+             <polygon points="38,10 44,-8 52,14" fill="#FFE44D" />
+             <polygon points="18,8 24,-16 30,6" fill="#FFEB3B" />
+             <polygon points="34,6 40,-14 46,8" fill="#FFEB3B" />
+             <rect x="16" y="6" width="32" height="10" fill="#FFD700" />
+             <polygon points="26,4 32,-18 38,4" fill="#FFF176" opacity="0.7" />
+           </>
+         );
+       }
+       // Sasuke Shippuden - Dark spiky
+       if (optionId.includes("sasuke") || optionId.includes("shippuden") || optionId === "vip-sasuke") {
+         return (
+           <>
+             <polygon points="8,16 14,-2 20,12" fill="#1a1a2e" />
+             <polygon points="44,12 50,-2 56,16" fill="#1a1a2e" />
+             <rect x="16" y="6" width="32" height="14" fill="#1a1a2e" />
+             <polygon points="18,10 24,-8 30,8" fill="#2d2d44" />
+             <polygon points="26,6 32,-12 38,6" fill="#1a1a2e" />
+             <polygon points="34,8 40,-8 46,10" fill="#2d2d44" />
+             <polygon points="12,12 18,2 20,24 14,30" fill="#1a1a2e" />
+             <polygon points="52,12 46,2 44,24 50,30" fill="#1a1a2e" />
+           </>
+         );
+       }
+       // Akatsuki long hair
+       if (optionId.includes("akatsuki")) {
+         return (
+           <>
+             <rect x="12" y="4" width="40" height="10" fill="#1A1A1A" />
+             <rect x="8" y="10" width="8" height="28" fill="#1A1A1A" />
+             <rect x="48" y="10" width="8" height="28" fill="#1A1A1A" />
+             <polygon points="18,10 24,24 22,10" fill="#2D2D2D" />
+             <polygon points="26,8 30,26 28,8" fill="#1A1A1A" />
+             <polygon points="38,8 42,26 40,8" fill="#1A1A1A" />
+           </>
+         );
+       }
+       // Default VIP spiky
+       return (
+         <>
+           <polygon points="20,12 24,0 28,12" fill={color} />
+           <polygon points="28,10 32,-4 36,10" fill={color} />
+           <polygon points="36,12 40,0 44,12" fill={color} />
+           <rect x="18" y="8" width="28" height="8" fill={color} />
+         </>
+       );
+     }
+ 
      const hairVariants: Record<string, JSX.Element> = {
        "hair-short": (
          <>
@@ -221,13 +279,23 @@
    customization,
    size = "sm",
    className,
-   rank
+   rank,
+   vipHairStyle,
+   vipShirtStyle
  }: MiniLayeredAvatarProps) {
    // Parse customization
-   const config: AvatarCustomization = typeof customization === "string" 
+   let config: AvatarCustomization = typeof customization === "string" 
      ? deserializeCustomization(customization)
      : customization || defaultCustomization;
    
+   // Override with VIP styles if provided
+   if (vipHairStyle) {
+     config = {
+       ...config,
+       hair: { ...config.hair, optionId: vipHairStyle }
+     };
+   }
+ 
    const dimension = sizeConfig[size];
    const frameConfig = getRankFrame(rank);
    
