@@ -6,6 +6,7 @@
    itemName: string;
    rarity: string;
    size?: "sm" | "md" | "lg";
+   imageUrl?: string | null;
  }
  
  const sizeConfig = {
@@ -21,9 +22,12 @@
  };
  
  // VIP Hair previews
- const renderVipHair = (itemId: string): JSX.Element => {
+ const renderVipHair = (itemId: string, itemName: string, imageUrl?: string | null): JSX.Element => {
+   const nameLower = itemName.toLowerCase();
+   const urlLower = (imageUrl || "").toLowerCase();
+   
    // Super Saiyajin
-   if (itemId.includes("6ad93b94")) {
+   if (nameLower.includes("goku") || nameLower.includes("saiyajin") || nameLower.includes("ssj") || urlLower.includes("goku") || urlLower.includes("ssj")) {
      return (
        <>
          <polygon points="10,28 18,-4 26,22" fill="#FFD700" />
@@ -39,8 +43,29 @@
        </>
      );
    }
-   // Akatsuki
-   if (itemId.includes("c0ebe936")) {
+   // Sasuke Shippuden
+   if (nameLower.includes("sasuke") || nameLower.includes("shippuden") || urlLower.includes("sasuke")) {
+     return (
+       <>
+         {/* Back spikes */}
+         <polygon points="8,24 14,2 20,20" fill="#1a1a2e" />
+         <polygon points="44,20 50,2 56,24" fill="#1a1a2e" />
+         {/* Main hair */}
+         <rect x="16" y="12" width="32" height="20" fill="#1a1a2e" />
+         {/* Top spikes */}
+         <polygon points="18,16 24,-6 30,14" fill="#2d2d44" />
+         <polygon points="26,12 32,-10 38,12" fill="#1a1a2e" />
+         <polygon points="34,14 40,-6 46,16" fill="#2d2d44" />
+         {/* Side bangs */}
+         <polygon points="12,18 18,8 20,30 14,38" fill="#1a1a2e" />
+         <polygon points="52,18 46,8 44,30 50,38" fill="#1a1a2e" />
+         {/* Highlights */}
+         <polygon points="28,8 32,-8 36,8" fill="#3d3d5c" opacity="0.5" />
+       </>
+     );
+   }
+   // Akatsuki long hair
+   if (nameLower.includes("akatsuki") || urlLower.includes("akatsuki")) {
      return (
        <>
          <rect x="12" y="10" width="40" height="12" fill="#1A1A1A" />
@@ -193,13 +218,13 @@
    );
  };
  
- export function VipItemPreview({ type, itemId, itemName, rarity, size = "md" }: VipItemPreviewProps) {
+ export function VipItemPreview({ type, itemId, itemName, rarity, size = "md", imageUrl }: VipItemPreviewProps) {
    const pixelSize = sizeConfig[size];
    
    const renderContent = () => {
      switch (type) {
        case "hair":
-         return renderVipHair(itemId);
+         return renderVipHair(itemId, itemName, imageUrl);
        case "shirt":
          return renderVipShirt(itemId);
        case "pants":
