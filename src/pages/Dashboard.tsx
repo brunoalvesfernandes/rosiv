@@ -113,6 +113,15 @@ export default function Dashboard() {
           />
         </div>
 
+        {/* Water Lobby */}
+        <div>
+          <h2 className="font-display text-xl font-bold flex items-center gap-2 mb-4">
+            <Waves className="w-5 h-5 text-primary" />
+            Lobby Aquático
+          </h2>
+          <WaterLobby />
+        </div>
+
         {/* Active Missions */}
         <div>
           <div className="flex items-center justify-between mb-4">
