@@ -12,9 +12,8 @@
  import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
  import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
  import { Loader2, Plus, Pencil, Trash2, Crown } from "lucide-react";
- import { LayeredPixelAvatar } from "@/components/game/LayeredPixelAvatar";
+ import { PixelArtEditor } from "./PixelArtEditor";
  import { toast } from "sonner";
- import type { AvatarCustomization } from "@/data/avatarLayers";
  
  // Available pixel art styles for each type
  const PIXEL_ART_STYLES: Record<string, { value: string; label: string }[]> = {
@@ -79,6 +78,8 @@
    min_level: 1,
    is_available: true,
    pixel_style: "vip-goku-ssj",
+   custom_pixel_data: "",
+   use_custom_art: false,
  };
  
  export function VipClothingManager() {
@@ -106,6 +107,7 @@
    // Create mutation
    const createMutation = useMutation({
      mutationFn: async (data: typeof formData) => {
+       const imageUrl = data.use_custom_art && data.custom_pixel_data ? data.custom_pixel_data : data.pixel_style;
        const { error } = await supabase.from("vip_clothing").insert({
          name: data.name,
          description: data.description || null,
@@ -114,7 +116,7 @@
          price_brl_cents: data.price_brl_cents,
          min_level: data.min_level,
          is_available: data.is_available,
-         image_url: data.pixel_style,
+         image_url: imageUrl,
        });
        if (error) throw error;
      },
@@ -132,6 +134,7 @@
    // Update mutation
    const updateMutation = useMutation({
      mutationFn: async ({ id, data }: { id: string; data: typeof formData }) => {
+       const imageUrl = data.use_custom_art && data.custom_pixel_data ? data.custom_pixel_data : data.pixel_style;
        const { error } = await supabase
          .from("vip_clothing")
          .update({
@@ -142,7 +145,7 @@
            price_brl_cents: data.price_brl_cents,
            min_level: data.min_level,
            is_available: data.is_available,
-           image_url: data.pixel_style,
+           image_url: imageUrl,
          })
          .eq("id", id);
        if (error) throw error;
@@ -176,27 +179,20 @@
  
    const handleOpenCreate = () => {
      setEditingItem(null);
-     setFormData(defaultFormData);
+     setFormData({ ...defaultFormData, use_custom_art: false, custom_pixel_data: "" });
      setIsDialogOpen(true);
    };
  
    const handleOpenEdit = (item: VipClothing) => {
      setEditingItem(item);
-     // Detect pixel style from image_url or name
      const styles = PIXEL_ART_STYLES[item.type] || [];
      let detectedStyle = styles[0]?.value || "vip-ssj";
-     if (item.image_url && item.image_url.startsWith("vip-")) {
+     const isCustomArt = item.image_url?.startsWith("[") || false;
+     
+     if (!isCustomArt && item.image_url?.startsWith("vip-")) {
        detectedStyle = item.image_url;
-     } else {
-       const nameLower = item.name.toLowerCase();
-       for (const style of styles) {
-         const parts = style.value.replace("vip-", "").split("-");
-         if (parts.some(p => nameLower.includes(p))) {
-           detectedStyle = style.value;
-           break;
-         }
-       }
      }
+     
      setFormData({
        name: item.name,
        description: item.description || "",
@@ -206,6 +202,8 @@
        min_level: item.min_level || 1,
        is_available: item.is_available ?? true,
        pixel_style: detectedStyle,
+       custom_pixel_data: isCustomArt ? item.image_url || "" : "",
+       use_custom_art: isCustomArt,
      });
      setIsDialogOpen(true);
    };
@@ -213,12 +211,17 @@
    const handleCloseDialog = () => {
      setIsDialogOpen(false);
      setEditingItem(null);
-     setFormData(defaultFormData);
+     setFormData({ ...defaultFormData, use_custom_art: false, custom_pixel_data: "" });
    };
  
    const handleSubmit = () => {
      if (!formData.name.trim()) {
        toast.error("Nome é obrigatório");
+       return;
+     }
+ 
+     if (formData.use_custom_art && !formData.custom_pixel_data) {
+       toast.error("Desenhe e salve a pixel art primeiro");
        return;
      }
  
@@ -248,45 +251,34 @@
      return `R$ ${(cents / 100).toFixed(2).replace(".", ",")}`;
    };
  
-   // Create preview customization based on type and pixel style
-   const getPreviewCustomization = (type: string, pixelStyle: string): AvatarCustomization => {
-     const base: AvatarCustomization = {
-       body: { optionId: "body-1", paletteId: "skin-1" },
-       eyes: { optionId: "eyes-round", paletteId: "eyes-blue" },
-       hair: { optionId: "hair-short", paletteId: "hair-brown" },
-       top: { optionId: "top-tshirt", paletteId: "top-gray" },
-       bottom: { optionId: "bottom-pants", paletteId: "bottom-gray" },
-       accessory: { optionId: "acc-none", paletteId: "acc-none" },
-     };
- 
-     // Override with pixel style
-     if (type === "hair") {
-       base.hair = { optionId: pixelStyle, paletteId: "hair-black" };
-     } else if (type === "shirt") {
-       base.top = { optionId: pixelStyle, paletteId: "top-red" };
-     } else if (type === "pants") {
-       base.bottom = { optionId: pixelStyle, paletteId: "bottom-blue" };
-     } else if (type === "accessory") {
-       base.accessory = { optionId: pixelStyle, paletteId: "acc-gold" };
-     }
- 
-     return base;
-   };
- 
-   // Get pixel style from item
-   const getItemPixelStyle = (item: VipClothing): string => {
-     if (item.image_url && item.image_url.startsWith("vip-")) {
-       return item.image_url;
-     }
-     const styles = PIXEL_ART_STYLES[item.type] || [];
-     const nameLower = item.name.toLowerCase();
-     for (const style of styles) {
-       const parts = style.value.replace("vip-", "").split("-");
-       if (parts.some(p => nameLower.includes(p))) {
-         return style.value;
+   const renderItemPreview = (item: VipClothing) => {
+     const isCustomArt = item.image_url?.startsWith("[");
+     if (isCustomArt && item.image_url) {
+       try {
+         const pixels = JSON.parse(item.image_url);
+         return (
+           <svg viewBox="0 0 16 24" className="w-full h-full">
+             {pixels.map((row: (string | null)[], rowIndex: number) =>
+               row.map((color: string | null, colIndex: number) =>
+                 color ? (
+                   <rect
+                     key={`${rowIndex}-${colIndex}`}
+                     x={colIndex}
+                     y={rowIndex}
+                     width={1}
+                     height={1}
+                     fill={color}
+                   />
+                 ) : null
+               )
+             )}
+           </svg>
+         );
+       } catch {
+         return <span className="text-xs text-muted-foreground">Custom</span>;
        }
      }
-     return styles[0]?.value || "vip-ssj";
+     return <span className="text-xs text-muted-foreground">{item.image_url || "—"}</span>;
    };
  
    const filteredClothing = filterType === "all" 
@@ -346,11 +338,8 @@
                  {filteredClothing?.map((item) => (
                    <TableRow key={item.id}>
                      <TableCell>
-                       <div className="w-12 h-12 bg-muted rounded overflow-hidden flex items-center justify-center">
-                         <LayeredPixelAvatar
-                           customization={getPreviewCustomization(item.type, getItemPixelStyle(item))}
-                           size="md"
-                         />
+                       <div className="w-12 h-16 bg-muted rounded overflow-hidden flex items-center justify-center">
+                         {renderItemPreview(item)}
                        </div>
                      </TableCell>
                      <TableCell className="font-medium">{item.name}</TableCell>
@@ -410,7 +399,7 @@
  
        {/* Create/Edit Dialog */}
        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-         <DialogContent className="max-w-lg">
+         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
            <DialogHeader>
              <DialogTitle className="flex items-center gap-2">
                {editingItem ? (
@@ -428,19 +417,48 @@
            </DialogHeader>
  
            <div className="space-y-4">
-             {/* Preview */}
-             <div className="flex justify-center">
-               <div className="w-24 h-24 bg-muted rounded-lg overflow-hidden border-2 border-dashed border-primary/30 flex items-center justify-center">
-                 <LayeredPixelAvatar
-                   customization={getPreviewCustomization(formData.type, formData.pixel_style)}
-                   size="xl"
+             {/* Toggle: Preset vs Custom */}
+             <div className="flex items-center gap-4 p-3 bg-muted/50 rounded-lg">
+               <Label className="flex items-center gap-2 cursor-pointer">
+                 <input
+                   type="radio"
+                   name="art_mode"
+                   checked={!formData.use_custom_art}
+                   onChange={() => setFormData({ ...formData, use_custom_art: false })}
+                   className="accent-primary"
                  />
-               </div>
+                 Usar Estilo Pré-definido
+               </Label>
+               <Label className="flex items-center gap-2 cursor-pointer">
+                 <input
+                   type="radio"
+                   name="art_mode"
+                   checked={formData.use_custom_art}
+                   onChange={() => setFormData({ ...formData, use_custom_art: true })}
+                   className="accent-primary"
+                 />
+                 Desenhar Pixel Art
+               </Label>
              </div>
  
-             <div className="grid grid-cols-2 gap-4">
-               {/* Pixel Art Style Selection */}
-               <div className="col-span-2">
+             {/* Custom Pixel Art Editor */}
+             {formData.use_custom_art && (
+               <div className="border border-border rounded-lg p-4 bg-card">
+                 <PixelArtEditor
+                   width={16}
+                   height={24}
+                   initialData={formData.custom_pixel_data}
+                   onSave={(data) => setFormData({ ...formData, custom_pixel_data: data })}
+                 />
+                 {formData.custom_pixel_data && (
+                   <p className="text-xs text-accent mt-2">✓ Pixel art salva</p>
+                 )}
+               </div>
+             )}
+ 
+             {/* Preset Style Selection */}
+             {!formData.use_custom_art && (
+               <div>
                  <Label>Estilo Pixel Art *</Label>
                  <Select
                    value={formData.pixel_style}
@@ -457,11 +475,10 @@
                      ))}
                    </SelectContent>
                  </Select>
-                 <p className="text-xs text-muted-foreground mt-1">
-                   Este é o visual que aparecerá no avatar do jogador
-                 </p>
                </div>
+             )}
  
+             <div className="grid grid-cols-2 gap-4">
                <div className="col-span-2">
                  <Label>Nome *</Label>
                  <Input
