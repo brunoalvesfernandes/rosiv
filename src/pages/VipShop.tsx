@@ -1,7 +1,10 @@
-import { GameLayout } from "@/components/layout/GameLayout";
-import { useVipClothingCatalog, useMyVipClothing, useBuyVipClothing, useEquipVipClothing, VipClothing } from "@/hooks/useVipClothing";
-import { useCharacter } from "@/hooks/useCharacter";
-import { Loader2, Crown, Shirt, Scissors, Check, ShoppingBag, Sparkles } from "lucide-react";
+ import { useState } from "react";
+ import { GameLayout } from "@/components/layout/GameLayout";
+ import { useVipClothingCatalog, useMyVipClothing, useEquipVipClothing, VipClothing } from "@/hooks/useVipClothing";
+ import { useCharacter } from "@/hooks/useCharacter";
+ import { usePixPayment } from "@/hooks/usePixPayment";
+ import { PixPaymentModal } from "@/components/game/PixPaymentModal";
+ import { Loader2, Crown, Shirt, Scissors, Check, ShoppingBag, Sparkles, QrCode } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -36,7 +39,6 @@ function ClothingCard({
   onBuy, 
   onEquip,
   isBuying,
-  canAfford,
   playerLevel
 }: { 
   item: VipClothing;
@@ -45,7 +47,6 @@ function ClothingCard({
   onBuy: () => void;
   onEquip: () => void;
   isBuying: boolean;
-  canAfford: boolean;
   playerLevel: number;
 }) {
   const Icon = typeIcons[item.type] || Shirt;
@@ -117,17 +118,15 @@ function ClothingCard({
         ) : (
           <Button 
             onClick={onBuy} 
-            disabled={isBuying || !canAfford || !meetsLevel}
+             disabled={isBuying || !meetsLevel}
             className="w-full gap-2"
           >
             {isBuying ? (
               <Loader2 className="w-4 h-4 animate-spin" />
             ) : (
             <>
-              <ShoppingBag className="w-4 h-4" />
-              <span className={cn(!canAfford && "text-destructive")}>
-                {item.price_gold.toLocaleString()} Gold
-              </span>
+               <QrCode className="w-4 h-4" />
+               R$ {((item as any).price_brl_cents / 100 || 5).toFixed(2)}
             </>
             )}
           </Button>
@@ -138,11 +137,12 @@ function ClothingCard({
 }
 
 export default function VipShop() {
+   const [selectedItem, setSelectedItem] = useState<VipClothing | null>(null);
   const { data: catalog, isLoading: catalogLoading } = useVipClothingCatalog();
   const { data: myClothing, isLoading: myClothingLoading } = useMyVipClothing();
   const { data: character, isLoading: charLoading } = useCharacter();
-  const buyClothing = useBuyVipClothing();
   const equipClothing = useEquipVipClothing();
+   const { isLoading: pixLoading, pixData, createPixPayment, copyPixCode, clearPixData, checkPaymentStatus } = usePixPayment();
 
   const isLoading = catalogLoading || myClothingLoading || charLoading;
 
@@ -171,8 +171,9 @@ export default function VipShop() {
     accessory: catalog?.filter(c => c.type === "accessory") || [],
   };
 
-  const handleBuy = (clothingId: string) => {
-    buyClothing.mutate(clothingId);
+   const handleBuy = async (item: VipClothing) => {
+     setSelectedItem(item);
+     await createPixPayment(item.id);
   };
 
   const handleEquip = (clothingId: string, type: string) => {
@@ -229,10 +230,9 @@ export default function VipShop() {
                       item={item}
                       owned={ownedIds.has(item.id)}
                       equipped={equippedIds.has(item.id)}
-                      onBuy={() => handleBuy(item.id)}
+                       onBuy={() => handleBuy(item)}
                       onEquip={() => handleEquip(equippedIds.has(item.id) ? null : item.id, item.type)}
-                      isBuying={buyClothing.isPending}
-                      canAfford={(character?.gold || 0) >= item.price_gold}
+                       isBuying={pixLoading}
                       playerLevel={character?.level || 1}
                     />
                   ))}
@@ -278,6 +278,16 @@ export default function VipShop() {
             </div>
           </div>
         )}
+       
+       {/* PIX Payment Modal */}
+       <PixPaymentModal
+         isOpen={!!pixData}
+         onClose={clearPixData}
+         pixData={pixData}
+         itemName={selectedItem?.name || "Item VIP"}
+         onCopy={copyPixCode}
+         onCheckStatus={checkPaymentStatus}
+       />
       </div>
     </GameLayout>
   );
