@@ -85,17 +85,19 @@ export function useLobbyPresence() {
     channel
       .on("presence", { event: "sync" }, () => {
         const state: PresenceState = channel.presenceState();
-        const allPlayers: LobbyPlayer[] = [];
+        const playerMap = new Map<string, LobbyPlayer>();
         
+        // Deduplicate by user ID - keep only one entry per player
         Object.values(state).forEach((presences) => {
           presences.forEach((presence) => {
             if (presence.odw_uid) {
-              allPlayers.push(presence as LobbyPlayer);
+              // Overwrite to keep the most recent presence
+              playerMap.set(presence.odw_uid, presence as LobbyPlayer);
             }
           });
         });
         
-        setPlayers(allPlayers);
+        setPlayers(Array.from(playerMap.values()));
       })
       .subscribe(async (status) => {
         if (status === "SUBSCRIBED") {
