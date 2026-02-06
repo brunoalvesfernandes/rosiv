@@ -1,16 +1,18 @@
 import { motion } from "framer-motion";
 import { LayeredPixelAvatar } from "@/components/game/LayeredPixelAvatar";
 import { deserializeCustomization, defaultCustomization } from "@/data/avatarLayers";
-import { SpeechBubble } from "./SpeechBubble";
 import { LobbyPlayer } from "@/hooks/useLobbyPresence";
 import { Crown } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { PlayerStatusBubble, SleepingEyes } from "./PlayerStatusBubble";
 
 interface LobbyAvatarProps {
   player: LobbyPlayer;
   isMe: boolean;
   onClick?: () => void;
   compact?: boolean;
+  isSleeping?: boolean;
+  isTyping?: boolean;
 }
 
 // Get VIP hair style from name
@@ -23,7 +25,7 @@ function getVipHairStyle(hairName: string | null): string | null {
   return null;
 }
 
-export function LobbyAvatar({ player, isMe, onClick, compact = false }: LobbyAvatarProps) {
+export function LobbyAvatar({ player, isMe, onClick, compact = false, isSleeping = false, isTyping = false }: LobbyAvatarProps) {
   const customization = player.odw_avatar_customization 
     ? deserializeCustomization(player.odw_avatar_customization)
     : defaultCustomization;
@@ -38,6 +40,19 @@ export function LobbyAvatar({ player, isMe, onClick, compact = false }: LobbyAva
   }
 
   const hasVip = !!(player.odw_vip_hair_name || player.odw_vip_shirt_name);
+
+  // Determine status for bubble
+  let status: "idle" | "typing" | "sleeping" | "message" = "idle";
+  if (isTyping) {
+    status = "typing";
+  } else if (isSleeping) {
+    status = "sleeping";
+  } else if (player.odw_last_message && player.odw_message_timestamp) {
+    const age = Date.now() - player.odw_message_timestamp;
+    if (age < 8000) { // Show message for 8 seconds
+      status = "message";
+    }
+  }
 
   return (
     <motion.div
@@ -59,11 +74,10 @@ export function LobbyAvatar({ player, isMe, onClick, compact = false }: LobbyAva
       onClick={onClick}
       whileHover={{ scale: 1.1 }}
     >
-      {/* Speech Bubble */}
-      <SpeechBubble 
+      {/* Status Bubble (typing, sleeping, or message) */}
+      <PlayerStatusBubble 
+        status={status}
         message={player.odw_last_message}
-        timestamp={player.odw_message_timestamp}
-        playerName={player.odw_name}
       />
 
       {/* Avatar Container */}
@@ -80,6 +94,15 @@ export function LobbyAvatar({ player, isMe, onClick, compact = false }: LobbyAva
             size={compact ? "sm" : "md"}
             variant="minimal"
           />
+          
+          {/* Sleeping overlay - closed eyes */}
+          {isSleeping && (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="relative" style={{ width: compact ? 48 : 80, height: compact ? 48 : 80 }}>
+                <SleepingEyes />
+              </div>
+            </div>
+          )}
           
           {/* VIP Crown */}
           {hasVip && (
