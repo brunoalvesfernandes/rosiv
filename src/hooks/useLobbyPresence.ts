@@ -15,6 +15,8 @@ export interface LobbyPlayer {
   odw_vip_shirt_name: string | null;
   odw_last_message: string | null;
   odw_message_timestamp: number | null;
+  odw_is_typing: boolean;
+  odw_is_sleeping: boolean;
 }
 
 interface PresenceState {
@@ -30,45 +32,84 @@ export function useLobbyPresence() {
   
   const [players, setPlayers] = useState<LobbyPlayer[]>([]);
   const [myPosition, setMyPosition] = useState({ x: 300, y: 200 });
+  const [isTyping, setIsTyping] = useState(false);
+  const [isSleeping, setIsSleeping] = useState(false);
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
   const isJoined = useRef(false);
+  const lastMessageRef = useRef<string | null>(null);
+  const lastMessageTimestampRef = useRef<number | null>(null);
+
+  // Track current state to send with updates
+  const trackState = useCallback((overrides: Partial<{
+    x: number;
+    y: number;
+    message: string | null;
+    messageTimestamp: number | null;
+    typing: boolean;
+    sleeping: boolean;
+  }> = {}) => {
+    if (!channelRef.current || !isJoined.current || !user) return;
+
+    const x = overrides.x ?? myPosition.x;
+    const y = overrides.y ?? myPosition.y;
+    const message = overrides.message !== undefined ? overrides.message : lastMessageRef.current;
+    const timestamp = overrides.messageTimestamp !== undefined ? overrides.messageTimestamp : lastMessageTimestampRef.current;
+    const typing = overrides.typing ?? isTyping;
+    const sleeping = overrides.sleeping ?? isSleeping;
+
+    channelRef.current.track({
+      odw_uid: user.id,
+      odw_x: x,
+      odw_y: y,
+      odw_name: character?.name || "Jogador",
+      odw_level: character?.level || 1,
+      odw_avatar_customization: character?.avatar_customization || null,
+      odw_vip_hair_name: vipClothing?.hair?.name || null,
+      odw_vip_shirt_name: vipClothing?.shirt?.name || null,
+      odw_last_message: message,
+      odw_message_timestamp: timestamp,
+      odw_is_typing: typing,
+      odw_is_sleeping: sleeping,
+    });
+  }, [user, myPosition, character, vipClothing, isTyping, isSleeping]);
 
   // Update my position in the channel
   const updatePosition = useCallback((x: number, y: number) => {
     setMyPosition({ x, y });
-    if (channelRef.current && isJoined.current) {
-      channelRef.current.track({
-        odw_uid: user?.id,
-        odw_x: x,
-        odw_y: y,
-        odw_name: character?.name || "Jogador",
-        odw_level: character?.level || 1,
-        odw_avatar_customization: character?.avatar_customization || null,
-        odw_vip_hair_name: vipClothing?.hair?.name || null,
-        odw_vip_shirt_name: vipClothing?.shirt?.name || null,
-        odw_last_message: null,
-        odw_message_timestamp: null,
-      });
-    }
-  }, [user?.id, character, vipClothing]);
+    setIsSleeping(false); // Moving wakes up
+    trackState({ x, y, sleeping: false });
+  }, [trackState]);
 
   // Broadcast a chat message bubble
   const broadcastMessage = useCallback((message: string) => {
-    if (channelRef.current && isJoined.current) {
-      channelRef.current.track({
-        odw_uid: user?.id,
-        odw_x: myPosition.x,
-        odw_y: myPosition.y,
-        odw_name: character?.name || "Jogador",
-        odw_level: character?.level || 1,
-        odw_avatar_customization: character?.avatar_customization || null,
-        odw_vip_hair_name: vipClothing?.hair?.name || null,
-        odw_vip_shirt_name: vipClothing?.shirt?.name || null,
-        odw_last_message: message,
-        odw_message_timestamp: Date.now(),
-      });
+    lastMessageRef.current = message;
+    lastMessageTimestampRef.current = Date.now();
+    setIsTyping(false);
+    trackState({ 
+      message, 
+      messageTimestamp: Date.now(),
+      typing: false,
+      sleeping: false,
+    });
+  }, [trackState]);
+
+  // Set typing status
+  const setTypingStatus = useCallback((typing: boolean) => {
+    setIsTyping(typing);
+    if (typing) {
+      setIsSleeping(false);
     }
-  }, [user?.id, myPosition, character, vipClothing]);
+    trackState({ typing, sleeping: typing ? false : isSleeping });
+  }, [trackState, isSleeping]);
+
+  // Set sleeping status
+  const setSleepingStatus = useCallback((sleeping: boolean) => {
+    setIsSleeping(sleeping);
+    if (sleeping) {
+      setIsTyping(false);
+    }
+    trackState({ sleeping, typing: sleeping ? false : isTyping });
+  }, [trackState, isTyping]);
 
   // Join lobby
   useEffect(() => {
@@ -91,8 +132,22 @@ export function useLobbyPresence() {
         Object.values(state).forEach((presences) => {
           presences.forEach((presence) => {
             if (presence.odw_uid) {
-              // Overwrite to keep the most recent presence
-              playerMap.set(presence.odw_uid, presence as LobbyPlayer);
+              // Ensure all fields have defaults
+              const player: LobbyPlayer = {
+                odw_uid: presence.odw_uid,
+                odw_x: presence.odw_x ?? 300,
+                odw_y: presence.odw_y ?? 200,
+                odw_name: presence.odw_name ?? "Jogador",
+                odw_level: presence.odw_level ?? 1,
+                odw_avatar_customization: presence.odw_avatar_customization ?? null,
+                odw_vip_hair_name: presence.odw_vip_hair_name ?? null,
+                odw_vip_shirt_name: presence.odw_vip_shirt_name ?? null,
+                odw_last_message: presence.odw_last_message ?? null,
+                odw_message_timestamp: presence.odw_message_timestamp ?? null,
+                odw_is_typing: presence.odw_is_typing ?? false,
+                odw_is_sleeping: presence.odw_is_sleeping ?? false,
+              };
+              playerMap.set(presence.odw_uid, player);
             }
           });
         });
@@ -114,6 +169,8 @@ export function useLobbyPresence() {
             odw_vip_shirt_name: vipClothing?.shirt?.name || null,
             odw_last_message: null,
             odw_message_timestamp: null,
+            odw_is_typing: false,
+            odw_is_sleeping: false,
           });
         }
       });
@@ -129,6 +186,10 @@ export function useLobbyPresence() {
     myPosition,
     updatePosition,
     broadcastMessage,
+    setTypingStatus,
+    setSleepingStatus,
+    isTyping,
+    isSleeping,
     myUserId: user?.id,
   };
 }
