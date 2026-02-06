@@ -5,7 +5,6 @@ import { useGlobalChat } from "@/hooks/useChat";
 import { useCharacter } from "@/hooks/useCharacter";
 import { WaterBackground } from "./WaterBackground";
 import { LobbyAvatar } from "./LobbyAvatar";
-import { LobbyGameNav } from "./LobbyGameNav";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { 
@@ -59,8 +58,16 @@ export function FullscreenLobby({ onClose, onNavigate }: FullscreenLobbyProps) {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // Handle click to move
+  // Handle click to move (only if not clicking a building)
   const handleClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    // Check if the click was on the canvas (buildings handle their own clicks)
+    const target = e.target as HTMLElement;
+    if (target.tagName === 'CANVAS') {
+      // Canvas clicks are handled by WaterBackground for building detection
+      // If no building was clicked, it will fall through to here for movement
+      return;
+    }
+    
     if (!containerRef.current) return;
     
     const rect = containerRef.current.getBoundingClientRect();
@@ -73,7 +80,7 @@ export function FullscreenLobby({ onClose, onNavigate }: FullscreenLobbyProps) {
     
     // Clamp
     const clampedX = Math.max(8, Math.min(92, percentX));
-    const clampedY = Math.max(10, Math.min(90, percentY));
+    const clampedY = Math.max(15, Math.min(85, percentY));
     
     // Convert back to absolute for storage (using base 700x400)
     const absX = (clampedX / 100) * 700;
@@ -81,6 +88,32 @@ export function FullscreenLobby({ onClose, onNavigate }: FullscreenLobbyProps) {
     
     updatePosition(absX, absY);
   }, [updatePosition, dimensions]);
+
+  // Handle movement from background click
+  const handleBackgroundClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    if (!containerRef.current) return;
+    
+    const rect = containerRef.current.getBoundingClientRect();
+    let x = e.clientX - rect.left;
+    let y = e.clientY - rect.top;
+    
+    const percentX = (x / dimensions.width) * 100;
+    const percentY = (y / dimensions.height) * 100;
+    
+    const clampedX = Math.max(10, Math.min(90, percentX));
+    const clampedY = Math.max(18, Math.min(82, percentY));
+    
+    const absX = (clampedX / 100) * 700;
+    const absY = (clampedY / 100) * 400;
+    
+    updatePosition(absX, absY);
+  }, [updatePosition, dimensions]);
+
+  // Handle location click from buildings
+  const handleLocationClick = useCallback((location: string) => {
+    onClose();
+    onNavigate(location);
+  }, [onClose, onNavigate]);
 
   // Handle send message
   const handleSendMessage = useCallback(() => {
@@ -97,11 +130,6 @@ export function FullscreenLobby({ onClose, onNavigate }: FullscreenLobbyProps) {
       e.preventDefault();
       handleSendMessage();
     }
-  };
-
-  const handleNavigate = (route: string) => {
-    onClose();
-    onNavigate(route);
   };
 
   const onlineCount = players.length;
@@ -126,17 +154,14 @@ export function FullscreenLobby({ onClose, onNavigate }: FullscreenLobbyProps) {
       {/* Main Lobby Area */}
       <div 
         ref={containerRef}
-        className="relative w-full h-full cursor-crosshair overflow-hidden"
-        onClick={handleClick}
+        className="relative w-full h-full overflow-hidden"
+        onClick={handleBackgroundClick}
       >
-        {/* Animated Water Background */}
-        <WaterBackground width={dimensions.width} height={dimensions.height} />
-        
-        {/* Navigation Points */}
-        <LobbyGameNav 
-          onNavigate={handleNavigate}
-          lobbyWidth={dimensions.width}
-          lobbyHeight={dimensions.height}
+        {/* Animated Water Background with clickable buildings */}
+        <WaterBackground 
+          width={dimensions.width} 
+          height={dimensions.height}
+          onLocationClick={handleLocationClick}
         />
 
         {/* Players */}
@@ -173,8 +198,8 @@ export function FullscreenLobby({ onClose, onNavigate }: FullscreenLobbyProps) {
         </div>
 
         {/* Bottom hint */}
-        <div className="absolute bottom-20 left-1/2 -translate-x-1/2 text-xs text-muted-foreground/60 pointer-events-none">
-          Toque para mover • Ícones para navegar
+        <div className="absolute bottom-20 left-1/2 -translate-x-1/2 text-xs text-muted-foreground/70 pointer-events-none bg-background/50 backdrop-blur-sm px-3 py-1 rounded-full">
+          Toque no chão para mover • Clique nas construções para entrar
         </div>
 
         {/* Chat Toggle Button */}
@@ -191,7 +216,7 @@ export function FullscreenLobby({ onClose, onNavigate }: FullscreenLobbyProps) {
           {showChat ? <ChevronDown className="w-3 h-3" /> : <ChevronUp className="w-3 h-3" />}
         </motion.button>
 
-        {/* Chat Panel (Slide up from bottom on mobile) */}
+        {/* Chat Panel */}
         <AnimatePresence>
           {showChat && (
             <motion.div

@@ -29,7 +29,23 @@ export function WaterLobby() {
   const [chatInput, setChatInput] = useState("");
   const [showChat, setShowChat] = useState(!isMobile);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [containerSize, setContainerSize] = useState({ width: LOBBY_WIDTH, height: LOBBY_HEIGHT });
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Update container size
+  useEffect(() => {
+    const updateSize = () => {
+      if (containerRef.current) {
+        setContainerSize({
+          width: containerRef.current.clientWidth,
+          height: containerRef.current.clientHeight,
+        });
+      }
+    };
+    updateSize();
+    window.addEventListener("resize", updateSize);
+    return () => window.removeEventListener("resize", updateSize);
+  }, []);
 
   // Scroll to bottom on new messages
   useEffect(() => {
@@ -38,6 +54,10 @@ export function WaterLobby() {
 
   // Handle click to move
   const handleClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    // If click was on canvas, it handles building clicks
+    const target = e.target as HTMLElement;
+    if (target.tagName === 'CANVAS') return;
+    
     if (!containerRef.current) return;
     
     const rect = containerRef.current.getBoundingClientRect();
@@ -57,6 +77,23 @@ export function WaterLobby() {
     updatePosition(x, y);
   }, [updatePosition]);
 
+  // Handle location click from buildings
+  const handleLocationClick = useCallback((location: string) => {
+    const routeMap: Record<string, string> = {
+      crafting: "/crafting",
+      shop: "/shop",
+      dungeons: "/dungeons",
+      dungeon: "/dungeons",
+      arena: "/arena",
+      mining: "/mining",
+      inventory: "/inventory",
+      guild: "/guild",
+    };
+    
+    const path = routeMap[location] || `/${location}`;
+    navigate(path);
+  }, [navigate]);
+
   // Handle send message
   const handleSendMessage = useCallback(() => {
     const msg = chatInput.trim();
@@ -75,27 +112,15 @@ export function WaterLobby() {
   };
 
   const handleNavigate = (route: string) => {
-    // Map route names to actual paths
-    const routeMap: Record<string, string> = {
-      crafting: "/crafting",
-      shop: "/shop",
-      dungeons: "/dungeons",
-      arena: "/arena",
-      mining: "/mining",
-      inventory: "/inventory",
-      guild: "/guild",
-    };
-    
-    const path = routeMap[route] || `/${route}`;
-    navigate(path);
+    handleLocationClick(route);
   };
 
   const onlineCount = players.length;
 
   // Get scaled position for display
-  const getDisplayPosition = (x: number, y: number, containerRect: DOMRect) => {
-    const scaleX = containerRect.width / LOBBY_WIDTH;
-    const scaleY = containerRect.height / LOBBY_HEIGHT;
+  const getDisplayPosition = (x: number, y: number, rect: DOMRect) => {
+    const scaleX = rect.width / LOBBY_WIDTH;
+    const scaleY = rect.height / LOBBY_HEIGHT;
     return {
       x: x * scaleX,
       y: y * scaleY,
@@ -143,24 +168,25 @@ export function WaterLobby() {
           {/* Lobby Area - Responsive */}
           <div 
             ref={containerRef}
-            className="relative rounded-xl overflow-hidden border border-primary/20 shadow-[0_0_30px_hsl(var(--primary)/0.15)] cursor-crosshair w-full lg:flex-shrink-0 aspect-[7/4] lg:w-[700px] lg:h-[400px]"
+            className="relative rounded-xl overflow-hidden border border-primary/20 shadow-[0_0_30px_hsl(var(--primary)/0.15)] w-full lg:flex-shrink-0 aspect-[7/4] lg:w-[700px] lg:h-[400px]"
             onClick={handleClick}
           >
-            {/* Animated Water Background */}
+            {/* Animated Water Background with buildings */}
             <WaterBackground 
-              width={containerRect?.width || LOBBY_WIDTH} 
-              height={containerRect?.height || LOBBY_HEIGHT} 
+              width={containerSize.width} 
+              height={containerSize.height}
+              onLocationClick={handleLocationClick}
             />
             
             {/* "Clique para mover" hint */}
-            <div className="absolute bottom-2 left-2 sm:bottom-3 sm:left-3 text-[10px] sm:text-xs text-muted-foreground/60 pointer-events-none">
-              Toque para mover
+            <div className="absolute bottom-2 left-2 sm:bottom-3 sm:left-3 text-[10px] sm:text-xs text-muted-foreground/70 pointer-events-none bg-background/40 backdrop-blur-sm px-2 py-0.5 rounded">
+              Clique nas construções ou no chão
             </div>
 
             {/* Expand hint on mobile */}
             {isMobile && (
               <div className="absolute top-2 right-2 text-[10px] text-primary/80 bg-background/50 backdrop-blur-sm rounded px-2 py-1 pointer-events-none">
-                Toque "Jogar" para tela cheia
+                "Jogar" = tela cheia
               </div>
             )}
 
