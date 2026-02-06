@@ -34,10 +34,34 @@ export function useLobbyPresence() {
   const [myPosition, setMyPosition] = useState({ x: 300, y: 200 });
   const [isTyping, setIsTyping] = useState(false);
   const [isSleeping, setIsSleeping] = useState(false);
+  
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
   const isJoined = useRef(false);
+  const isMounted = useRef(true);
   const lastMessageRef = useRef<string | null>(null);
   const lastMessageTimestampRef = useRef<number | null>(null);
+  
+  // Use refs to track current state for async callbacks
+  const stateRef = useRef({
+    x: 300,
+    y: 200,
+    isTyping: false,
+    isSleeping: false,
+  });
+
+  // Update refs when state changes
+  useEffect(() => {
+    stateRef.current.x = myPosition.x;
+    stateRef.current.y = myPosition.y;
+  }, [myPosition]);
+
+  useEffect(() => {
+    stateRef.current.isTyping = isTyping;
+  }, [isTyping]);
+
+  useEffect(() => {
+    stateRef.current.isSleeping = isSleeping;
+  }, [isSleeping]);
 
   // Track current state to send with updates
   const trackState = useCallback((overrides: Partial<{
@@ -48,35 +72,42 @@ export function useLobbyPresence() {
     typing: boolean;
     sleeping: boolean;
   }> = {}) => {
-    if (!channelRef.current || !isJoined.current || !user) return;
+    if (!channelRef.current || !isJoined.current || !user || !isMounted.current) return;
 
-    const x = overrides.x ?? myPosition.x;
-    const y = overrides.y ?? myPosition.y;
+    const x = overrides.x ?? stateRef.current.x;
+    const y = overrides.y ?? stateRef.current.y;
     const message = overrides.message !== undefined ? overrides.message : lastMessageRef.current;
     const timestamp = overrides.messageTimestamp !== undefined ? overrides.messageTimestamp : lastMessageTimestampRef.current;
-    const typing = overrides.typing ?? isTyping;
-    const sleeping = overrides.sleeping ?? isSleeping;
+    const typing = overrides.typing ?? stateRef.current.isTyping;
+    const sleeping = overrides.sleeping ?? stateRef.current.isSleeping;
 
-    channelRef.current.track({
-      odw_uid: user.id,
-      odw_x: x,
-      odw_y: y,
-      odw_name: character?.name || "Jogador",
-      odw_level: character?.level || 1,
-      odw_avatar_customization: character?.avatar_customization || null,
-      odw_vip_hair_name: vipClothing?.hair?.name || null,
-      odw_vip_shirt_name: vipClothing?.shirt?.name || null,
-      odw_last_message: message,
-      odw_message_timestamp: timestamp,
-      odw_is_typing: typing,
-      odw_is_sleeping: sleeping,
-    });
-  }, [user, myPosition, character, vipClothing, isTyping, isSleeping]);
+    try {
+      channelRef.current.track({
+        odw_uid: user.id,
+        odw_x: x,
+        odw_y: y,
+        odw_name: character?.name || "Jogador",
+        odw_level: character?.level || 1,
+        odw_avatar_customization: character?.avatar_customization || null,
+        odw_vip_hair_name: vipClothing?.hair?.name || null,
+        odw_vip_shirt_name: vipClothing?.shirt?.name || null,
+        odw_last_message: message,
+        odw_message_timestamp: timestamp,
+        odw_is_typing: typing,
+        odw_is_sleeping: sleeping,
+      });
+    } catch (error) {
+      console.error("Error tracking presence:", error);
+    }
+  }, [user, character, vipClothing]);
 
   // Update my position in the channel
   const updatePosition = useCallback((x: number, y: number) => {
     setMyPosition({ x, y });
-    setIsSleeping(false); // Moving wakes up
+    setIsSleeping(false);
+    stateRef.current.x = x;
+    stateRef.current.y = y;
+    stateRef.current.isSleeping = false;
     trackState({ x, y, sleeping: false });
   }, [trackState]);
 
@@ -85,6 +116,8 @@ export function useLobbyPresence() {
     lastMessageRef.current = message;
     lastMessageTimestampRef.current = Date.now();
     setIsTyping(false);
+    stateRef.current.isTyping = false;
+    stateRef.current.isSleeping = false;
     trackState({ 
       message, 
       messageTimestamp: Date.now(),
@@ -96,23 +129,29 @@ export function useLobbyPresence() {
   // Set typing status
   const setTypingStatus = useCallback((typing: boolean) => {
     setIsTyping(typing);
+    stateRef.current.isTyping = typing;
     if (typing) {
       setIsSleeping(false);
+      stateRef.current.isSleeping = false;
     }
-    trackState({ typing, sleeping: typing ? false : isSleeping });
-  }, [trackState, isSleeping]);
+    trackState({ typing, sleeping: typing ? false : stateRef.current.isSleeping });
+  }, [trackState]);
 
   // Set sleeping status
   const setSleepingStatus = useCallback((sleeping: boolean) => {
     setIsSleeping(sleeping);
+    stateRef.current.isSleeping = sleeping;
     if (sleeping) {
       setIsTyping(false);
+      stateRef.current.isTyping = false;
     }
-    trackState({ sleeping, typing: sleeping ? false : isTyping });
-  }, [trackState, isTyping]);
+    trackState({ sleeping, typing: sleeping ? false : stateRef.current.isTyping });
+  }, [trackState]);
 
   // Join lobby
   useEffect(() => {
+    isMounted.current = true;
+    
     if (!user || !character) return;
 
     const channel = supabase.channel(LOBBY_CHANNEL, {
@@ -125,6 +164,8 @@ export function useLobbyPresence() {
 
     channel
       .on("presence", { event: "sync" }, () => {
+        if (!isMounted.current) return;
+        
         const state: PresenceState = channel.presenceState();
         const playerMap = new Map<string, LobbyPlayer>();
         
@@ -155,31 +196,36 @@ export function useLobbyPresence() {
         setPlayers(Array.from(playerMap.values()));
       })
       .subscribe(async (status) => {
-        if (status === "SUBSCRIBED") {
+        if (status === "SUBSCRIBED" && isMounted.current) {
           isJoined.current = true;
           // Track initial position
-          await channel.track({
-            odw_uid: user.id,
-            odw_x: myPosition.x,
-            odw_y: myPosition.y,
-            odw_name: character.name || "Jogador",
-            odw_level: character.level || 1,
-            odw_avatar_customization: character.avatar_customization || null,
-            odw_vip_hair_name: vipClothing?.hair?.name || null,
-            odw_vip_shirt_name: vipClothing?.shirt?.name || null,
-            odw_last_message: null,
-            odw_message_timestamp: null,
-            odw_is_typing: false,
-            odw_is_sleeping: false,
-          });
+          try {
+            await channel.track({
+              odw_uid: user.id,
+              odw_x: stateRef.current.x,
+              odw_y: stateRef.current.y,
+              odw_name: character.name || "Jogador",
+              odw_level: character.level || 1,
+              odw_avatar_customization: character.avatar_customization || null,
+              odw_vip_hair_name: vipClothing?.hair?.name || null,
+              odw_vip_shirt_name: vipClothing?.shirt?.name || null,
+              odw_last_message: null,
+              odw_message_timestamp: null,
+              odw_is_typing: false,
+              odw_is_sleeping: false,
+            });
+          } catch (error) {
+            console.error("Error tracking initial presence:", error);
+          }
         }
       });
 
     return () => {
+      isMounted.current = false;
       isJoined.current = false;
       supabase.removeChannel(channel);
     };
-  }, [user, character?.name, character?.level, character?.avatar_customization]);
+  }, [user, character?.name, character?.level, character?.avatar_customization, vipClothing?.hair?.name, vipClothing?.shirt?.name]);
 
   return {
     players,
