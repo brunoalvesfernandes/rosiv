@@ -3,27 +3,24 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useLobbyPresence } from "@/hooks/useLobbyPresence";
 import { useGlobalChat } from "@/hooks/useChat";
 import { useCharacter } from "@/hooks/useCharacter";
-import { WaterBackground } from "./WaterBackground";
 import { LobbyAvatar } from "./LobbyAvatar";
-import { FullscreenLobby } from "./FullscreenLobby";
+import { SideScrollingLobby } from "./SideScrollingLobby";
+import { FullscreenSideScrollLobby } from "./FullscreenSideScrollLobby";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Send, Users, MessageCircle, Maximize2 } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
-import { useNavigate } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 const LOBBY_WIDTH = 700;
-const LOBBY_HEIGHT = 400;
-const AVATAR_PADDING = 40;
+const LOBBY_HEIGHT = 300;
 
 export function WaterLobby() {
   const containerRef = useRef<HTMLDivElement>(null);
-  const navigate = useNavigate();
   const isMobile = useIsMobile();
   const { data: character } = useCharacter();
-  const { players, myPosition, updatePosition, broadcastMessage, myUserId } = useLobbyPresence();
+  const { players, myUserId, broadcastMessage } = useLobbyPresence();
   const { messages, sendMessage, cooldownRemaining } = useGlobalChat(true, character?.name);
   
   const [chatInput, setChatInput] = useState("");
@@ -52,48 +49,6 @@ export function WaterLobby() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // Handle click to move
-  const handleClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-    // If click was on canvas, it handles building clicks
-    const target = e.target as HTMLElement;
-    if (target.tagName === 'CANVAS') return;
-    
-    if (!containerRef.current) return;
-    
-    const rect = containerRef.current.getBoundingClientRect();
-    let x = e.clientX - rect.left;
-    let y = e.clientY - rect.top;
-    
-    // Scale to base dimensions
-    const scaleX = LOBBY_WIDTH / rect.width;
-    const scaleY = LOBBY_HEIGHT / rect.height;
-    x = x * scaleX;
-    y = y * scaleY;
-    
-    // Clamp position within bounds
-    x = Math.max(AVATAR_PADDING, Math.min(LOBBY_WIDTH - AVATAR_PADDING, x));
-    y = Math.max(AVATAR_PADDING, Math.min(LOBBY_HEIGHT - AVATAR_PADDING, y));
-    
-    updatePosition(x, y);
-  }, [updatePosition]);
-
-  // Handle location click from buildings
-  const handleLocationClick = useCallback((location: string) => {
-    const routeMap: Record<string, string> = {
-      crafting: "/crafting",
-      shop: "/shop",
-      dungeons: "/dungeons",
-      dungeon: "/dungeons",
-      arena: "/arena",
-      mining: "/mining",
-      inventory: "/inventory",
-      guild: "/guild",
-    };
-    
-    const path = routeMap[location] || `/${location}`;
-    navigate(path);
-  }, [navigate]);
-
   // Handle send message
   const handleSendMessage = useCallback(() => {
     const msg = chatInput.trim();
@@ -111,23 +66,7 @@ export function WaterLobby() {
     }
   };
 
-  const handleNavigate = (route: string) => {
-    handleLocationClick(route);
-  };
-
   const onlineCount = players.length;
-
-  // Get scaled position for display
-  const getDisplayPosition = (x: number, y: number, rect: DOMRect) => {
-    const scaleX = rect.width / LOBBY_WIDTH;
-    const scaleY = rect.height / LOBBY_HEIGHT;
-    return {
-      x: x * scaleX,
-      y: y * scaleY,
-    };
-  };
-
-  const containerRect = containerRef.current?.getBoundingClientRect();
 
   return (
     <>
@@ -149,8 +88,8 @@ export function WaterLobby() {
               className="gap-2"
             >
               <Maximize2 className="w-4 h-4" />
-              <span className="hidden sm:inline">Expandir</span>
-              <span className="sm:hidden">Jogar</span>
+              <span className="hidden sm:inline">Jogar</span>
+              <span className="sm:hidden">🎮</span>
             </Button>
             <Button 
               variant="ghost" 
@@ -165,46 +104,16 @@ export function WaterLobby() {
         </div>
 
         <div className="flex flex-col lg:flex-row gap-3">
-          {/* Lobby Area - Responsive */}
+          {/* Side-Scrolling Lobby Area */}
           <div 
             ref={containerRef}
-            className="relative rounded-xl overflow-hidden border border-primary/20 shadow-[0_0_30px_hsl(var(--primary)/0.15)] w-full lg:flex-shrink-0 aspect-[7/4] lg:w-[700px] lg:h-[400px]"
-            onClick={handleClick}
+            className="relative rounded-xl overflow-hidden border border-primary/20 shadow-[0_0_30px_hsl(var(--primary)/0.15)] w-full lg:flex-shrink-0 aspect-[7/3] lg:w-[700px] lg:h-[300px]"
           >
-            {/* Animated Water Background with buildings */}
-            <WaterBackground 
-              width={containerSize.width} 
+            <SideScrollingLobby
+              width={containerSize.width}
               height={containerSize.height}
-              onLocationClick={handleLocationClick}
+              isFullscreen={false}
             />
-            
-            {/* "Clique para mover" hint */}
-            <div className="absolute bottom-2 left-2 sm:bottom-3 sm:left-3 text-[10px] sm:text-xs text-muted-foreground/70 pointer-events-none bg-background/40 backdrop-blur-sm px-2 py-0.5 rounded">
-              Clique nas construções ou no chão
-            </div>
-
-            {/* Expand hint on mobile */}
-            {isMobile && (
-              <div className="absolute top-2 right-2 text-[10px] text-primary/80 bg-background/50 backdrop-blur-sm rounded px-2 py-1 pointer-events-none">
-                "Jogar" = tela cheia
-              </div>
-            )}
-
-            {/* Players - scaled positions */}
-            {players.map((player) => {
-              const displayPos = containerRect 
-                ? getDisplayPosition(player.odw_x, player.odw_y, containerRect)
-                : { x: player.odw_x, y: player.odw_y };
-              
-              return (
-                <LobbyAvatar
-                  key={player.odw_uid}
-                  player={{ ...player, odw_x: displayPos.x, odw_y: displayPos.y }}
-                  isMe={player.odw_uid === myUserId}
-                  compact={isMobile}
-                />
-              );
-            })}
           </div>
 
           {/* Chat Panel - Responsive */}
@@ -274,14 +183,10 @@ export function WaterLobby() {
       </div>
 
       {/* Fullscreen Lobby */}
-      <AnimatePresence>
-        {isFullscreen && (
-          <FullscreenLobby 
-            onClose={() => setIsFullscreen(false)}
-            onNavigate={handleNavigate}
-          />
-        )}
-      </AnimatePresence>
+      <FullscreenSideScrollLobby
+        isOpen={isFullscreen}
+        onClose={() => setIsFullscreen(false)}
+      />
     </>
   );
 }
